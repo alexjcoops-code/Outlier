@@ -11,7 +11,9 @@ function Bar({ count, total, kind }: { count: number; total: number; kind: strin
   const pct = total ? (count / total) * 100 : 0;
   return (
     <td className="admin__cell">
-      <span className={`admin__bar admin__bar--${kind}`} style={{ width: `${Math.min(100, pct * 2)}%` }} />
+      {count > 0 && (
+        <span className={`admin__bar admin__bar--${kind}`} style={{ width: `${Math.max(2, pct * 0.62)}%` }} />
+      )}
       <span className="admin__num">{count ? `${pct.toFixed(0)}%` : ''}</span>
     </td>
   );

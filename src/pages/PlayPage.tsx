@@ -34,7 +34,7 @@ export function PlayPage({ backend, date, navigate, onFinished, onAgain }: Props
   }, [screen]);
 
   const live = (
-    <div className="sr-only" aria-live="assertive" role="status">
+    <div className="sr-only" aria-live="assertive" aria-atomic="true">
       {game.announcement}
     </div>
   );
@@ -63,7 +63,8 @@ export function PlayPage({ backend, date, navigate, onFinished, onAgain }: Props
     const resuming = phase.position > 1;
     return (
       <section className="start" aria-labelledby="start-title">
-        <p className="start__fields pencil mono" aria-hidden="true">
+        {/* In practice the corner stamp sits here instead. */}
+        <p className="start__fields pencil mono" aria-hidden="true" style={practice ? { visibility: 'hidden' } : undefined}>
           Name <span className="start__blank" /> Class <span className="start__blank start__blank--short" />
         </p>
         <h1 id="start-title">

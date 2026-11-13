@@ -309,6 +309,13 @@
   font-size: 10.5px;
   color: var(--pencil);
 }
+.book__cell.is-played .book__day {
+  top: 0;
+  left: 0;
+  padding: 1px 3px;
+  background: var(--paper);
+  color: var(--ink);
+}
 .book__score {
   position: absolute;
   right: 2px;

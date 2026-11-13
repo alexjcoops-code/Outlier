@@ -166,6 +166,8 @@ a:hover,
   color: var(--ink);
   text-decoration: none;
   line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .wordmark__i {
   position: relative;
@@ -213,7 +215,12 @@ a:hover,
 .header__help:hover {
   background: var(--highlight);
 }
-@media (max-width: 345px) {
+@media (max-width: 420px) {
+  .header__weekday {
+    display: none;
+  }
+}
+@media (max-width: 330px) {
   .header__date {
     display: none;
   }

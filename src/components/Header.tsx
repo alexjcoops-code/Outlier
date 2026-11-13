@@ -22,14 +22,17 @@ export function Header({ date, streak, navigate, onHelp }: Props) {
         </span>
       </a>
       <div className="header__right">
-        <span className="header__date">{formatShortDate(date)}</span>
+        <span className="header__date">
+          <span className="header__weekday">{formatShortDate(date).slice(0, 4)}</span>
+          {formatShortDate(date).slice(4)}
+        </span>
         <a
           className="header__streak"
           href="/book"
           onClick={linkHandler(navigate, '/book')}
           aria-label={`My book. Streak: ${streak} ${streak === 1 ? 'day' : 'days'}`}
         >
-          {streak > 0 && <Tally count={streak} />}
+          {streak > 0 && <Tally count={Math.min(streak, 5)} />}
           <span aria-hidden="true">
             {streak} {streak === 1 ? 'day' : 'days'}
           </span>

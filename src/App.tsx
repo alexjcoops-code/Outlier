@@ -30,6 +30,27 @@ export function App() {
     return () => clearInterval(id);
   }, []);
 
+  // Past days still marked provisional in "My book" get their final marks once the day is locked.
+  useEffect(() => {
+    const pending = Object.entries(loadHistory()).filter(([date, entry]) => !entry.final && date < today);
+    if (pending.length === 0) return;
+    let cancelled = false;
+    void (async () => {
+      for (const [date] of pending.slice(-14)) {
+        try {
+          const r = await backend.getResults(date);
+          if (cancelled) return;
+          if (r.final) setHistory(recordDay(r));
+        } catch {
+          return; // offline: try again next visit
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [backend, today]);
+
   const onFinished = useCallback((r: DayResults) => setHistory(recordDay(r)), []);
   const closeHelp = useCallback(() => {
     setHelp(false);
