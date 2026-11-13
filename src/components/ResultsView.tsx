@@ -194,6 +194,7 @@ function ResultRow({ row, results, backend }: { row: DayRow; results: DayResults
                 prompt={prompt}
                 values={dist.values}
                 mine={row.value}
+                lone={row.tier === 'lone'}
                 animate
                 caption={`${basedOn(dist.players, dist.simulated)}.`}
               />

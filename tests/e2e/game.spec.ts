@@ -68,6 +68,8 @@ test('a full game: retries, a time-out, results, share text, resume and history'
       await page.clock.runFor(800);
       const reveal = page.locator('.reveal');
       await expect(reveal).toBeVisible();
+      // The mark must be on screen without scrolling, or players never see it.
+      await expect(reveal.locator('.reveal__mark')).toBeInViewport({ ratio: 1 });
       const points = Number((await reveal.locator('.reveal__points').innerText()).replace('+', ''));
       expect([10, 15, 30, 60, 85, 100]).toContain(points);
       expectedTotal += points;
@@ -147,8 +149,9 @@ test('practice mode plays the same but saves nothing', async ({ page }) => {
   await expect(page.getByText('Nothing marked yet.')).toBeVisible();
 });
 
-test('the on-screen number pad works on a phone', async ({ page }, testInfo) => {
+test('the on-screen number pad works on a small phone, and the mark fits on screen', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'phone', 'pad only shows on small or touch screens');
+  await page.setViewportSize({ width: 320, height: 568 });
   await page.goto('/');
   await page.getByRole('button', { name: 'Start' }).click();
   const valid = await answersOnScreen(page);
@@ -159,4 +162,6 @@ test('the on-screen number pad works on a phone', async ({ page }, testInfo) => 
   for (const digit of String(valid[0])) await pad.getByRole('button', { name: digit, exact: true }).click();
   await pad.getByRole('button', { name: 'Hand in' }).click();
   await expect(page.locator('.reveal')).toBeVisible();
+  await expect(page.locator('.reveal__mark')).toBeInViewport({ ratio: 1 });
+  await expect(page.locator('.reveal figure.crowd')).toBeInViewport({ ratio: 0.5 });
 });

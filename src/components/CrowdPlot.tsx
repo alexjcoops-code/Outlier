@@ -33,6 +33,10 @@ interface Props {
   compact?: boolean;
   /** Shown under the rack, after the "each ball is…" line. */
   caption?: string;
+  /** Rack height in pixels (default 240; compact strips are 40). */
+  height?: number;
+  /** The player's answer scored Lone Wolf: nobody else gave it. Only then is it labelled "alone". */
+  lone?: boolean;
 }
 
 interface DrawnBall {
@@ -51,6 +55,7 @@ const short = (n: number) => n.toLocaleString('en-GB');
 function drawRack(
   ctx: CanvasRenderingContext2D,
   L: RackLayout,
+  lone: boolean,
   balls: readonly DrawnBall[],
   labels: number,
   prompt: Prompt,
@@ -158,7 +163,7 @@ function drawRack(
       ...balls.filter((b) => !b.mine && Math.abs(b.x - x) < 110).map((b) => b.y - r),
     );
     const ty = Math.max(16, Math.min(y - 24, nearbyTop - 14));
-    if (L.alone) {
+    if (lone) {
       ctx.strokeStyle = PENCIL;
       ctx.lineWidth = 1.2;
       ctx.setLineDash([3, 3]);
@@ -176,7 +181,7 @@ function drawRack(
     ctx.stroke();
     ctx.font = '700 21px Caveat, cursive';
     ctx.textAlign = right ? 'left' : 'right';
-    const text = L.alone ? `you, alone (${short(mine)})` : `you (${short(mine)})`;
+    const text = lone ? `you, alone (${short(mine)})` : `you (${short(mine)})`;
     // A halo of paper so the writing stays legible over the balls.
     ctx.strokeStyle = '#f5f1e6';
     ctx.lineWidth = 5;
@@ -188,7 +193,7 @@ function drawRack(
   ctx.globalAlpha = 1;
 }
 
-export function CrowdPlot({ prompt, values, mine = null, animate = false, compact = false, caption }: Props) {
+export function CrowdPlot({ prompt, values, mine = null, animate = false, compact = false, caption, height: wanted, lone = false }: Props) {
   const reduce = useReducedMotion();
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -196,7 +201,7 @@ export function CrowdPlot({ prompt, values, mine = null, animate = false, compac
   const [width, setWidth] = useState(0);
   const [visible, setVisible] = useState(false);
   const [settled, setSettled] = useState(false);
-  const height = compact ? 40 : 240;
+  const height = compact ? 40 : (wanted ?? 240);
   const physical = animate && !reduce && !compact;
 
   useLayoutEffect(() => {
@@ -251,7 +256,7 @@ export function CrowdPlot({ prompt, values, mine = null, animate = false, compac
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const draw = (balls: DrawnBall[], labels: number) =>
-      drawRack(ctx, layout, balls, labels, prompt, values, mine, compact);
+      drawRack(ctx, layout, lone, balls, labels, prompt, values, mine, compact);
 
     if (!physical) {
       const still = restingPositions(layout).map((p) => ({ ...p, squash: 0 }));
@@ -413,7 +418,7 @@ export function CrowdPlot({ prompt, values, mine = null, animate = false, compac
       Engine.clear(engine);
       shakeRef.current = null;
     };
-  }, [layout, physical, visible, prompt, values, mine, compact]);
+  }, [layout, physical, visible, prompt, values, mine, compact, lone]);
 
   const mineShare = mine === null ? null : (values.find((v) => v.value === mine)?.share ?? 0);
   const label = [

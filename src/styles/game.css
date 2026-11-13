@@ -433,8 +433,7 @@
 
 /* ───── Where you landed ───── */
 .reveal__crowd {
-  margin-top: 18px;
-  min-height: 284px;
+  margin-top: 14px;
 }
 .reveal__crowd-title {
   font-family: var(--mono);
@@ -446,7 +445,6 @@
 .reveal__crowd-wait {
   display: flex;
   align-items: flex-end;
-  height: 240px;
   padding-bottom: 36px;
   border-bottom: 1.5px dashed var(--grid);
   font-family: var(--mono);
@@ -542,4 +540,48 @@
     margin-top: 2px;
     transform: rotate(-2deg);
   }
+}
+
+/* Once answered, the question has been read: shrink it so the mark and the rack fit on a phone. */
+.question:has(.reveal) .question__prompt {
+  font-size: 19px;
+  line-height: 26px;
+  min-height: 0;
+  letter-spacing: -0.02em;
+}
+@media (min-width: 720px) {
+  .question:has(.reveal) .question__prompt {
+    font-size: 24px;
+    line-height: 32px;
+  }
+}
+.question:has(.reveal) .progress {
+  margin-bottom: 14px;
+}
+.reveal {
+  margin-top: 10px;
+}
+.reveal__answer {
+  min-height: 48px;
+}
+.reveal__value {
+  font-size: 34px;
+  line-height: 48px;
+}
+.reveal__mark {
+  margin-top: 10px;
+  min-height: 56px;
+}
+.reveal__share {
+  margin-top: 4px;
+}
+.reveal__aside {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 24px;
+  font-weight: 700;
+  transform: rotate(-2deg);
+}
+.reveal__next {
+  margin-top: 16px;
 }

@@ -10,6 +10,7 @@ interface Loaded {
   prompt: Prompt;
   dist: Distribution;
   mine: number | null;
+  lone: boolean;
 }
 
 /** A right answer nobody gave, from the middle of the list: proof the empty paper exists. */
@@ -37,7 +38,7 @@ export function YesterdayCrowd({ backend, today }: { backend: Backend; today: st
         const row = results.rows[hashString(yesterday) % results.rows.length];
         if (!row) return;
         const dist = await backend.getDistribution(yesterday, row.position);
-        if (!cancelled && dist.values.length > 0) setData({ prompt: getPrompt(row.promptId), dist, mine: row.value });
+        if (!cancelled && dist.values.length > 0) setData({ prompt: getPrompt(row.promptId), dist, mine: row.value, lone: row.tier === 'lone' });
       } catch {
         /* nothing to show */
       }
@@ -58,7 +59,7 @@ export function YesterdayCrowd({ backend, today }: { backend: Backend; today: st
         Yesterday's crowd
       </p>
       <p className="clipping__prompt">{data.prompt.text}</p>
-      <CrowdPlot prompt={data.prompt} values={data.dist.values} mine={data.mine} animate />
+      <CrowdPlot prompt={data.prompt} values={data.dist.values} mine={data.mine} lone={data.lone} animate />
       <p className="clipping__note">
         <span className="mono">{formatShare(top.share)}</span> said <span className="mono">{top.value.toLocaleString('en-GB')}</span>.{' '}
         {empty !== null ? (

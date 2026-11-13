@@ -42,6 +42,9 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
     transition: { duration: reduce ? 0 : 0.25, delay: reduce ? 0 : delay },
   });
 
+  // Everything has to fit on a phone screen without scrolling: shorter rack on short screens.
+  const rackHeight = typeof window === 'undefined' ? 240 : window.innerHeight < 620 ? 150 : window.innerHeight < 760 ? 180 : 240;
+
   return (
     <div className="reveal">
       <div className="reveal__answer">
@@ -52,23 +55,6 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
             <span className="reveal__value">{data.value!.toLocaleString('en-GB')}</span>
             <RedTick />
           </>
-        )}
-      </div>
-
-      <div className="reveal__crowd">
-        <p className="reveal__crowd-title">{missed ? 'Where the crowd went' : 'Where you landed'}</p>
-        {data.crowd ? (
-          <CrowdPlot
-            prompt={prompt}
-            values={data.crowd.values}
-            mine={data.value}
-            animate
-            caption={`${basedOn(data.crowd.players, data.crowd.simulated)}.`}
-          />
-        ) : (
-          <div className="reveal__crowd-wait" aria-hidden={data.crowd === undefined ? undefined : true}>
-            {data.crowd === undefined ? 'Counting the class…' : "Can't reach the staffroom for the class answers."}
-          </div>
         )}
       </div>
 
@@ -95,24 +81,30 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
           {data.tier === 'lone'
             ? `Nobody else said ${data.value!.toLocaleString('en-GB')}`
             : `${formatShare(data.share!)} of answers were ${data.value!.toLocaleString('en-GB')}`}
+          {data.tier === 'lone' && <span className="hand reveal__aside"> well spotted!!</span>}
+          {data.tier === 'clever' && <span className="hand reveal__aside"> everyone thinks of that</span>}
+          {data.tier === 'outlier' && <span className="hand reveal__aside"> bold.</span>}
         </motion.p>
       )}
 
-      {data.tier === 'lone' && (
-        <motion.p className="hand reveal__scribble" style={{ rotate: -2 }} {...fade(2.9)}>
-          well spotted!!
-        </motion.p>
-      )}
-      {data.tier === 'clever' && (
-        <motion.p className="hand reveal__scribble" style={{ rotate: -1.5 }} {...fade(2.9)}>
-          everyone thinks of that
-        </motion.p>
-      )}
-      {data.tier === 'outlier' && (
-        <motion.p className="hand reveal__scribble" style={{ rotate: -1.5 }} {...fade(2.9)}>
-          bold.
-        </motion.p>
-      )}
+      <div className="reveal__crowd">
+        <p className="reveal__crowd-title">{missed ? 'Where the crowd went' : 'Where you landed'}</p>
+        {data.crowd ? (
+          <CrowdPlot
+            prompt={prompt}
+            values={data.crowd.values}
+            mine={data.value}
+            animate
+            height={rackHeight}
+            lone={data.tier === 'lone'}
+            caption={`${basedOn(data.crowd.players, data.crowd.simulated)}.`}
+          />
+        ) : (
+          <div className="reveal__crowd-wait" style={{ height: rackHeight }}>
+            {data.crowd === undefined ? 'Counting the class…' : "Can't reach the staffroom for the class answers."}
+          </div>
+        )}
+      </div>
 
       <div className="reveal__next">
         <button ref={nextRef} type="button" className="stamp stamp--small" onClick={onNext}>
