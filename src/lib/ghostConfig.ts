@@ -90,9 +90,9 @@ export const GHOST_CONFIG: GhostConfig = {
   abilities: {
     ultra: { share: 0.1, reach: 1.0, salienceExponent: 0.15, timeoutRate: 0.01, invalidTries: [0.95, 0.05, 0, 0] },
     pretty: { share: 0.2, reach: 0.6, salienceExponent: 0.6, timeoutRate: 0.03, invalidTries: [0.7, 0.3, 0, 0] },
-    average: { share: 0.4, reach: 0.25, salienceExponent: 1.0, timeoutRate: 0.08, invalidTries: [0.4, 0.6, 0, 0] },
-    weak: { share: 0.2, reach: 0.1, salienceExponent: 1.5, timeoutRate: 0.2, invalidTries: [0.15, 0.4, 0.3, 0.15] },
-    panicker: { share: 0.1, reach: 0.04, salienceExponent: 2.5, timeoutRate: 0.3, invalidTries: [0.1, 0.4, 0.3, 0.2] },
+    average: { share: 0.4, reach: 0.35, salienceExponent: 1.0, timeoutRate: 0.08, invalidTries: [0.4, 0.6, 0, 0] },
+    weak: { share: 0.2, reach: 0.15, salienceExponent: 1.1, timeoutRate: 0.2, invalidTries: [0.15, 0.4, 0.3, 0.15] },
+    panicker: { share: 0.1, reach: 0.06, salienceExponent: 1.6, timeoutRate: 0.3, invalidTries: [0.1, 0.4, 0.3, 0.2] },
   },
 
   styles: {
@@ -103,7 +103,7 @@ export const GHOST_CONFIG: GhostConfig = {
   },
 
   styleShape: {
-    safeDecay: 4,
+    safeDecay: 2,
     midCentre: 0.3,
     midWidth: 0.25,
     midFirstAnswer: 0.08,
@@ -111,8 +111,8 @@ export const GHOST_CONFIG: GhostConfig = {
   },
 
   salience: {
-    rank: { strength: 9, halfLife: 4 },
-    firstFew: { count: 5, boost: 2.2 },
+    rank: { strength: 5, halfLife: 8 },
+    firstFew: { count: 5, boost: 1.5 },
     small: { upTo12: 1.8, upTo20: 1.4, upTo100: 1.2 },
     perExtraDigit: 0.7,
     endsIn0: 1.7,

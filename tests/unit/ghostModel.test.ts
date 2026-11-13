@@ -85,8 +85,8 @@ describe('rule-based ghosts', () => {
       answerDistribution(p, a, 'safe', ctx).probs.filter((x) => x > 0).length;
     const n = validAnswers(p).length;
     expect(support('ultra')).toBe(n);
-    expect(support('average')).toBe(Math.ceil(0.25 * n));
-    expect(support('panicker')).toBe(Math.ceil(0.04 * n));
+    expect(support('average')).toBe(Math.ceil(GHOST_CONFIG.abilities.average.reach * n));
+    expect(support('panicker')).toBe(Math.ceil(GHOST_CONFIG.abilities.panicker.reach * n));
   });
 
   it('show-offs go for the clever list, safe players for the obvious', () => {

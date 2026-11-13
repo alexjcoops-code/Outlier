@@ -121,8 +121,8 @@ Every ghost has an **ability** and, independently, a **playing style**. The prop
 |---|---|---|---|
 | Ultra smart | 10% | almost every valid answer | ~1% |
 | Pretty smart | 20% | the most salient 60% | ~3% |
-| Average | 40% | the most salient 25% | ~8% |
-| Weak | 20% | the most salient 10% | ~20% |
+| Average | 40% | the most salient 35% | ~8% |
+| Weak | 20% | the most salient 15% | ~20% |
 | Panicker | 10% | the first thing that comes to mind | ~30% |
 
 | Style | Share | Picks |
