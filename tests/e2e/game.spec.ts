@@ -70,7 +70,7 @@ test('a full game: retries, a time-out, results, share text, resume and history'
       await expect(reveal).toBeVisible();
       // The mark must be on screen without scrolling, or players never see it.
       await expect(reveal.locator('.reveal__mark')).toBeInViewport({ ratio: 1 });
-      const points = Number((await reveal.locator('.reveal__points').innerText()).replace('+', ''));
+      const points = Number(await reveal.locator('.reveal__score').getAttribute('data-points'));
       expect([10, 15, 30, 60, 85, 100]).toContain(points);
       expectedTotal += points;
       await expect(page.locator('[aria-live]')).toContainText(`${points} points`);

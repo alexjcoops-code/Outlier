@@ -1,4 +1,6 @@
+import { useReducedMotion } from 'framer-motion';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { awardFor, burst, buzz, shakePage } from '../lib/celebrate.ts';
 import type { Backend, DayResults, DayRow, Distribution } from '../lib/backend/types.ts';
 import { teacherComment } from '../lib/comment.ts';
 import { linkHandler } from '../lib/router.ts';
@@ -7,6 +9,7 @@ import { shareText } from '../lib/share.ts';
 import { getPrompt } from '../prompts.ts';
 import { Countdown } from './Countdown.tsx';
 import { CrowdPlot } from './CrowdPlot.tsx';
+import { InkStamp } from './InkStamp.tsx';
 import { Circled, Scribble } from './Marks.tsx';
 import { basedOn } from './Reveal.tsx';
 
@@ -16,6 +19,8 @@ interface Props {
   navigate: (to: string) => void;
   /** Practice rounds: no share, no countdown, a button to go again. */
   onAgain?: () => void;
+  /** The paper was just finished (not reloaded): celebrate a good day. */
+  fresh?: boolean;
 }
 
 /** A ruled line from 0 to 700 with your score, today's average and the top-10% mark. */
@@ -207,10 +212,27 @@ function ResultRow({ row, results, backend }: { row: DayRow; results: DayResults
   );
 }
 
-export function ResultsView({ results, backend, navigate, onAgain }: Props) {
+export function ResultsView({ results, backend, navigate, onAgain, fresh = false }: Props) {
   const [copied, setCopied] = useState<'idle' | 'done' | 'failed'>('idle');
   const practice = backend.kind === 'practice';
   const text = shareText(results, window.location.host);
+  const reduce = useReducedMotion();
+  const award = awardFor(results.total);
+  const totalRef = useRef<HTMLDivElement>(null);
+
+  // A good day: the award stamp slams down and the confetti goes up.
+  useEffect(() => {
+    if (!fresh || !award || reduce) return;
+    const id = setTimeout(() => {
+      const rect = totalRef.current?.getBoundingClientRect();
+      if (rect) burst({ x: rect.left + rect.width * 0.35, y: rect.top + rect.height / 2, chads: award.chads, stars: award.stars, colour: '#ffe97a' });
+      shakePage(award.chads > 100 ? 0.8 : 0.4);
+      buzz(award.chads > 100 ? [30, 50, 30, 50, 120] : [25]);
+    }, 1050);
+    return () => clearTimeout(id);
+    // Once per finished paper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const copy = async () => {
     try {
@@ -227,7 +249,16 @@ export function ResultsView({ results, backend, navigate, onAgain }: Props) {
       <h1 id="results-title">{practice ? 'Practice paper, marked' : "Today's worksheet, marked"}</h1>
       {!practice && !results.final && <span className="provisional">provisional</span>}
 
-      <div className="results__total">
+      <div className="results__total" ref={totalRef}>
+        {award && (
+          <InkStamp
+            text={award.text}
+            ink={award.ink}
+            delay={fresh ? 0.95 : 0}
+            scale={award.chads > 100 ? 1.1 : 0.95}
+            className="results__award"
+          />
+        )}
         <Circled className="results__circle" delay={0.2}>
           <span className="results__score">{results.total}</span>
           <span className="results__outof"> / {MAX_TOTAL}</span>

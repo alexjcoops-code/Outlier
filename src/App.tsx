@@ -2,6 +2,7 @@ import { MotionConfig } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Header } from './components/Header.tsx';
 import { HowToPlay } from './components/HowToPlay.tsx';
+import { ConfettiLayer } from './components/Confetti.tsx';
 import { SvgDefs } from './components/Marks.tsx';
 import { createBackend } from './lib/backend/index.ts';
 import { createPracticeBackend } from './lib/backend/local.ts';
@@ -116,6 +117,7 @@ export function App() {
         </div>
       </div>
       {help && <HowToPlay onClose={closeHelp} />}
+      <ConfettiLayer />
     </MotionConfig>
   );
 }

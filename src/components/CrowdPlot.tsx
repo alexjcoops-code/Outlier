@@ -37,6 +37,8 @@ interface Props {
   height?: number;
   /** The player's answer scored Lone Wolf: nobody else gave it. Only then is it labelled "alone". */
   lone?: boolean;
+  /** How hard the player's ball knocks the crowd when it lands, 0 (not at all) to about 1.5. */
+  shockwave?: number;
 }
 
 interface DrawnBall {
@@ -193,7 +195,7 @@ function drawRack(
   ctx.globalAlpha = 1;
 }
 
-export function CrowdPlot({ prompt, values, mine = null, animate = false, compact = false, caption, height: wanted, lone = false }: Props) {
+export function CrowdPlot({ prompt, values, mine = null, animate = false, compact = false, caption, height: wanted, lone = false, shockwave = 0 }: Props) {
   const reduce = useReducedMotion();
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -332,6 +334,7 @@ export function CrowdPlot({ prompt, values, mine = null, animate = false, compac
     let quiet = 0;
     let labels = 0;
     let done = false;
+    let landed = false;
     const STEP = 1000 / 60;
 
     const frame = (now: number) => {
@@ -354,11 +357,26 @@ export function CrowdPlot({ prompt, values, mine = null, animate = false, compac
           // A sudden stop is an impact: squash the ball for a moment.
           if (b.lastVy > 1.4 && vy < b.lastVy * 0.45) {
             b.squash = Math.min(b.mine ? 0.4 : 0.3, b.lastVy * 0.05);
-            if (b.mine && b.lastVy > 3 && canvas.animate) {
-              canvas.animate(
-                [{ transform: 'translateY(0)' }, { transform: 'translateY(2.5px)' }, { transform: 'translateY(0)' }],
-                { duration: 170, easing: 'ease-out' },
+            if (b.mine && b.lastVy > 3 && !landed) {
+              landed = true;
+              const jolt = 2.5 + 6 * shockwave;
+              canvas.animate?.(
+                [{ transform: 'translateY(0)' }, { transform: `translateY(${jolt}px)` }, { transform: 'translateY(0)' }],
+                { duration: 170 + 120 * shockwave, easing: 'ease-out' },
               );
+              // A rare answer hits hard: the crowd jumps away from it.
+              if (shockwave > 0) {
+                const mx = b.body.position.x;
+                for (const o of live) {
+                  if (o === b) continue;
+                  const dx = o.body.position.x - mx;
+                  const near = Math.exp(-Math.abs(dx) / (L.width * 0.4));
+                  Body.setVelocity(o.body, {
+                    x: Math.sign(dx || 1) * 1.4 * near * shockwave,
+                    y: -(2.5 + 6 * near + Math.random() * 2) * shockwave,
+                  });
+                }
+              }
             }
           }
           b.squash *= 0.8;
@@ -418,7 +436,7 @@ export function CrowdPlot({ prompt, values, mine = null, animate = false, compac
       Engine.clear(engine);
       shakeRef.current = null;
     };
-  }, [layout, physical, visible, prompt, values, mine, compact, lone]);
+  }, [layout, physical, visible, prompt, values, mine, compact, lone, shockwave]);
 
   const mineShare = mine === null ? null : (values.find((v) => v.value === mine)?.share ?? 0);
   const label = [

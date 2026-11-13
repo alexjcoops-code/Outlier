@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { Backend, DayResults } from '../lib/backend/types.ts';
 import { PROMPTS_PER_DAY } from '../lib/daily.ts';
 import { linkHandler } from '../lib/router.ts';
@@ -27,6 +27,9 @@ export function PlayPage({ backend, date, navigate, onFinished, onAgain }: Props
   const game = useGame(backend, date, onFinished);
   const { phase, results } = game;
   const practice = backend.kind === 'practice';
+  // Did the player finish the paper just now (rather than reload the results)?
+  const playedNow = useRef(false);
+  if (phase.name === 'reveal') playedNow.current = true;
 
   // Each new question (and the results) starts at the top of the page.
   const screen = phase.name === 'prompt' ? `q${phase.position}` : phase.name === 'reveal' ? 'reveal' : phase.name;
@@ -57,7 +60,9 @@ export function PlayPage({ backend, date, navigate, onFinished, onAgain }: Props
   }
 
   if (phase.name === 'results') {
-    return <ResultsView results={results} backend={backend} navigate={navigate} onAgain={onAgain} />;
+    return (
+      <ResultsView results={results} backend={backend} navigate={navigate} onAgain={onAgain} fresh={playedNow.current} />
+    );
   }
 
   if (phase.name === 'start') {

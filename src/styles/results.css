@@ -487,3 +487,22 @@
 .result__panel .crowd {
   margin-bottom: 12px;
 }
+
+.results__total {
+  position: relative;
+}
+.ink-stamp.results__award {
+  position: absolute;
+  right: 0;
+  top: -18px;
+  z-index: 2;
+}
+@media (max-width: 400px) {
+  .ink-stamp.results__award {
+    position: relative;
+    top: auto;
+    right: auto;
+    order: 3;
+    margin: 6px 0 14px 6px;
+  }
+}

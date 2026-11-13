@@ -585,3 +585,86 @@
 .reveal__next {
   margin-top: 16px;
 }
+
+/* ───── Celebrations ───── */
+.confetti {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 60;
+  pointer-events: none;
+}
+.reveal__crowd {
+  position: relative;
+}
+.ink-stamp.reveal__stamp {
+  position: absolute;
+  top: 26px;
+  right: 6px;
+  z-index: 3;
+}
+.ink-stamp {
+  position: relative;
+  display: inline-block;
+  pointer-events: none;
+  transform-origin: center;
+}
+.ink-stamp__border {
+  display: inline-block;
+  padding: 0.28em 0.7em 0.32em;
+  border: 0.16em double currentColor;
+  border-radius: 0.3em;
+  outline: 0.08em solid currentColor;
+  outline-offset: 0.12em;
+  background: rgba(245, 241, 230, 0.55);
+  filter: url(#rough-edge);
+}
+.ink-stamp__text {
+  font-family: var(--mono);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  /* worn, uneven ink */
+  mask-image: radial-gradient(circle at 30% 40%, #000 55%, rgba(0, 0, 0, 0.7) 75%, #000 100%);
+}
+.ink-stamp__spatter {
+  position: absolute;
+  inset: -6px -10px;
+  width: calc(100% + 20px);
+  height: calc(100% + 12px);
+  overflow: visible;
+}
+.reveal__score {
+  position: relative;
+  display: inline-block;
+}
+.reveal__ticks {
+  position: absolute;
+  left: calc(100% - 14px);
+  top: -14px;
+  display: inline-flex;
+  transform: rotate(-8deg);
+}
+.reveal__ticks svg + svg {
+  margin-left: -13px;
+}
+/* Outlier and Lone Wolf: the highlighter keeps glowing a moment after it lands. */
+.reveal__tier--loud {
+  animation:
+    swipe 420ms cubic-bezier(0.3, 0.7, 0.2, 1) both,
+    loud 900ms ease-out 1 both;
+}
+@keyframes loud {
+  0%,
+  45% {
+    transform: rotate(-0.6deg) scale(1);
+  }
+  60% {
+    transform: rotate(-1.4deg) scale(1.12);
+  }
+  100% {
+    transform: rotate(-0.6deg) scale(1);
+  }
+}

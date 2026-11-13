@@ -37,8 +37,8 @@ function useDraw(duration: number, delay = 0) {
 }
 
 /** A red-pen tick that draws itself. */
-export function RedTick({ size = 40 }: { size?: number }) {
-  const draw = useDraw(0.4);
+export function RedTick({ size = 40, delay = 0 }: { size?: number; delay?: number }) {
+  const draw = useDraw(0.4, delay);
   return (
     <svg className="red-tick" width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
       <motion.path
@@ -93,7 +93,7 @@ export function Circled({ children, delay = 0, className = '' }: { children: Rea
 }
 
 /** A merit-star stamp for Lone Wolf answers. */
-export function StarStamp() {
+export function StarStamp({ delay = 0.55 }: { delay?: number }) {
   const reduce = useReducedMotion();
   return (
     <motion.svg
@@ -104,7 +104,7 @@ export function StarStamp() {
       aria-hidden="true"
       initial={reduce ? false : { scale: 1.7, opacity: 0, rotate: -30 }}
       animate={{ scale: 1, opacity: 1, rotate: -11 }}
-      transition={{ duration: reduce ? 0 : 0.22, delay: reduce ? 0 : 0.55, ease: 'easeIn' }}
+      transition={{ duration: reduce ? 0 : 0.22, delay: reduce ? 0 : delay, ease: 'easeIn' }}
     >
       <g filter="url(#rough-edge)">
         <circle cx="30" cy="30" r="25" fill="none" stroke="var(--tier-lone)" strokeWidth="3" />

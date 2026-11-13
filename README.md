@@ -150,6 +150,20 @@ The script treats real answers as a mixture of the 20 (ability, style) distribut
 
 The game's signature view, simulated with real physics (matter-js on a canvas). After each answer the whole crowd pours into a rack of tubes standing on the number line: each answer is a ball (1% of answers, or 2–5% when one answer is so popular its pile would overflow), and the balls bounce, rattle and settle into piles where people agreed. Your red ball drops in last and lands with a squash: on a tall pile you were Obvious, alone in an empty tube you were an outlier. Tap the rack or "Shake it" to throw the balls up and watch them resettle. With reduced motion the balls are drawn at rest. The same plot appears as a thin strip on every question in the results, and the start screen shows a clipping of yesterday's crowd with a right answer nobody gave. Crowd data comes from `get_distribution`, which refuses until you have finished that prompt.
 
+### Celebrations
+
+The rarer the answer, the bigger the fuss (`src/lib/celebrate.ts`):
+
+| Tier | What happens |
+|---|---|
+| Obvious, Predictably Clever | A plain mark. |
+| Fair | The points count up into the red circle; one tick. |
+| Rare | Two ticks (a teacher's "very good"), a small burst of hole-punch confetti, a light buzz. |
+| Outlier | The red ball knocks the crowd into the air, a red BOLD stamp slams onto the page, the page jolts, confetti with gold stars. |
+| Lone Wolf | The crowd scatters off the red ball, a big purple NOBODY ELSE stamp, the page shakes, a shower of confetti and stars, a longer buzz. |
+
+A good day earns an award stamp on the results page, with confetti when the paper has just been finished: Merit (300+), Distinction (450+), Headteacher's award (600+). Vibration only happens on phones that support it. With reduced motion there is no confetti, shaking, buzzing or flying balls; the stamps and marks simply appear.
+
 ### Not cheatable from the client
 
 - Tables have row level security with no client policies, apart from reading which prompts make up today and past days. Everything else goes through `SECURITY DEFINER` RPCs.

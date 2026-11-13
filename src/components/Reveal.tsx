@@ -1,9 +1,12 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
+import { burst, buzz, FANFARE, shakePage } from '../lib/celebrate.ts';
 import type { Prompt } from '../prompts.ts';
 import { formatShare, TIERS } from '../lib/scoring.ts';
 import type { RevealData } from '../lib/useGame.ts';
+import { CountUp } from './CountUp.tsx';
 import { CrowdPlot } from './CrowdPlot.tsx';
+import { InkStamp } from './InkStamp.tsx';
 import { Circled, RedDash, RedTick, StarStamp } from './Marks.tsx';
 
 interface Props {
@@ -15,6 +18,17 @@ interface Props {
 
 /** Auto-advance delay: long enough to watch the crowd land and read the mark. */
 const ADVANCE_MS = 6200;
+/** When the mark lands, just after the red ball. */
+const MARK_AT = 2.3;
+
+const TIER_INK: Record<string, string> = {
+  obvious: '#cfcfcf',
+  clever: '#b9d7f0',
+  fair: '#ffe97a',
+  rare: '#ffb570',
+  outlier: '#ff7a8a',
+  lone: '#9b7bff',
+};
 
 export function basedOn(players: number, simulated: boolean): string {
   const who = `${players.toLocaleString('en-GB')} ${players === 1 ? 'player' : 'players'}`;
@@ -27,6 +41,28 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
   const nextRef = useRef<HTMLButtonElement>(null);
   const tier = TIERS[data.tier];
   const missed = data.tier === 'none';
+  const fan = FANFARE[data.tier];
+  const markRef = useRef<HTMLSpanElement>(null);
+
+  // The fuss, timed with the mark: confetti from the tier, a page shake, a buzz.
+  useEffect(() => {
+    if (reduce || (!fan.chads && !fan.shake && !fan.vibrate)) return;
+    const id = setTimeout(() => {
+      const rect = markRef.current?.getBoundingClientRect();
+      if (rect && fan.chads + fan.stars > 0) {
+        burst({
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+          chads: fan.chads,
+          stars: fan.stars,
+          colour: TIER_INK[data.tier] ?? '#ffe97a',
+        });
+      }
+      shakePage(fan.shake);
+      buzz(fan.vibrate);
+    }, MARK_AT * 1000 + 80);
+    return () => clearTimeout(id);
+  }, [reduce, fan, data.tier]);
 
   useEffect(() => {
     nextRef.current?.focus({ preventScroll: true });
@@ -64,20 +100,32 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
             out of time
           </span>
         ) : (
-          <span className={`reveal__tier hl hl--swipe tier-${data.tier}`} style={{ animationDelay: reduce ? '0ms' : '2.3s' }}>
+          <span
+            ref={markRef}
+            className={`reveal__tier hl hl--swipe tier-${data.tier} ${fan.shake > 0 ? 'reveal__tier--loud' : ''}`}
+            style={{ animationDelay: reduce ? '0ms' : `${MARK_AT}s` }}
+          >
             {tier.name}
           </span>
         )}
-        <motion.span {...fade(2.5)}>
-          <Circled className="reveal__points" delay={reduce ? 0 : 2.6}>
-            {missed ? '0' : `+${data.points}`}
+        <motion.span className="reveal__score" data-points={data.points} {...fade(MARK_AT + 0.2)}>
+          <Circled className="reveal__points" delay={reduce ? 0 : MARK_AT + 0.3}>
+            {missed ? '0' : fan.countUp ? <CountUp to={data.points} prefix="+" delay={MARK_AT + 0.2} /> : `+${data.points}`}
           </Circled>
+          {/* the teacher's ticks, scribbled on the corner of the circle */}
+          {fan.ticks > 0 && (
+            <span className="reveal__ticks" aria-hidden="true">
+              {Array.from({ length: fan.ticks }, (_, i) => (
+                <RedTick key={i} size={24} delay={reduce ? 0 : MARK_AT + 0.75 + i * 0.18} />
+              ))}
+            </span>
+          )}
         </motion.span>
-        {data.tier === 'lone' && <StarStamp />}
+        {data.tier === 'lone' && <StarStamp delay={MARK_AT + 0.9} />}
       </div>
 
       {!missed && (
-        <motion.p className="pencil reveal__share" {...fade(2.7)}>
+        <motion.p className="pencil reveal__share" {...fade(MARK_AT + 0.4)}>
           {data.tier === 'lone'
             ? `Nobody else said ${data.value!.toLocaleString('en-GB')}`
             : `${formatShare(data.share!)} of answers were ${data.value!.toLocaleString('en-GB')}`}
@@ -88,6 +136,15 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
       )}
 
       <div className="reveal__crowd">
+        {fan.stamp && (
+          <InkStamp
+            text={fan.stamp.text}
+            ink={fan.stamp.ink}
+            delay={MARK_AT + 0.15}
+            scale={data.tier === 'lone' ? 1.3 : 1}
+            className="reveal__stamp"
+          />
+        )}
         <p className="reveal__crowd-title">{missed ? 'Where the crowd went' : 'Where you landed'}</p>
         {data.crowd ? (
           <CrowdPlot
@@ -97,6 +154,7 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
             animate
             height={rackHeight}
             lone={data.tier === 'lone'}
+            shockwave={fan.shockwave}
             caption={`${basedOn(data.crowd.players, data.crowd.simulated)}.`}
           />
         ) : (
