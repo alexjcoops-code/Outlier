@@ -20,7 +20,7 @@ npm install
 npm run dev
 ```
 
-With no Supabase settings the app runs against a built-in offline backend: the same prompts and scoring rules, with 100 rule-based "ghost" answers per prompt standing in for the crowd, and progress kept in `localStorage`. This is also what the end-to-end test uses.
+With no Supabase settings the app runs against a built-in offline backend: the same prompts and scoring rules, with 1,100 rule-based "ghost" players per prompt (what the live game uses when the Claude API is down) standing in for the crowd, and progress kept in `localStorage`. This is also what the end-to-end test uses.
 
 ```bash
 npm test          # unit tests (Vitest), including the SQL run in an in-process Postgres
