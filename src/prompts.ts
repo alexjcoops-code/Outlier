@@ -1,0 +1,238 @@
+// The prompt bank. Every prompt has many right answers; the game is picking a rare one.
+//
+// Why there are far more than 60: seven prompts a day with no repeat inside any
+// 14-day window means 13 previous days × 7 = 91 prompts are off limits on any
+// given day, so the bank needs at least 98 to work at all.
+//
+// This file is shared with the Edge Functions (see scripts/sync-shared.mjs), so it
+// must stay dependency-free and use explicit .ts import paths.
+
+import {
+  allDigitsSame,
+  countFactors,
+  digitProduct,
+  digitSum,
+  digitsOf,
+  digitsStrictlyAscending,
+  isAbundant,
+  isCube,
+  isDifferenceOfTwoSquares,
+  isFactorial,
+  isFibonacci,
+  isHarshad,
+  isLeapYear,
+  isPalindrome,
+  isPowerOf,
+  isPrime,
+  isProductOfDistinctPrimes,
+  isSquare,
+  isSumOfTwoCubes,
+  isSumOfTwoSquares,
+  isTriangular,
+  reverseDigits,
+} from './lib/maths.ts';
+
+export type Difficulty = 1 | 2 | 3;
+
+export interface Prompt {
+  id: string;
+  /** Shown to the player. Proper notation only: n², ×, ÷, ≤ — never ^ or *. */
+  text: string;
+  difficulty: Difficulty;
+  /** Smallest and largest number worth checking; anything outside is invalid. */
+  min: number;
+  max: number;
+  /** The mathematical property. Use isValidAnswer() to include the range check. */
+  validator: (n: number) => boolean;
+  /** "Predictably Clever": valid answers that feel clever but everyone thinks of. */
+  cleverList: number[];
+}
+
+/** Numbers people reach for when they want to look clever, whatever the question. */
+export const FAMOUS_NUMBERS: readonly number[] = [
+  7, 13, 37, 42, 69, 100, 101, 111, 420, 666, 777, 999, 1000, 1001, 1024, 1089, 1729, 2024, 2025,
+  2026, 6174, 8128,
+];
+
+export function isValidAnswer(prompt: Prompt, n: number): boolean {
+  return Number.isSafeInteger(n) && n >= prompt.min && n <= prompt.max && prompt.validator(n);
+}
+
+function p(
+  id: string,
+  difficulty: Difficulty,
+  text: string,
+  min: number,
+  max: number,
+  validator: (n: number) => boolean,
+  extraClever: number[] = [],
+): Prompt {
+  const prompt: Prompt = { id, text, difficulty, min, max, validator, cleverList: [] };
+  const seen = new Set<number>();
+  for (const n of [...FAMOUS_NUMBERS, ...extraClever]) {
+    if (!seen.has(n) && isValidAnswer(prompt, n)) seen.add(n);
+  }
+  prompt.cleverList = [...seen].sort((a, b) => a - b);
+  return prompt;
+}
+
+const multipleOf = (k: number) => (n: number) => n % k === 0;
+const factorOf = (k: number) => (n: number) => k % n === 0;
+const digitsOdd = (n: number) => digitsOf(n).every((d) => d % 2 === 1);
+const consecutiveRun = (n: number) => {
+  const d = digitsOf(n);
+  const up = d.every((x, i) => i === 0 || x === d[i - 1]! + 1);
+  const down = d.every((x, i) => i === 0 || x === d[i - 1]! - 1);
+  return up || down;
+};
+
+export const PROMPTS: readonly Prompt[] = [
+  // ───────────────────────────── Difficulty 1 ─────────────────────────────
+  p('prime-u1000', 1, 'Name a prime under 1,000', 2, 999, isPrime, [2, 3, 5, 11, 17, 97, 997]),
+  p('prime-u100', 1, 'Name a prime under 100', 2, 99, isPrime, [2, 3, 5, 11, 17, 97]),
+  p('square-u1000', 1, 'Name a square number under 1,000', 1, 999, isSquare, [144, 169, 961]),
+  p('square-3digit', 1, 'Name a three-digit square number', 100, 999, isSquare, [144, 169, 961]),
+  p('cube-u10000', 1, 'Name a cube number under 10,000', 1, 9999, isCube, [27, 343, 1000]),
+  p('pow2-u10000', 1, 'Name a power of 2 under 10,000 (2, 4, 8, …)', 2, 9999, (n) => isPowerOf(n, 2), [64, 256, 512]),
+  p('mult7-u200', 1, 'Name a multiple of 7 under 200', 7, 199, multipleOf(7), [49, 77]),
+  p('mult7-500-700', 1, 'Name a multiple of 7 between 500 and 700', 500, 700, multipleOf(7), [700]),
+  p('mult8-u300', 1, 'Name a multiple of 8 under 300', 8, 299, multipleOf(8), [64, 88, 256]),
+  p('mult9-u500', 1, 'Name a multiple of 9 under 500', 9, 499, multipleOf(9), [81, 99]),
+  p('mult11-u1000', 1, 'Name a multiple of 11 under 1,000', 11, 999, multipleOf(11), [121, 333, 555]),
+  p('mult12-u500', 1, 'Name a multiple of 12 under 500', 12, 499, multipleOf(12), [144]),
+  p('mult13-u500', 1, 'Name a multiple of 13 under 500', 13, 499, multipleOf(13), [169]),
+  p('mult14-u300', 1, 'Name a multiple of 14 under 300', 14, 299, multipleOf(14), [196]),
+  p('mult15-u1000', 1, 'Name a multiple of 15 under 1,000', 15, 999, multipleOf(15), [225, 555]),
+  p('mult16-u500', 1, 'Name a multiple of 16 under 500', 16, 499, multipleOf(16), [64, 256]),
+  p('mult19-u1000', 1, 'Name a multiple of 19 under 1,000', 19, 999, multipleOf(19), [361]),
+  p('mult25-u1000', 1, 'Name a multiple of 25 under 1,000', 25, 999, multipleOf(25), [625]),
+  p('mult50-u2000', 1, 'Name a multiple of 50 under 2,000', 50, 1999, multipleOf(50), [500]),
+  p('mult99-u2000', 1, 'Name a multiple of 99 under 2,000', 99, 1999, multipleOf(99), [99, 198]),
+  p('mult101-u5000', 1, 'Name a multiple of 101 under 5,000', 101, 4999, multipleOf(101), [1111, 2020]),
+  p('mult3-50-150', 1, 'Name a multiple of 3 between 50 and 150', 50, 150, multipleOf(3), [99, 123]),
+  p('mult4-100-200', 1, 'Name a multiple of 4 between 100 and 200', 100, 200, multipleOf(4), [144, 200]),
+  p('mult3and4-u100', 1, 'Name a number under 100 that is a multiple of both 3 and 4', 12, 99, multipleOf(12)),
+  p('odd-mult5-u500', 1, 'Name an odd multiple of 5 under 500', 5, 499, (n) => n % 10 === 5, [25, 125, 365]),
+  p('factor-60', 1, 'Name a factor of 60', 1, 60, factorOf(60), [1, 60]),
+  p('factor-72', 1, 'Name a factor of 72', 1, 72, factorOf(72), [1, 72]),
+  p('factor-96', 1, 'Name a factor of 96', 1, 96, factorOf(96), [1, 96]),
+  p('factor-120', 1, 'Name a factor of 120', 1, 120, factorOf(120), [1, 120]),
+  p('factor-144', 1, 'Name a factor of 144', 1, 144, factorOf(144), [1, 12, 144]),
+  p('factor-360', 1, 'Name a factor of 360', 1, 360, factorOf(360), [1, 360, 180]),
+  p('factor-1000', 1, 'Name a factor of 1,000', 1, 1000, factorOf(1000), [1, 125]),
+  p('palindrome-3digit', 1, 'Name a three-digit palindrome', 100, 999, isPalindrome, [121, 131, 747, 909]),
+  p('palindrome-4digit', 1, 'Name a four-digit palindrome', 1000, 9999, isPalindrome, [1221, 2002, 1991, 9999]),
+  p('repdigit-2', 1, 'Name a two-digit number with both digits the same', 11, 99, allDigitsSame),
+  p('repdigit-3', 1, 'Name a three-digit number with all its digits the same', 111, 999, allDigitsSame),
+  p('digitsum-5', 1, 'Name a number under 1,000 whose digits add up to 5', 1, 999, (n) => digitSum(n) === 5, [5, 500]),
+  p('digitsum-7-u100', 1, 'Name a number under 100 whose digits add up to 7', 1, 99, (n) => digitSum(n) === 7),
+  p('digitsum-9', 1, 'Name a number under 1,000 whose digits add up to 9', 1, 999, (n) => digitSum(n) === 9, [9, 900, 333]),
+  p('digitsum-10', 1, 'Name a number under 1,000 whose digits add up to 10', 1, 999, (n) => digitSum(n) === 10, [19, 55, 91]),
+  p('ascending-3digit', 1, 'Name a three-digit number whose digits are in ascending order (like 258)', 100, 999, digitsStrictlyAscending, [123, 789]),
+  p('consecutive-3digit', 1, 'Name a three-digit number made of three consecutive digits in order, up or down (like 345 or 543)', 100, 999, consecutiveRun, [123, 321, 789, 987]),
+  p('digits-differ-1', 1, 'Name a two-digit number whose digits differ by exactly 1', 10, 99, (n) => Math.abs(Math.floor(n / 10) - (n % 10)) === 1, [12, 89]),
+  p('pow3-u100000', 1, 'Name a power of 3 under 100,000 (3, 9, 27, …)', 3, 99999, (n) => isPowerOf(n, 3), [81, 243, 729]),
+  p('even-square-u2000', 1, 'Name an even square number under 2,000', 4, 1999, (n) => n % 2 === 0 && isSquare(n), [144, 256]),
+
+  // ───────────────────────────── Difficulty 2 ─────────────────────────────
+  p('prime-100-200', 2, 'Name a prime between 100 and 200', 100, 200, isPrime, [103, 199]),
+  p('prime-ends-7', 2, 'Name a prime under 200 that ends in 7', 7, 199, (n) => n % 10 === 7 && isPrime(n), [17, 197]),
+  p('prime-ends-9', 2, 'Name a prime under 200 that ends in 9', 9, 199, (n) => n % 10 === 9 && isPrime(n), [19, 199]),
+  p('prime-1mod4', 2, 'Name a prime p under 100 with p ≡ 1 (mod 4)', 2, 99, (n) => n % 4 === 1 && isPrime(n), [5, 17]),
+  p('twin-prime-u200', 2, 'Name a twin prime under 200 (a prime exactly 2 away from another prime)', 3, 199, (n) => isPrime(n) && (isPrime(n - 2) || isPrime(n + 2)), [3, 5, 11, 17]),
+  p('prime-odd-digits', 2, 'Name a prime under 1,000 made only of odd digits', 3, 999, (n) => isPrime(n) && digitsOdd(n), [3, 5, 11, 113, 137]),
+  p('semiprime-u100', 2, 'Name a number under 100 that is the product of two different primes', 6, 99, (n) => isProductOfDistinctPrimes(n, 2), [6, 10, 15, 21]),
+  p('four-factors-u100', 2, 'Name a number under 100 with exactly 4 factors', 6, 99, (n) => countFactors(n) === 4, [6, 8, 27]),
+  p('odd-composite-u100', 2, 'Name an odd number under 100, bigger than 1, that is not prime', 9, 99, (n) => n % 2 === 1 && !isPrime(n), [9, 15, 51, 91]),
+  p('triangular-u500', 2, 'Name a triangular number under 500 (1, 3, 6, 10, …)', 1, 499, isTriangular, [28, 55, 153]),
+  p('even-triangular-u1000', 2, 'Name an even triangular number under 1,000', 6, 999, (n) => n % 2 === 0 && isTriangular(n), [6, 28, 496]),
+  p('fibonacci-u10000', 2, 'Name a Fibonacci number under 10,000', 1, 9999, isFibonacci, [1, 89, 144, 233]),
+  p('factorial-u1000000', 2, 'Name a factorial under 1,000,000 (n! = 1 × 2 × … × n)', 1, 999999, isFactorial, [120, 720, 5040]),
+  p('pow4-u100000', 2, 'Name a power of 4 under 100,000 (4, 16, 64, …)', 4, 99999, (n) => isPowerOf(n, 4), [64, 256]),
+  p('pow5-u1000000', 2, 'Name a power of 5 under 1,000,000 (5, 25, 125, …)', 5, 999999, (n) => isPowerOf(n, 5), [625, 3125]),
+  p('mersenne-u1000', 2, 'Name a number under 1,000 that is one less than a power of 2', 1, 999, (n) => isPowerOf(n + 1, 2), [1, 31, 127, 255]),
+  p('square-1000-5000', 2, 'Name a square number between 1,000 and 5,000', 1000, 5000, isSquare, [1600, 2500, 4096]),
+  p('square-ends-9', 2, 'Name a square number under 5,000 that ends in 9', 9, 4999, (n) => n % 10 === 9 && isSquare(n), [9, 49, 169]),
+  p('square-ends-25', 2, 'Name a square number under 10,000 that ends in 25', 25, 9999, (n) => n % 100 === 25 && isSquare(n), [25, 225, 625]),
+  p('odd-cube-u10000', 2, 'Name an odd cube number under 10,000', 1, 9999, (n) => n % 2 === 1 && isCube(n), [1, 27, 125, 343, 729]),
+  p('cube-plus-1', 2, 'Name a number under 1,000 that is one more than a cube number', 2, 999, (n) => isCube(n - 1), [2, 9, 28]),
+  p('square-minus-1', 2, 'Name a number under 500 that is one less than a square number', 3, 499, (n) => isSquare(n + 1), [3, 8, 99, 143]),
+  p('double-is-square', 2, 'Name a number under 1,000 whose double is a square number', 2, 999, (n) => isSquare(2 * n), [2, 8, 50]),
+  p('n2-ends-6', 2, 'Name a number n under 200 where n² ends in 6', 4, 199, (n) => (n * n) % 10 === 6, [4, 6, 14, 16]),
+  p('sum-two-squares-u100', 2, 'Name a number under 100 that is the sum of two square numbers (0 not allowed)', 2, 99, isSumOfTwoSquares, [2, 5, 25, 50]),
+  p('sum-3-consecutive', 2, 'Name a number under 100 that is the sum of three consecutive whole numbers, starting from at least 1', 6, 99, multipleOf(3), [6, 9, 15]),
+  p('leap-year', 2, 'Name a leap year between 1900 and 2100', 1900, 2100, isLeapYear, [2000, 2020, 2028, 1996]),
+  p('mult6and8-u500', 2, 'Name a multiple of both 6 and 8 under 500', 24, 499, multipleOf(24), [24, 48, 240]),
+  p('mult9and12-u500', 2, 'Name a multiple of both 9 and 12 under 500', 36, 499, multipleOf(36), [36, 72, 360]),
+  p('mult4and14-u500', 2, 'Name a multiple of both 4 and 14 under 500', 28, 499, multipleOf(28), [28, 56]),
+  p('mult7and11-u1000', 2, 'Name a multiple of both 7 and 11 under 1,000', 77, 999, multipleOf(77), [77, 154]),
+  p('mult17-u500', 2, 'Name a multiple of 17 under 500', 17, 499, multipleOf(17), [17, 34, 289]),
+  p('mult37-3digit', 2, 'Name a three-digit multiple of 37', 100, 999, multipleOf(37), [222, 333, 444, 555, 888]),
+  p('mult7-ends-7', 2, 'Name a multiple of 7 under 500 that ends in 7', 7, 499, (n) => n % 7 === 0 && n % 10 === 7, [147]),
+  p('mod5-1', 2, 'Name a number n ≤ 200 with n ≡ 1 (mod 5)', 1, 200, (n) => n % 5 === 1, [1, 6, 11, 51]),
+  p('mod7-2', 2, 'Name a number n under 100 with n ≡ 2 (mod 7)', 2, 99, (n) => n % 7 === 2, [2, 9]),
+  p('mod9-5', 2, 'Name a number n under 300 with n ≡ 5 (mod 9)', 5, 299, (n) => n % 9 === 5, [5, 14]),
+  p('factor-210', 2, 'Name a factor of 210', 1, 210, factorOf(210), [1, 210, 30]),
+  p('factor-5040', 2, 'Name a factor of 5,040', 1, 5040, factorOf(5040), [1, 5040, 720]),
+  p('harshad-2digit', 2, 'Name a two-digit Harshad number (one that is divisible by the sum of its digits)', 10, 99, isHarshad, [10, 12, 18]),
+  p('divisible-by-digits', 2, 'Name a two-digit number, with no zeros, that is divisible by both of its digits', 11, 99, (n) => digitsOf(n).every((d) => d !== 0 && n % d === 0), [11, 12, 36]),
+  p('digitsum-20', 2, 'Name a number under 1,000 whose digits add up to 20', 1, 999, (n) => digitSum(n) === 20, [299, 992, 578]),
+  p('digitsum-is-square', 2, 'Name a two-digit number whose digits add up to a square number', 10, 99, (n) => isSquare(digitSum(n)), [10, 13, 18, 90]),
+  p('digit-product-12', 2, 'Name a number under 1,000 whose digits multiply to make 12', 1, 999, (n) => digitProduct(n) === 12, [26, 34, 43, 62]),
+  p('palindrome-2000s', 2, 'Name a palindrome between 1,000 and 3,000', 1000, 3000, isPalindrome, [1001, 1111, 2002, 1991]),
+  p('odd-factor-count', 2, 'Name a number under 500 with an odd number of factors', 1, 499, (n) => countFactors(n) % 2 === 1, [1, 4, 9]),
+
+  // ───────────────────────────── Difficulty 3 ─────────────────────────────
+  p('three-factors', 3, 'Name a number under 3,000 with exactly 3 factors', 4, 2999, (n) => countFactors(n) === 3, [4, 9, 25, 49]),
+  p('six-factors-u200', 3, 'Name a number under 200 with exactly 6 factors', 12, 199, (n) => countFactors(n) === 6, [12, 18, 20]),
+  p('eight-factors-u200', 3, 'Name a number under 200 with exactly 8 factors', 24, 199, (n) => countFactors(n) === 8, [24, 30]),
+  p('twelve-factors-u200', 3, 'Name a number under 200 with exactly 12 factors', 60, 199, (n) => countFactors(n) === 12, [60, 72]),
+  p('square-and-cube', 3, 'Name a number under 1,000,000 that is both a square and a cube', 1, 999999, (n) => isSquare(n) && isCube(n), [1, 64, 729]),
+  p('pow2-big', 3, 'Name a power of 2 between 1,000 and 1,000,000', 1000, 1000000, (n) => isPowerOf(n, 2), [2048, 4096, 65536]),
+  p('abundant-u100', 3, 'Name an abundant number under 100 (its factors, apart from itself, add up to more than it)', 12, 99, isAbundant, [12, 18, 24]),
+  p('harshad-100-200', 3, 'Name a Harshad number between 100 and 200 (divisible by the sum of its digits)', 100, 200, isHarshad, [100, 200, 110]),
+  p('diff-squares-even', 3, 'Name an even number under 200 that can be written as a² − b² (whole numbers, a > b ≥ 0)', 4, 199, (n) => n % 2 === 0 && isDifferenceOfTwoSquares(n), [4, 8, 16]),
+  p('not-diff-squares', 3, 'Name a number under 200 that cannot be written as a² − b² for whole numbers a and b', 2, 199, (n) => !isDifferenceOfTwoSquares(n), [2, 6, 10]),
+  p('sum-two-cubes', 3, 'Name a number under 2,000 that is the sum of two cube numbers (0 not allowed)', 2, 1999, isSumOfTwoCubes, [2, 9, 16, 28]),
+  p('sum-consecutive-squares', 3, 'Name a number under 1,000 that is the sum of two consecutive square numbers (like 4 + 9)', 5, 999, (n) => n % 2 === 1 && isSquare(2 * n - 1), [5, 13, 25]),
+  p('sphenic-u300', 3, 'Name a number under 300 that is the product of three different primes', 30, 299, (n) => isProductOfDistinctPrimes(n, 3), [30, 42, 105]),
+  p('rough-composite', 3, 'Name a number under 300, bigger than 1, that is not prime and not divisible by 2, 3 or 5', 49, 299, (n) => !isPrime(n) && n % 2 !== 0 && n % 3 !== 0 && n % 5 !== 0, [49, 77, 91, 121]),
+  p('palindromic-prime', 3, 'Name a palindromic prime between 10 and 1,000', 11, 999, (n) => isPalindrome(n) && isPrime(n), [11, 131, 151]),
+  p('prime-square-plus-1', 3, 'Name a prime under 2,000 that is one more than a square number', 2, 1999, (n) => isPrime(n) && isSquare(n - 1), [2, 5, 17]),
+  p('prime-1000-1100', 3, 'Name a prime between 1,000 and 1,100', 1000, 1100, isPrime, [1009, 1013, 1097]),
+  p('prime-year-2000s', 3, 'Name a year from 2001 to 2100 that is a prime number', 2001, 2100, isPrime, [2003, 2011, 2017, 2027]),
+  p('cousin-prime', 3, 'Name a prime p under 200 where p + 4 is also prime', 3, 199, (n) => isPrime(n) && isPrime(n + 4), [3, 7, 13]),
+  p('sophie-germain', 3, 'Name a prime p under 200 where 2p + 1 is also prime', 2, 199, (n) => isPrime(n) && isPrime(2 * n + 1), [2, 3, 5, 11, 23]),
+  p('emirp', 3, 'Name a prime under 200 whose digits reversed make a different prime', 13, 199, (n) => isPrime(n) && reverseDigits(n) !== n && isPrime(reverseDigits(n)), [13, 17, 31]),
+  p('ascending-prime', 3, 'Name a prime between 10 and 1,000 whose digits are in ascending order', 13, 999, (n) => isPrime(n) && digitsStrictlyAscending(n), [13, 17, 23]),
+  p('odd-sum-two-primes', 3, 'Name an odd number under 100 that is the sum of two primes', 5, 99, (n) => n % 2 === 1 && isPrime(n - 2), [5, 7, 9]),
+  p('square-mult-7', 3, 'Name a square number under 10,000 that is a multiple of 7', 49, 9999, (n) => n % 7 === 0 && isSquare(n), [49, 196, 4900]),
+  p('palindrome-mult-7', 3, 'Name a palindrome under 1,000 that is a multiple of 7', 7, 999, (n) => n % 7 === 0 && isPalindrome(n), [7, 77, 343]),
+  p('palindrome-mult-9', 3, 'Name a three-digit palindrome that is a multiple of 9', 100, 999, (n) => n % 9 === 0 && isPalindrome(n), [333, 171]),
+  p('palindrome-mult-11', 3, 'Name a three-digit palindrome that is a multiple of 11', 100, 999, (n) => n % 11 === 0 && isPalindrome(n), [121, 242]),
+  p('factor-1001', 3, 'Name a factor of 1,001', 1, 1001, factorOf(1001), [1]),
+  p('factor-2024', 3, 'Name a factor of 2,024', 1, 2024, factorOf(2024), [1, 2, 4, 8]),
+];
+
+const BY_ID = new Map(PROMPTS.map((x) => [x.id, x]));
+
+export function getPrompt(id: string): Prompt {
+  const found = BY_ID.get(id);
+  if (!found) throw new Error(`Unknown prompt: ${id}`);
+  return found;
+}
+
+const validCache = new Map<string, number[]>();
+
+/** Every valid answer for a prompt, ascending. Cached: ranges are bounded so this is cheap. */
+export function validAnswers(prompt: Prompt): number[] {
+  let list = validCache.get(prompt.id);
+  if (!list) {
+    list = [];
+    for (let n = prompt.min; n <= prompt.max; n++) {
+      if (prompt.validator(n)) list.push(n);
+    }
+    validCache.set(prompt.id, list);
+  }
+  return list;
+}
