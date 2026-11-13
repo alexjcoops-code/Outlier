@@ -194,7 +194,8 @@ function ResultRow({ row, results, backend }: { row: DayRow; results: DayResults
                 prompt={prompt}
                 values={dist.values}
                 mine={row.value}
-                caption={`Each dot is 1% of answers. ${basedOn(dist.players, dist.simulated)}.`}
+                animate
+                caption={`${basedOn(dist.players, dist.simulated)}.`}
               />
               <BarChart dist={dist} row={row} />
             </>

@@ -25,7 +25,7 @@ test('a full game: retries, a time-out, results, share text, resume and history'
   // Yesterday's crowd teaser: piles of dots and a right answer nobody gave.
   const clipping = page.getByRole('complementary', { name: "Yesterday's crowd" });
   await expect(clipping).toContainText(/said/);
-  expect(await clipping.locator('.crowd__dot').count()).toBeGreaterThan(50);
+  expect(Number(await clipping.locator('figure.crowd').getAttribute('data-balls'))).toBeGreaterThanOrEqual(20);
   await page.getByRole('button', { name: 'Start' }).click();
 
   const input = page.getByLabel('Your answer, a whole number');
@@ -74,8 +74,9 @@ test('a full game: retries, a time-out, results, share text, resume and history'
       await expect(page.locator('[aria-live]')).toContainText(`${points} points`);
       await expect(reveal).toContainText('simulated answers');
       // Where you landed: the crowd's dots, and the player's own red one.
-      await expect(reveal.locator('.crowd__mine')).toHaveCount(1);
-      expect(await reveal.locator('.crowd__dot').count()).toBeGreaterThan(20);
+      const rack = reveal.locator('figure.crowd');
+      await expect(rack).toHaveAttribute('data-mine', 'yes');
+      expect(Number(await rack.getAttribute('data-balls'))).toBeGreaterThanOrEqual(20);
       await expect(reveal.getByRole('img', { name: new RegExp(`Your answer ${answer.toLocaleString('en-GB')}`) })).toBeVisible();
     }
     await page.getByRole('button', { name: q === 7 ? 'See marks' : 'Next question' }).click();
@@ -89,7 +90,7 @@ test('a full game: retries, a time-out, results, share text, resume and history'
   await expect(page.locator('.result').nth(3)).toContainText('out of time');
   // Every question shows a strip of its crowd; the timed-out one has no red dot.
   await expect(page.locator('.result__strip')).toHaveCount(7);
-  await expect(page.locator('.result__strip .crowd__mine')).toHaveCount(6);
+  await expect(page.locator('.result__strip figure[data-mine="yes"]')).toHaveCount(6);
   await expect(page.locator('.countdown')).toContainText(/Next worksheet in \d\d:\d\d:\d\d/);
 
   const share = await page.getByLabel('Share text').innerText();
@@ -98,7 +99,7 @@ test('a full game: retries, a time-out, results, share text, resume and history'
 
   // Top answers for a question
   await page.locator('.result__head').first().click();
-  await expect(page.locator('.result__panel .crowd__caption')).toContainText('Each dot is 1% of answers');
+  await expect(page.locator('.result__panel .crowd__caption')).toContainText(/Each ball is \d+(\.\d)?% of answers/);
   await expect(page.locator('.bars tbody tr').first()).toBeVisible();
   expect(await page.locator('.bars tbody tr').count()).toBeGreaterThanOrEqual(2);
 

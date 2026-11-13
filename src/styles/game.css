@@ -434,7 +434,7 @@
 /* ───── Where you landed ───── */
 .reveal__crowd {
   margin-top: 18px;
-  min-height: 210px;
+  min-height: 284px;
 }
 .reveal__crowd-title {
   font-family: var(--mono);
@@ -446,7 +446,7 @@
 .reveal__crowd-wait {
   display: flex;
   align-items: flex-end;
-  height: 168px;
+  height: 240px;
   padding-bottom: 36px;
   border-bottom: 1.5px dashed var(--grid);
   font-family: var(--mono);
@@ -456,36 +456,21 @@
 .crowd {
   margin: 0;
 }
-.crowd__svg {
+.crowd__rack {
+  position: relative;
+}
+.crowd--live .crowd__rack {
+  cursor: grab;
+  touch-action: manipulation;
+}
+.crowd__canvas {
   display: block;
   width: 100%;
-  overflow: visible;
 }
-.crowd__dot {
-  fill: var(--pencil);
-  fill-opacity: 0.82;
-}
-.crowd__mine {
-  fill: var(--redpen);
-  stroke: var(--paper);
-  stroke-width: 1.2;
-}
-.crowd__axis {
-  fill: var(--ink);
+.crowd__shake {
   font-family: var(--mono);
   font-size: 11.5px;
-}
-.crowd__peak {
-  fill: var(--pencil);
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 600;
-}
-.crowd__you {
-  fill: var(--redpen);
-  font-family: var(--hand);
-  font-weight: 700;
-  font-size: 21px;
+  color: var(--ink);
 }
 .crowd__caption {
   margin-top: 2px;
@@ -493,9 +478,6 @@
   font-size: 11.5px;
   line-height: 1.5;
   color: var(--pencil);
-}
-.crowd--compact .crowd__dot {
-  fill-opacity: 0.7;
 }
 
 /* ───── Yesterday's crowd: a clipping taped to the page ───── */

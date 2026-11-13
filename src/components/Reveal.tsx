@@ -14,7 +14,7 @@ interface Props {
 }
 
 /** Auto-advance delay: long enough to watch the crowd land and read the mark. */
-const ADVANCE_MS = 4800;
+const ADVANCE_MS = 6200;
 
 export function basedOn(players: number, simulated: boolean): string {
   const who = `${players.toLocaleString('en-GB')} ${players === 1 ? 'player' : 'players'}`;
@@ -63,7 +63,7 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
             values={data.crowd.values}
             mine={data.value}
             animate
-            caption={`Each dot is 1% of answers. ${basedOn(data.crowd.players, data.crowd.simulated)}.`}
+            caption={`${basedOn(data.crowd.players, data.crowd.simulated)}.`}
           />
         ) : (
           <div className="reveal__crowd-wait" aria-hidden={data.crowd === undefined ? undefined : true}>
@@ -78,12 +78,12 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
             out of time
           </span>
         ) : (
-          <span className={`reveal__tier hl hl--swipe tier-${data.tier}`} style={{ animationDelay: reduce ? '0ms' : '1.3s' }}>
+          <span className={`reveal__tier hl hl--swipe tier-${data.tier}`} style={{ animationDelay: reduce ? '0ms' : '2.3s' }}>
             {tier.name}
           </span>
         )}
-        <motion.span {...fade(1.5)}>
-          <Circled className="reveal__points" delay={reduce ? 0 : 1.6}>
+        <motion.span {...fade(2.5)}>
+          <Circled className="reveal__points" delay={reduce ? 0 : 2.6}>
             {missed ? '0' : `+${data.points}`}
           </Circled>
         </motion.span>
@@ -91,7 +91,7 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
       </div>
 
       {!missed && (
-        <motion.p className="pencil reveal__share" {...fade(1.6)}>
+        <motion.p className="pencil reveal__share" {...fade(2.7)}>
           {data.tier === 'lone'
             ? `Nobody else said ${data.value!.toLocaleString('en-GB')}`
             : `${formatShare(data.share!)} of answers were ${data.value!.toLocaleString('en-GB')}`}
@@ -99,17 +99,17 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
       )}
 
       {data.tier === 'lone' && (
-        <motion.p className="hand reveal__scribble" style={{ rotate: -2 }} {...fade(1.8)}>
+        <motion.p className="hand reveal__scribble" style={{ rotate: -2 }} {...fade(2.9)}>
           well spotted!!
         </motion.p>
       )}
       {data.tier === 'clever' && (
-        <motion.p className="hand reveal__scribble" style={{ rotate: -1.5 }} {...fade(1.8)}>
+        <motion.p className="hand reveal__scribble" style={{ rotate: -1.5 }} {...fade(2.9)}>
           everyone thinks of that
         </motion.p>
       )}
       {data.tier === 'outlier' && (
-        <motion.p className="hand reveal__scribble" style={{ rotate: -1.5 }} {...fade(1.8)}>
+        <motion.p className="hand reveal__scribble" style={{ rotate: -1.5 }} {...fade(2.9)}>
           bold.
         </motion.p>
       )}

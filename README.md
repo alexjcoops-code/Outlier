@@ -148,7 +148,7 @@ The script treats real answers as a mixture of the 20 (ability, style) distribut
 
 ### Where did you land?
 
-The game's signature view. After each answer, the whole crowd falls onto a number line as pencil dots, one dot per 1% of answers, piling up where people agree. Your answer drops in last in red ink: on a tall pile you were Obvious, alone in the empty paper you were an outlier. Very tall piles are cut off with a break mark and labelled with their share. The same plot appears as a thin strip on every question in the results, and the start screen shows a clipping of yesterday's crowd with a right answer nobody gave. Crowd data comes from `get_distribution`, which refuses until you have finished that prompt.
+The game's signature view, simulated with real physics (matter-js on a canvas). After each answer the whole crowd pours into a rack of tubes standing on the number line: each answer is a ball (1% of answers, or 2–5% when one answer is so popular its pile would overflow), and the balls bounce, rattle and settle into piles where people agreed. Your red ball drops in last and lands with a squash: on a tall pile you were Obvious, alone in an empty tube you were an outlier. Tap the rack or "Shake it" to throw the balls up and watch them resettle. With reduced motion the balls are drawn at rest. The same plot appears as a thin strip on every question in the results, and the start screen shows a clipping of yesterday's crowd with a right answer nobody gave. Crowd data comes from `get_distribution`, which refuses until you have finished that prompt.
 
 ### Not cheatable from the client
 

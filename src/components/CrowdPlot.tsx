@@ -1,152 +1,419 @@
-// "Where did you land?": the whole crowd as pencil dots on a number line.
+// "Where did you land?": the crowd as real balls in a rack of tubes.
 //
-// One dot is 1% of the (weighted) answers. Dots pile up where people agree; the
-// player's own answer drops in last, in red ink. Obvious answers sit on a tall
-// pile; outliers sit alone in the empty paper to the side.
+// Every answer is a ball. They pour into tubes standing on the number line,
+// bounce, rattle and settle into piles where people agreed. The player's red
+// ball drops in last and lands with a thud. Tap the rack to shake it.
+//
+// Physics by matter-js on a canvas. With reduced motion, or in the small
+// strips on the results page, the balls are simply drawn at rest.
 
-import { motion, useReducedMotion } from 'framer-motion';
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { Prompt } from '../prompts.ts';
+import { useReducedMotion } from 'framer-motion';
+import Matter from 'matter-js';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  formatPerBall,
+  rackLayout,
+  restingPositions,
+  type CrowdValue,
+  type RackLayout,
+} from '../lib/crowdLayout.ts';
 import { formatShare } from '../lib/scoring.ts';
+import type { Prompt } from '../prompts.ts';
 
-export interface CrowdValue {
-  value: number;
-  share: number;
-}
+export type { CrowdValue };
 
 interface Props {
   prompt: Prompt;
   values: readonly CrowdValue[];
   /** The player's answer, if any. */
   mine?: number | null;
-  /** Let the dots fall in (respects reduced motion). */
+  /** Pour the balls in with physics when the rack comes into view (respects reduced motion). */
   animate?: boolean;
-  /** A thin strip for lists: no labels. */
+  /** A thin strip for lists: no labels, no physics. */
   compact?: boolean;
-  /** Shown under the plot. */
+  /** Shown under the rack, after the "each ball is…" line. */
   caption?: string;
 }
 
-/** Split `total` dots between values in proportion to their shares (largest remainder). */
-export function allocateDots(values: readonly CrowdValue[], total: number): Map<number, number> {
-  const sum = values.reduce((s, v) => s + v.share, 0) || 1;
-  const exact = values.map((v) => (v.share / sum) * total);
-  const dots = exact.map(Math.floor);
-  let left = total - dots.reduce((s, x) => s + x, 0);
-  const order = values.map((_, i) => i).sort((a, b) => exact[b]! - dots[b]! - (exact[a]! - dots[a]!) || a - b);
-  for (const i of order) {
-    if (left-- <= 0) break;
-    dots[i]!++;
-  }
-  const out = new Map<number, number>();
-  values.forEach((v, i) => {
-    if (dots[i]! > 0) out.set(v.value, dots[i]!);
-  });
-  return out;
+interface DrawnBall {
+  x: number;
+  y: number;
+  mine: boolean;
+  /** Squash on impact: 0 is round. */
+  squash: number;
 }
 
-/** Position along the line, 0–1. Wide ranges use a log scale so small numbers don't all collapse together. */
-export function scalePosition(prompt: Prompt, value: number): number {
-  const lo = Math.max(1, prompt.min);
-  const hi = Math.max(lo + 1, prompt.max);
-  const v = Math.min(hi, Math.max(lo, value));
-  if (hi / lo > 50) return Math.log(v / lo) / Math.log(hi / lo);
-  return (v - lo) / (hi - lo);
-}
-
-/** A tiny deterministic wobble so the dots look placed by hand. */
-function wobble(a: number, b: number): number {
-  const x = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
-  return x - Math.floor(x) - 0.5;
-}
-
+const INK = '#1f2a44';
+const PENCIL = '#6b6b6b';
+const RED = '#c62828';
 const short = (n: number) => n.toLocaleString('en-GB');
+
+function drawRack(
+  ctx: CanvasRenderingContext2D,
+  L: RackLayout,
+  balls: readonly DrawnBall[],
+  labels: number,
+  prompt: Prompt,
+  values: readonly CrowdValue[],
+  mine: number | null,
+  compact: boolean,
+) {
+  ctx.clearRect(0, 0, L.width, L.height);
+  const r = L.radius;
+
+  // The rack: faint pencil tubes standing on the number line.
+  if (!compact) {
+    ctx.strokeStyle = 'rgba(107,107,107,0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const wallTop = L.floor - (L.floor - 30) * 0.55;
+    for (let k = 0; k <= L.tubes; k++) {
+      const x = Math.round(L.left + k * L.tubeWidth) + 0.5;
+      ctx.moveTo(x, L.floor);
+      ctx.lineTo(x, wallTop + ((k * 7) % 5));
+    }
+    ctx.stroke();
+  }
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = compact ? 1 : 1.6;
+  ctx.beginPath();
+  ctx.moveTo(L.left - 3, L.floor + 0.5);
+  ctx.lineTo(L.width - L.left + 3, L.floor + 0.5);
+  if (!compact) {
+    ctx.moveTo(L.left, L.floor - 5);
+    ctx.lineTo(L.left, L.floor + 6);
+    ctx.moveTo(L.width - L.left, L.floor - 5);
+    ctx.lineTo(L.width - L.left, L.floor + 6);
+  }
+  ctx.stroke();
+  if (!compact) {
+    ctx.fillStyle = INK;
+    ctx.font = '11.5px "IBM Plex Mono", monospace';
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'left';
+    ctx.fillText(short(prompt.min), L.left, L.floor + 20);
+    ctx.textAlign = 'right';
+    ctx.fillText(short(prompt.max), L.width - L.left, L.floor + 20);
+  }
+
+  // The balls: graphite pellets, and one red one.
+  for (const b of balls) {
+    const sy = 1 - b.squash;
+    const sx = 1 + b.squash * 0.7;
+    ctx.save();
+    ctx.translate(b.x, b.y + r);
+    ctx.scale(sx, sy);
+    ctx.translate(0, -r);
+    if (compact) {
+      ctx.fillStyle = b.mine ? RED : 'rgba(107,107,107,0.75)';
+    } else {
+      const g = ctx.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.1, 0, 0, r);
+      if (b.mine) {
+        g.addColorStop(0, '#ff9a8a');
+        g.addColorStop(0.55, RED);
+        g.addColorStop(1, '#7f1717');
+      } else {
+        g.addColorStop(0, '#b4b4b4');
+        g.addColorStop(0.6, '#666666');
+        g.addColorStop(1, '#3f3f3f');
+      }
+      ctx.fillStyle = g;
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, b.mine && !compact ? r + 0.6 : r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  if (compact || labels <= 0) return;
+  ctx.globalAlpha = Math.min(1, labels);
+
+  const mineBall = balls.find((b) => b.mine);
+  // The crowd's favourite, labelled above its pile, unless it would collide with the player's label.
+  const best = values[0];
+  if (best && L.peakTube !== null && !(L.mineTube !== null && Math.abs(L.mineTube - L.peakTube) * L.tubeWidth < 70)) {
+    const x = L.left + (L.peakTube + 0.5) * L.tubeWidth;
+    const topY = Math.min(
+      L.floor,
+      ...balls.filter((b) => Math.abs(b.x - x) < L.tubeWidth / 2 && !b.mine).map((b) => b.y - r),
+    );
+    ctx.fillStyle = PENCIL;
+    ctx.font = '600 12px "IBM Plex Mono", monospace';
+    const align = x < 60 ? 'left' : x > L.width - 60 ? 'right' : 'center';
+    ctx.textAlign = align;
+    ctx.fillText(
+      `${short(best.value)} · ${formatShare(best.share)}`,
+      align === 'left' ? x - 4 : align === 'right' ? x + 4 : x,
+      Math.max(13, topY - 7),
+    );
+  }
+
+  if (mineBall && mine !== null) {
+    const { x, y } = mineBall;
+    const right = x < L.width - 120;
+    const dir = right ? 1 : -1;
+    // Lift the label clear of nearby piles.
+    const nearbyTop = Math.min(
+      y,
+      ...balls.filter((b) => !b.mine && Math.abs(b.x - x) < 110).map((b) => b.y - r),
+    );
+    const ty = Math.max(16, Math.min(y - 24, nearbyTop - 14));
+    if (L.alone) {
+      ctx.strokeStyle = PENCIL;
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.ellipse(x, y, r + 9, r + 7, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.strokeStyle = RED;
+    ctx.lineWidth = 1.6;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x + dir * (r + 4), y - r - 2);
+    ctx.bezierCurveTo(x + dir * 10, y - 16, x + dir * 18, ty + 6, x + dir * 28, ty - 2);
+    ctx.stroke();
+    ctx.font = '700 21px Caveat, cursive';
+    ctx.textAlign = right ? 'left' : 'right';
+    const text = L.alone ? `you, alone (${short(mine)})` : `you (${short(mine)})`;
+    // A halo of paper so the writing stays legible over the balls.
+    ctx.strokeStyle = '#f5f1e6';
+    ctx.lineWidth = 5;
+    ctx.lineJoin = 'round';
+    ctx.strokeText(text, x + dir * 31, ty + 4);
+    ctx.fillStyle = RED;
+    ctx.fillText(text, x + dir * 31, ty + 4);
+  }
+  ctx.globalAlpha = 1;
+}
 
 export function CrowdPlot({ prompt, values, mine = null, animate = false, compact = false, caption }: Props) {
   const reduce = useReducedMotion();
-  const ref = useRef<SVGSVGElement>(null);
-  const [width, setWidth] = useState(compact ? 300 : 340);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const shakeRef = useRef<(() => void) | null>(null);
+  const [width, setWidth] = useState(0);
+  const [visible, setVisible] = useState(false);
+  const [settled, setSettled] = useState(false);
+  const height = compact ? 40 : 240;
+  const physical = animate && !reduce && !compact;
+
   useLayoutEffect(() => {
-    const measure = () => {
-      const w = ref.current?.getBoundingClientRect().width;
-      if (w) setWidth(Math.round(w));
-    };
+    const el = wrapRef.current;
+    if (!el) return;
+    const measure = () => setWidth(Math.round(el.getBoundingClientRect().width));
     measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
-  const height = compact ? 40 : 168;
-  const pad = compact ? 3 : 10;
-  const base = compact ? height - 6 : height - 30;
-  const top = compact ? 4 : 30;
-  const r = compact ? 1.5 : 2.5;
-  const pitch = compact ? 3.6 : 6.4;
-  const totalDots = compact ? 60 : 100;
-  const fall = animate && !reduce;
+  // Pour only once the rack is on screen, so nobody misses it.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || !physical) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisible(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.35 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [physical]);
 
-  const layout = useMemo(() => {
-    const plotW = Math.max(60, width - pad * 2);
-    const bins = Math.max(8, Math.floor(plotW / pitch));
-    const binOf = (v: number) => Math.min(bins - 1, Math.floor(scalePosition(prompt, v) * bins));
-    const dots = allocateDots(values, totalDots);
+  const layout = useMemo(
+    () =>
+      width > 0
+        ? rackLayout(
+            prompt,
+            values,
+            mine,
+            width,
+            height,
+            compact ? { pad: 3, floorGap: 5, top: 3, pitch: 4.4 } : { pad: 10, floorGap: 30, top: 34, pitch: 9 },
+          )
+        : null,
+    [prompt, values, mine, width, height, compact],
+  );
 
-    const stacks = new Map<number, { count: number; values: Map<number, number> }>();
-    for (const [value, n] of dots) {
-      const b = binOf(value);
-      const s = stacks.get(b) ?? { count: 0, values: new Map() };
-      s.count += n;
-      s.values.set(value, n);
-      stacks.set(b, s);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !layout) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(layout.width * dpr);
+    canvas.height = Math.round(layout.height * dpr);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const draw = (balls: DrawnBall[], labels: number) =>
+      drawRack(ctx, layout, balls, labels, prompt, values, mine, compact);
+
+    if (!physical) {
+      const still = restingPositions(layout).map((p) => ({ ...p, squash: 0 }));
+      draw(still, 1);
+      // Redraw once the fonts have loaded, for the labels.
+      void document.fonts?.ready.then(() => draw(still, 1));
+      setSettled(true);
+      shakeRef.current = null;
+      return;
     }
-    const mineBin = mine === null ? null : binOf(mine);
-    const mineHasDot = mine !== null && (dots.get(mine) ?? 0) > 0;
-    // Dots keep an even spacing so small piles stay readable. Piles taller than
-    // the page are cut off with a break mark (their share is labelled instead).
-    const step = compact ? 3 : pitch * 0.82;
-    const maxRows = Math.max(3, Math.floor((base - top) / step) - (mine === null ? 0 : 1));
-    const xOf = (b: number) => pad + (b + 0.5) * (plotW / bins);
+    setSettled(false);
+    if (!visible) {
+      draw([], 0);
+      return;
+    }
 
-    const grey: { x: number; y: number; order: number }[] = [];
-    const breaks: { x: number; y: number }[] = [];
-    let mineDot: { x: number; y: number } | null = null;
-    const drawnHeight = new Map<number, number>();
-    for (const [b, s] of stacks) {
-      let n = s.count;
-      // The player's own dot is the top one of their pile.
-      if (b === mineBin && mineHasDot) n -= 1;
-      if (n > maxRows) {
-        n = maxRows;
-        breaks.push({ x: xOf(b), y: base - r - (maxRows - 0.2) * step });
+    // ── The physics ──
+    const { Engine, Bodies, Body, Composite } = Matter;
+    const L = layout;
+    const r = L.radius;
+    // In the simulation the balls are a touch smaller than drawn, so they never
+    // jam against the tube walls; the walls are thick enough not to tunnel through.
+    const physR = Math.max(1, Math.min(r - 0.3, (L.tubeWidth - 2.2) / 2 - 0.25));
+    const engine = Engine.create({ gravity: { x: 0, y: 1, scale: 0.0011 } });
+    engine.positionIterations = 16;
+    engine.velocityIterations = 12;
+    const statics: Matter.Body[] = [
+      Bodies.rectangle(L.width / 2, L.floor + 25, L.width * 2, 50, { isStatic: true, friction: 0.3, restitution: 0.2 }),
+      // Thick outer walls, beyond the first and last tube.
+      Bodies.rectangle(L.left - 25, L.floor - 300, 50, 600, { isStatic: true }),
+      Bodies.rectangle(L.width - L.left + 25, L.floor - 300, 50, 600, { isStatic: true }),
+    ];
+    for (let k = 1; k < L.tubes; k++) {
+      const x = L.left + k * L.tubeWidth;
+      statics.push(Bodies.rectangle(x, L.floor - 300, 2.2, 600, { isStatic: true, friction: 0, restitution: 0.3 }));
+    }
+    Composite.add(engine.world, statics);
+
+    interface Live {
+      body: Matter.Body;
+      mine: boolean;
+      squash: number;
+      lastVy: number;
+    }
+    const live: Live[] = [];
+    const queue = L.balls
+      .filter((b) => !b.mine)
+      .map((b) => ({ b, key: Math.random() }))
+      .sort((a, b) => a.key - b.key)
+      .map(({ b }, i, all) => ({ b, at: (i / Math.max(1, all.length)) * 1300 }));
+    const mineBall = L.balls.find((b) => b.mine);
+    if (mineBall) queue.push({ b: mineBall, at: 1300 + 450 });
+
+    const spawn = (tube: number, isMine: boolean) => {
+      const x = L.left + (tube + 0.5) * L.tubeWidth + (Math.random() - 0.5) * 0.5;
+      const body = Bodies.circle(x, isMine ? -70 : -r - Math.random() * 30, physR, {
+        restitution: isMine ? 0.5 : 0.32,
+        friction: 0.02,
+        frictionAir: 0.006,
+        density: isMine ? 0.003 : 0.001,
+        slop: 0.01,
+      });
+      Body.setVelocity(body, { x: (Math.random() - 0.5) * 0.8, y: isMine ? 6 : 2 + Math.random() * 2 });
+      Composite.add(engine.world, body);
+      live.push({ body, mine: isMine, squash: 0, lastVy: 0 });
+    };
+
+    let raf = 0;
+    let running = false;
+    let started = performance.now();
+    let last = started;
+    let next = 0;
+    let quiet = 0;
+    let labels = 0;
+    let done = false;
+    const STEP = 1000 / 60;
+
+    const frame = (now: number) => {
+      const elapsed = now - started;
+      while (next < queue.length && queue[next]!.at <= elapsed) {
+        spawn(queue[next]!.b.tube, queue[next]!.b.mine);
+        next++;
       }
-      drawnHeight.set(b, n);
-      for (let i = 0; i < n; i++) {
-        grey.push({
-          x: xOf(b) + wobble(b, i) * (compact ? 0.4 : 1.1),
-          y: base - r - i * step + wobble(i, b) * 0.6,
-          order: i * 3 + wobble(b, 7) * 6,
+      let steps = Math.min(4, Math.max(1, Math.round((now - last) / STEP)));
+      last = now;
+      while (steps-- > 0) {
+        for (const b of live) b.lastVy = b.body.velocity.y;
+        Engine.update(engine, STEP);
+        for (const b of live) {
+          // Keep sideways rattling gentle so balls stay in their tubes.
+          if (Math.abs(b.body.velocity.x) > 1.5) {
+            Body.setVelocity(b.body, { x: Math.sign(b.body.velocity.x) * 1.5, y: b.body.velocity.y });
+          }
+          const vy = b.body.velocity.y;
+          // A sudden stop is an impact: squash the ball for a moment.
+          if (b.lastVy > 1.4 && vy < b.lastVy * 0.45) {
+            b.squash = Math.min(b.mine ? 0.4 : 0.3, b.lastVy * 0.05);
+            if (b.mine && b.lastVy > 3 && canvas.animate) {
+              canvas.animate(
+                [{ transform: 'translateY(0)' }, { transform: 'translateY(2.5px)' }, { transform: 'translateY(0)' }],
+                { duration: 170, easing: 'ease-out' },
+              );
+            }
+          }
+          b.squash *= 0.8;
+        }
+      }
+
+      const allIn = next >= queue.length;
+      const maxSpeed = live.reduce((m, b) => Math.max(m, b.body.speed), 0);
+      quiet = allIn && maxSpeed < 0.3 ? quiet + 1 : 0;
+      const lastAt = queue.length ? queue[queue.length - 1]!.at : 0;
+      if (!done && (quiet > 15 || (allIn && elapsed > lastAt + 1600))) {
+        done = true;
+        setSettled(true);
+      }
+      if (done) labels = Math.min(1, labels + 0.07);
+
+      draw(
+        live.map((b) => ({ x: b.body.position.x, y: b.body.position.y, mine: b.mine, squash: b.squash })),
+        labels,
+      );
+
+      if (done && labels >= 1 && (maxSpeed < 0.05 || elapsed > lastAt + 6000)) {
+        running = false;
+        return;
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    const run = () => {
+      if (running) return;
+      running = true;
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    };
+
+    shakeRef.current = () => {
+      for (const b of live) {
+        Body.setVelocity(b.body, {
+          x: (Math.random() - 0.5) * 2.4,
+          y: -(2.5 + Math.random() * 5) * (b.mine ? 1.25 : 1),
         });
       }
-    }
-    if (mineBin !== null) {
-      const below = drawnHeight.get(mineBin) ?? 0;
-      mineDot = { x: xOf(mineBin), y: base - r - below * step - (below > 0 ? 1.5 : 0) };
-    }
-    grey.sort((a, b) => a.order - b.order);
+      started = performance.now() - (queue.length ? queue[queue.length - 1]!.at : 0) - 1;
+      next = queue.length;
+      done = false;
+      quiet = 0;
+      labels = 0;
+      setSettled(false);
+      run();
+    };
 
-    // The crowd's favourite: label the biggest pile with its most common answer.
-    let peak: { x: number; y: number; value: number; share: number } | null = null;
-    const best = values[0];
-    if (best) {
-      const b = binOf(best.value);
-      if (stacks.has(b)) {
-        const h = drawnHeight.get(b) ?? 0;
-        peak = { x: xOf(b), y: base - r - h * step - 8, value: best.value, share: best.share };
-      }
-    }
-    const alone = mineBin !== null && (stacks.get(mineBin)?.count ?? 0) - (mineHasDot ? 1 : 0) === 0;
-    return { grey, breaks, mineDot, peak, alone, step };
-  }, [values, mine, width, prompt, compact, pad, pitch, base, top, r, totalDots]);
+    started = performance.now();
+    run();
+    return () => {
+      cancelAnimationFrame(raf);
+      running = false;
+      Composite.clear(engine.world, false);
+      Engine.clear(engine);
+      shakeRef.current = null;
+    };
+  }, [layout, physical, visible, prompt, values, mine, compact]);
 
   const mineShare = mine === null ? null : (values.find((v) => v.value === mine)?.share ?? 0);
   const label = [
@@ -154,134 +421,29 @@ export function CrowdPlot({ prompt, values, mine = null, animate = false, compac
     mine !== null ? `Your answer ${short(mine)}, ${formatShare(mineShare ?? 0)}.` : '',
   ].join(' ');
 
-  const peakNearMine = layout.peak && layout.mineDot && Math.abs(layout.peak.x - layout.mineDot.x) < 46;
-  const youRight = layout.mineDot ? layout.mineDot.x < width - 90 : true;
-
   return (
-    <figure className={`crowd ${compact ? 'crowd--compact' : ''}`}>
-      <svg ref={ref} className="crowd__svg" height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label}>
-        {/* the number line */}
-        <path
-          d={`M${pad - 2} ${base + 0.5} L${width - pad + 2} ${base + 0.5}`}
-          stroke="var(--ink)"
-          strokeWidth={compact ? 1 : 1.4}
-          filter={compact ? undefined : 'url(#pencil-texture)'}
-        />
-        {!compact && (
-          <>
-            <path d={`M${pad} ${base - 4} L${pad} ${base + 5}`} stroke="var(--ink)" strokeWidth="1.4" />
-            <path d={`M${width - pad} ${base - 4} L${width - pad} ${base + 5}`} stroke="var(--ink)" strokeWidth="1.4" />
-            <text x={pad} y={base + 19} className="crowd__axis" textAnchor="start">
-              {short(prompt.min)}
-            </text>
-            <text x={width - pad} y={base + 19} className="crowd__axis" textAnchor="end">
-              {short(prompt.max)}
-            </text>
-          </>
-        )}
-
-        {layout.grey.map((d, i) =>
-          fall ? (
-            <motion.circle
-              key={i}
-              cx={d.x}
-              r={r}
-              className="crowd__dot"
-              initial={{ cy: -8, opacity: 0 }}
-              animate={{ cy: d.y, opacity: 1 }}
-              transition={{ duration: 0.38, delay: 0.15 + (i / layout.grey.length) * 0.75, ease: [0.5, 0, 0.9, 0.6] }}
-            />
-          ) : (
-            <circle key={i} cx={d.x} cy={d.y} r={r} className="crowd__dot" />
-          ),
-        )}
-
-        {/* piles too tall for the page: a pencil break where they are cut off */}
-        {layout.breaks.map((b, i) => (
-          <path
-            key={`break-${i}`}
-            d={`M${b.x - 5} ${b.y + 2} l3 -3 l3 3 l3 -3`}
-            transform={`translate(-1.5 0)`}
-            fill="none"
-            stroke="var(--paper)"
-            strokeWidth={compact ? 1.6 : 2.6}
-          />
-        ))}
-
-        {!compact && layout.peak && !peakNearMine && (
-          <motion.text
-            x={layout.peak.x < 60 ? layout.peak.x - 4 : layout.peak.x > width - 60 ? layout.peak.x + 4 : layout.peak.x}
-            y={Math.max(12, layout.peak.y)}
-            className="crowd__peak"
-            textAnchor={layout.peak.x < 60 ? 'start' : layout.peak.x > width - 60 ? 'end' : 'middle'}
-            initial={fall ? { opacity: 0 } : false}
-            animate={{ opacity: 1 }}
-            transition={{ delay: fall ? 1.1 : 0 }}
-          >
-            {short(layout.peak.value)} · {formatShare(layout.peak.share)}
-          </motion.text>
-        )}
-
-        {layout.mineDot && (
-          <g>
-            {layout.alone && !compact && (
-              <motion.ellipse
-                cx={layout.mineDot.x}
-                cy={layout.mineDot.y}
-                rx={13}
-                ry={11}
-                fill="none"
-                stroke="var(--pencil)"
-                strokeWidth="1.2"
-                strokeDasharray="3 3"
-                initial={fall ? { opacity: 0 } : false}
-                animate={{ opacity: 1 }}
-                transition={{ delay: fall ? 1.5 : 0 }}
-              />
-            )}
-            {fall ? (
-              <motion.circle
-                cx={layout.mineDot.x}
-                r={compact ? 2.6 : 4.2}
-                className="crowd__mine"
-                initial={{ cy: -12, opacity: 0 }}
-                animate={{ cy: layout.mineDot.y, opacity: 1 }}
-                transition={{ delay: 1.05, type: 'spring', stiffness: 420, damping: 14 }}
-              />
-            ) : (
-              <circle cx={layout.mineDot.x} cy={layout.mineDot.y} r={compact ? 2.6 : 4.2} className="crowd__mine" />
-            )}
-            {!compact && (
-              <motion.g
-                initial={fall ? { opacity: 0 } : false}
-                animate={{ opacity: 1 }}
-                transition={{ delay: fall ? 1.35 : 0, duration: 0.25 }}
-              >
-                <path
-                  d={
-                    youRight
-                      ? `M${layout.mineDot.x + 7} ${layout.mineDot.y - 5} C${layout.mineDot.x + 14} ${layout.mineDot.y - 14}, ${layout.mineDot.x + 20} ${Math.max(14, layout.mineDot.y - 22)}, ${layout.mineDot.x + 28} ${Math.max(12, layout.mineDot.y - 24)}`
-                      : `M${layout.mineDot.x - 7} ${layout.mineDot.y - 5} C${layout.mineDot.x - 14} ${layout.mineDot.y - 14}, ${layout.mineDot.x - 20} ${Math.max(14, layout.mineDot.y - 22)}, ${layout.mineDot.x - 28} ${Math.max(12, layout.mineDot.y - 24)}`
-                  }
-                  fill="none"
-                  stroke="var(--redpen)"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
-                <text
-                  x={layout.mineDot.x + (youRight ? 31 : -31)}
-                  y={Math.max(15, layout.mineDot.y - 22)}
-                  className="crowd__you"
-                  textAnchor={youRight ? 'start' : 'end'}
-                >
-                  {layout.alone ? `you, alone (${short(mine!)})` : `you (${short(mine!)})`}
-                </text>
-              </motion.g>
-            )}
-          </g>
-        )}
-      </svg>
-      {caption && !compact && <figcaption className="crowd__caption">{caption}</figcaption>}
+    <figure
+      className={`crowd ${compact ? 'crowd--compact' : ''} ${physical ? 'crowd--live' : ''}`}
+      data-balls={layout?.balls.length ?? 0}
+      data-mine={layout?.balls.some((b) => b.mine) ? 'yes' : 'no'}
+      data-settled={settled ? 'yes' : 'no'}
+    >
+      <div ref={wrapRef} className="crowd__rack" onClick={() => shakeRef.current?.()}>
+        <canvas ref={canvasRef} className="crowd__canvas" style={{ height }} role="img" aria-label={label} />
+      </div>
+      {!compact && layout && (
+        <figcaption className="crowd__caption">
+          Each ball is {formatPerBall(layout.perBall)} of answers.{caption ? ` ${caption}` : ''}
+          {physical && (
+            <>
+              {' '}
+              <button type="button" className="linklike crowd__shake" onClick={() => shakeRef.current?.()}>
+                Shake it
+              </button>
+            </>
+          )}
+        </figcaption>
+      )}
     </figure>
   );
 }
