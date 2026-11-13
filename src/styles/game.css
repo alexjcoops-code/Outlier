@@ -1,0 +1,432 @@
+/* ───── Start screen ───── */
+.start__fields {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  line-height: 24px;
+}
+.start__blank {
+  flex: 1;
+  max-width: 150px;
+  border-bottom: 1.5px dotted var(--pencil);
+  margin-right: 10px;
+}
+.start__blank--short {
+  max-width: 56px;
+}
+.start h1 {
+  padding-bottom: 5px;
+  border-bottom: 3px double var(--ink);
+  display: inline-block;
+}
+.start__dash {
+  color: var(--pencil);
+}
+.start__count {
+  white-space: nowrap;
+}
+.start__lede {
+  margin-top: 19px;
+  max-width: 30em;
+}
+.start__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 26px;
+  margin-top: 30px;
+}
+.start__resume {
+  margin-top: 18px;
+  font-size: 15px;
+}
+
+.mark-scheme {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 26px;
+  border-collapse: collapse;
+  transform: rotate(-0.35deg);
+  transform-origin: left top;
+}
+.mark-scheme caption {
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pencil);
+  padding-bottom: 5px;
+}
+.mark-scheme tr {
+  border-top: 1.5px solid var(--ink);
+}
+.mark-scheme tr:last-child {
+  border-bottom: 1.5px solid var(--ink);
+}
+.mark-scheme td,
+.mark-scheme th {
+  padding: 0 0 0 0;
+  height: 36px;
+  vertical-align: middle;
+  background: rgba(245, 241, 230, 0.72);
+}
+.mark-scheme th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.15;
+}
+.mark-scheme__rule {
+  display: block;
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--pencil);
+}
+.mark-scheme__swatch {
+  width: 44px;
+}
+.swatch {
+  display: block;
+  width: 32px;
+  height: 15px;
+  background: var(--hl);
+  border-radius: 7px 3px 8px 2px;
+  transform: rotate(-3deg);
+}
+.mark-scheme tr:nth-child(even) .swatch {
+  transform: rotate(2deg) translateX(2px);
+}
+.mark-scheme__points {
+  width: 48px;
+  text-align: right;
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+/* ───── Question screen ───── */
+.progress {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+.progress__box {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1;
+  color: var(--ink);
+}
+.progress__box.is-done {
+  background: var(--hl);
+}
+.progress__box.tier-none.is-done {
+  background: var(--paper);
+  color: var(--redpen);
+}
+.progress__box.is-current {
+  border-width: 2.5px;
+  transform: rotate(-1.5deg);
+}
+
+.question__body {
+  position: relative;
+}
+.question__prompt {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 36px;
+  letter-spacing: -0.035em;
+  text-wrap: pretty;
+  min-height: 72px;
+}
+@media (max-width: 345px) {
+  .question__prompt {
+    font-size: 24px;
+    line-height: 32px;
+  }
+}
+@media (min-width: 720px) {
+  .question__prompt {
+    font-size: 32px;
+    line-height: 42px;
+  }
+}
+
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 24px;
+  margin-top: 12px;
+  color: var(--pencil);
+}
+.timer__track {
+  flex: 1;
+  height: 6px;
+  display: flex;
+  align-items: center;
+}
+.timer__line {
+  height: 3.5px;
+  min-width: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  filter: url(#pencil-texture);
+}
+.timer__seconds {
+  width: 3ch;
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.timer.is-urgent {
+  color: var(--redpen);
+}
+
+.answer {
+  margin-top: 16px;
+}
+.answer__row {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+.answer__field {
+  position: relative;
+  flex: 0 1 290px;
+  min-width: 0;
+}
+.answer__input {
+  display: block;
+  width: 100%;
+  height: 60px;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 2.5px solid var(--ink);
+  border-radius: 0;
+  background: rgba(245, 241, 230, 0.6);
+  color: #3a4660;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 40px;
+  line-height: 60px;
+  letter-spacing: -0.02em;
+  caret-color: var(--redpen);
+}
+.answer__input:focus-visible {
+  box-shadow: none;
+  border-bottom-color: var(--redpen);
+}
+.answer__input.is-locked {
+  color: #0d1424;
+  font-weight: 600;
+  border-bottom-color: var(--ink);
+}
+.answer__tick {
+  position: absolute;
+  right: 0;
+  bottom: 12px;
+}
+.answer__note {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  pointer-events: none;
+}
+.answer__note .hand {
+  display: inline-block;
+  font-size: 30px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.answer__submit {
+  margin-top: 22px;
+}
+
+.question__offline {
+  margin-top: 14px;
+  font-size: 15px;
+}
+.question__offline .hand {
+  font-size: 22px;
+}
+
+/* On-screen number pad: fixed to the bottom so the phone keyboard never appears. */
+.pad {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--paper);
+  border-top: 2px solid var(--ink);
+}
+.pad__key {
+  height: 50px;
+  border: 0;
+  border-right: 1px solid var(--grid);
+  border-bottom: 1px solid var(--grid);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 24px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.pad__key:nth-child(3n) {
+  border-right: 0;
+}
+.pad__key:active {
+  background: var(--highlight);
+}
+.pad__key--back {
+  color: var(--pencil);
+}
+.pad__key--submit {
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pad__key--submit:active {
+  background: #0d1424;
+}
+.pad__key:focus-visible {
+  box-shadow: inset 0 -4px 0 var(--redpen);
+}
+@media (max-height: 620px) {
+  .pad__key {
+    height: 42px;
+  }
+  .progress {
+    margin-bottom: 14px;
+  }
+}
+/* Leave room so the pad never covers the input. */
+.question:has(.pad) {
+  padding-bottom: 220px;
+}
+
+/* ───── Reveal ───── */
+.reveal {
+  margin-top: 20px;
+}
+.reveal__answer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 60px;
+  border-bottom: 2.5px solid var(--ink);
+  max-width: 290px;
+}
+.reveal__value {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 60px;
+  letter-spacing: -0.02em;
+  color: #0d1424;
+}
+.reveal__mark {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 22px;
+  min-height: 60px;
+}
+.reveal__tier {
+  font-size: 27px;
+  line-height: 1.3;
+  font-weight: 600;
+  font-variation-settings: 'opsz' 48, 'SOFT' 30, 'WONK' 1;
+  transform: rotate(-0.6deg);
+  display: inline-block;
+}
+.circled {
+  position: relative;
+  display: inline-block;
+  padding: 8px 20px 10px;
+  transform: rotate(-2deg);
+}
+.circled svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.circled__text {
+  position: relative;
+  font-family: var(--hand);
+  font-weight: 700;
+  color: var(--redpen);
+  line-height: 1;
+}
+.reveal__points .circled__text {
+  font-size: 38px;
+}
+.star-stamp {
+  margin-left: -4px;
+}
+.reveal__share {
+  margin-top: 12px;
+}
+.reveal__scribble {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 30px;
+  font-weight: 700;
+  transform-origin: left center;
+}
+.reveal__basis {
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.reveal__next {
+  position: relative;
+  display: inline-block;
+  margin-top: 24px;
+}
+/* A pencil line under the button that runs out when the page turns itself. */
+.reveal__auto {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -10px;
+  height: 2.5px;
+  background: var(--pencil);
+  transform-origin: left center;
+  animation: runout linear both;
+}
+@keyframes runout {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
