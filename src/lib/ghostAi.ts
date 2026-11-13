@@ -1,0 +1,122 @@
+// AI ghosts: asking Claude to play 50 ordinary people, and never trusting what comes back.
+//
+// This file only builds the request and checks the reply. The actual API call
+// lives in the prepare-day Edge Function, where the API key is. Shared code:
+// dependency-free, explicit .ts imports.
+
+import { isValidAnswer, type Prompt } from '../prompts.ts';
+import { sampleGhosts } from './ghostRules.ts';
+import type { Rng } from './rng.ts';
+
+export const GHOSTS_PER_SOURCE = 50;
+
+export interface GhostAnswer {
+  position: number;
+  value: number;
+  source: 'rules' | 'ai';
+}
+
+export const GHOST_SYSTEM_PROMPT = `You are helping to calibrate Outlier, a daily maths game.
+
+How the game works: a player sees a prompt such as "Name a prime under 1,000". The prompt has many correct whole-number answers. The player has 25 seconds to type one. Any correct answer scores, but the fewer other people who gave the same answer, the more it scores. So the game needs a realistic picture of what an ordinary crowd types, including how often they pile onto the same numbers.
+
+Your task: for each prompt you are given, write down the answer each of 50 different people would hand in. Imagine a real mixed crowd of British adults and teenagers playing on their phones:
+- About half are not confident at maths. Under time pressure they type the first correct thing that comes to mind: the smallest examples, round numbers, times-table facts, numbers ending in 0 or 5.
+- About a third are comfortable with maths and try to be a bit clever. They avoid the very first answer, but they tend to land on the same "clever" numbers as each other: famous numbers such as 7, 13, 37, 42, 69, 101, 1729, their age, a birth year, repeated digits like 111 or 777.
+- The rest are strong at maths and deliberately hunt for something obscure near the middle or top of the range. Even they have only 25 seconds, so their answers are still things a person can work out in their head.
+
+What matters most is the shape of the distribution. Popular answers must appear many times: if 12 of the 50 people would say the same number, list it 12 times. Do not spread the answers out evenly, and do not list each number once.
+
+Every answer must be a correct answer to its prompt and lie inside the stated range. People sometimes type wrong answers, but the game makes them try again, so only correct answers are ever handed in.
+
+Return exactly 50 answers for every prompt.`;
+
+/** JSON schema for the structured reply. */
+export const GHOST_SCHEMA = {
+  type: 'object',
+  properties: {
+    prompts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          position: { type: 'integer' },
+          answers: { type: 'array', items: { type: 'integer' } },
+        },
+        required: ['position', 'answers'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['prompts'],
+  additionalProperties: false,
+} as const;
+
+/** The user message: the day's prompts, numbered by position. */
+export function buildGhostUserMessage(prompts: readonly Prompt[]): string {
+  const lines = prompts.map(
+    (p, i) =>
+      `${i + 1}. ${p.text}\n   Allowed range: ${p.min.toLocaleString('en-GB')} to ${p.max.toLocaleString('en-GB')} inclusive.`,
+  );
+  return `Here are today's ${prompts.length} prompts. Use each prompt's number as its "position".\n\n${lines.join('\n\n')}`;
+}
+
+/**
+ * Read the model's reply into answers per position. Returns null if it can't be
+ * understood at all. Individual answers are checked later, in assembleGhosts.
+ */
+export function parseGhostReply(text: string): Map<number, number[]> | null {
+  let data: unknown;
+  try {
+    // Tolerate a stray code fence around the JSON.
+    data = JSON.parse(text.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, ''));
+  } catch {
+    return null;
+  }
+  const list = (data as { prompts?: unknown } | null)?.prompts;
+  if (!Array.isArray(list)) return null;
+  const out = new Map<number, number[]>();
+  for (const item of list) {
+    const position = (item as { position?: unknown })?.position;
+    const answers = (item as { answers?: unknown })?.answers;
+    if (typeof position !== 'number' || !Array.isArray(answers)) continue;
+    out.set(
+      position,
+      answers.filter((a): a is number => typeof a === 'number' && Number.isSafeInteger(a)),
+    );
+  }
+  return out.size > 0 ? out : null;
+}
+
+/**
+ * Build the day's ghosts: 50 rule-based plus 50 AI answers per prompt.
+ * Every AI answer is validated; invalid or missing ones are replaced with
+ * rule-based samples. With no AI reply at all, that's 100 rule-based ghosts.
+ */
+export function assembleGhosts(
+  prompts: readonly Prompt[],
+  ai: Map<number, number[]> | null,
+  rng: Rng,
+): { ghosts: GhostAnswer[]; aiAccepted: number; aiRejected: number } {
+  const ghosts: GhostAnswer[] = [];
+  let aiAccepted = 0;
+  let aiRejected = 0;
+  prompts.forEach((prompt, i) => {
+    const position = i + 1;
+    for (const value of sampleGhosts(prompt, GHOSTS_PER_SOURCE, rng)) {
+      ghosts.push({ position, value, source: 'rules' });
+    }
+    const offered = ai?.get(position) ?? [];
+    const good = offered.filter((v) => isValidAnswer(prompt, v)).slice(0, GHOSTS_PER_SOURCE);
+    aiAccepted += good.length;
+    aiRejected += Math.min(offered.length, GHOSTS_PER_SOURCE) - Math.min(good.length, offered.length);
+    for (const value of good) ghosts.push({ position, value, source: 'ai' });
+    const missing = GHOSTS_PER_SOURCE - good.length;
+    if (missing > 0) {
+      for (const value of sampleGhosts(prompt, missing, rng)) {
+        ghosts.push({ position, value, source: 'rules' });
+      }
+    }
+  });
+  return { ghosts, aiAccepted, aiRejected };
+}

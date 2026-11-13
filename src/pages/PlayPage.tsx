@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { Backend, DayResults } from '../lib/backend/types.ts';
 import { PROMPTS_PER_DAY } from '../lib/daily.ts';
 import { linkHandler } from '../lib/router.ts';
@@ -25,6 +26,12 @@ export function PlayPage({ backend, date, navigate, onFinished, onAgain }: Props
   const game = useGame(backend, date, onFinished);
   const { phase, results } = game;
   const practice = backend.kind === 'practice';
+
+  // Each new question (and the results) starts at the top of the page.
+  const screen = phase.name === 'prompt' ? `q${phase.position}` : phase.name === 'reveal' ? 'reveal' : phase.name;
+  useEffect(() => {
+    if (screen !== 'reveal') window.scrollTo(0, 0);
+  }, [screen]);
 
   const live = (
     <div className="sr-only" aria-live="assertive" role="status">
