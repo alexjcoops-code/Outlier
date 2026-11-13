@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getPrompt, isValidAnswer } from '../prompts.ts';
-import { GRACE_MS, OfflineError, type Backend, type DayResults } from './backend/types.ts';
+import { GRACE_MS, OfflineError, type Backend, type DayResults, type Distribution } from './backend/types.ts';
 import { parseAnswer } from './parseAnswer.ts';
 import { PROMPTS_PER_DAY } from './daily.ts';
 import { TIERS, type TierId } from './scoring.ts';
@@ -13,6 +13,8 @@ export interface RevealData {
   share: number | null;
   players: number;
   simulated: boolean;
+  /** The whole crowd for this prompt: undefined while loading, null if it couldn't be fetched. */
+  crowd?: Distribution | null;
 }
 
 export type Phase =
@@ -93,13 +95,26 @@ export function useGame(backend: Backend, date: string, onFinished?: (r: DayResu
         share: data.share,
       });
       setPhase({ name: 'reveal', data });
+      // Fetch the crowd for the "where did you land" plot. Allowed now: the prompt is done.
+      const gen = generation.current;
+      const attach = (crowd: Distribution | null) => {
+        const p = phaseRef.current;
+        if (gen === generation.current && p.name === 'reveal' && p.data.position === data.position) {
+          setPhase({ name: 'reveal', data: { ...p.data, crowd } });
+        }
+      };
+      // A time-out is reported a moment before the server's clock agrees, so wait for it.
+      const delay = data.tier === 'none' ? 600 : 0;
+      setTimeout(() => {
+        backend.getDistribution(date, data.position).then(attach, () => attach(null));
+      }, delay);
       say(
         data.tier === 'none'
           ? 'Out of time. No points.'
           : `Accepted — ${TIERS[data.tier].name}, ${data.points} points`,
       );
     },
-    [patchRow, say, setPhase],
+    [backend, date, patchRow, say, setPhase],
   );
 
   const timedOut = useCallback(

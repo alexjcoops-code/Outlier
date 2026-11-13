@@ -1,5 +1,6 @@
 // prepare-day: chooses a day's seven prompts, writes the answer key, and generates
-// 100 ghost answers per prompt (50 rule-based, 50 from Claude).
+// the ghost players: per prompt, 1,000 rule-based plus 100 played by Claude
+// (or 1,100 rule-based if the Claude call fails).
 //
 // Two ways in:
 //   • The nightly schedule (pg_cron, with the x-cron-secret header) prepares
@@ -7,7 +8,7 @@
 //     22:30 and 23:30 UTC and this function ignores whichever isn't 23:xx in London.
 //   • Anyone may ask for TODAY if it is missing (the schedule failed, or this is a
 //     brand-new project). That path never calls Claude, so strangers can't spend
-//     your API credit: it uses 100 rule-based ghosts.
+//     your API credit: it uses 1,100 rule-based ghosts per prompt.
 //
 // It is idempotent: a day that already exists is left alone.
 
@@ -18,43 +19,44 @@ import { getPrompt, validAnswers, type Prompt } from '../_shared/core/prompts.ts
 import { NO_REPEAT_DAYS, dailyPromptIds, selectDay } from '../_shared/core/lib/daily.ts';
 import {
   GHOST_SCHEMA,
-  GHOST_SYSTEM_PROMPT,
-  assembleGhosts,
+  assemblePromptGhosts,
+  buildAiCast,
   buildGhostUserMessage,
+  ghostSystemPrompt,
   parseGhostReply,
+  type AiReplyEntry,
+  type CastMember,
+  type GhostAnswer,
 } from '../_shared/core/lib/ghostAi.ts';
 import { seededRng } from '../_shared/core/lib/rng.ts';
 import { addDays, ukDateString, ukParts } from '../_shared/core/lib/ukDate.ts';
 
 const MODEL = 'claude-opus-5-5';
 
-/** Ask Claude to play 50 people per prompt. Returns null on any failure: the caller falls back to rules. */
-async function askClaude(prompts: Prompt[]): Promise<Map<number, number[]> | null> {
-  const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!apiKey) {
-    console.warn('ANTHROPIC_API_KEY is not set; using rule-based ghosts only');
-    return null;
-  }
-  const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 100_000 });
+/**
+ * Ask Claude to play the day's 100-person cast on one prompt. Returns null on
+ * any failure; the caller then uses rule-based ghosts for that prompt.
+ */
+async function askClaude(client: Anthropic, prompt: Prompt, cast: CastMember[]): Promise<Map<number, AiReplyEntry> | null> {
   try {
     const response = await client.beta.messages.create({
       model: MODEL,
       max_tokens: 16000,
-      // A quick, shallow task: no need for deep reasoning.
+      // A quick role-play, not a hard problem: keep thinking light.
       output_config: { effort: 'low', format: { type: 'json_schema', schema: GHOST_SCHEMA } },
       // If a safety classifier declines the request, let the API retry on a fallback model.
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
-      system: GHOST_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: buildGhostUserMessage(prompts) }],
+      system: ghostSystemPrompt(),
+      messages: [{ role: 'user', content: buildGhostUserMessage(prompt, cast) }],
     });
     if (response.stop_reason !== 'end_turn') {
-      console.warn('Claude stopped early:', response.stop_reason);
+      console.warn(`${prompt.id}: Claude stopped early (${response.stop_reason})`);
       return null;
     }
     const text = response.content.flatMap((block) => (block.type === 'text' ? [block.text] : [])).join('');
     const parsed = parseGhostReply(text);
-    if (!parsed) console.warn('Could not read Claude reply as ghost answers');
+    if (!parsed) console.warn(`${prompt.id}: could not read Claude's reply`);
     return parsed;
   } catch (error) {
     if (error instanceof Anthropic.AuthenticationError) {
@@ -64,7 +66,7 @@ async function askClaude(prompts: Prompt[]): Promise<Map<number, number[]> | nul
     } else if (error instanceof Anthropic.APIError) {
       console.error(`Claude API error ${error.status}: ${error.message}`);
     } else {
-      console.error('Claude call failed', error);
+      console.error(`${prompt.id}: Claude call failed`, error);
     }
     return null;
   }
@@ -131,9 +133,21 @@ Deno.serve(async (req) => {
 
     const ids = selectDay(date, await recentPromptIds(supabase, date));
     const prompts = ids.map(getPrompt);
+    const cast = buildAiCast(date);
 
-    const ai = scheduled ? await askClaude(prompts) : null;
-    const { ghosts, aiAccepted, aiRejected } = assembleGhosts(prompts, ai, seededRng(`ghosts:${date}`));
+    // One Claude call per prompt, all at once. No key, or not the schedule: rules only.
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+    if (scheduled && !apiKey) console.warn('ANTHROPIC_API_KEY is not set; using rule-based ghosts only');
+    const client = scheduled && apiKey ? new Anthropic({ apiKey, maxRetries: 0, timeout: 120_000 }) : null;
+    const replies = await Promise.all(prompts.map((p) => (client ? askClaude(client, p, cast) : Promise.resolve(null))));
+
+    const year = Number(date.slice(0, 4));
+    const ghosts: GhostAnswer[] = [];
+    const report = prompts.map((p, i) => {
+      const { ghosts: g, stats } = assemblePromptGhosts(p, i + 1, cast, replies[i]!, seededRng(`ghosts:${date}:${i + 1}`), { year });
+      ghosts.push(...g);
+      return { prompt: p.id, ...stats };
+    });
 
     const { data: created, error } = await supabase.rpc('install_day', {
       p_date: date,
@@ -147,8 +161,8 @@ Deno.serve(async (req) => {
     });
     if (error) throw new Error(error.message);
 
-    console.log(`prepared ${date}: created=${created} ai=${aiAccepted} accepted, ${aiRejected} rejected`);
-    return json({ date, created, prompts: ids, ghosts: { ai: aiAccepted, rejected: aiRejected, total: ghosts.length } });
+    console.log(`prepared ${date}: created=${created}`, JSON.stringify(report));
+    return json({ date, created, prompts: ids, ghosts: ghosts.length, ai: report });
   } catch (error) {
     console.error('prepare-day failed', error);
     return json({ error: 'prepare_failed' }, 500);

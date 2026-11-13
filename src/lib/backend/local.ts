@@ -1,12 +1,14 @@
 // A complete in-browser backend. Used when no Supabase project is configured
 // (local development, the end-to-end test) and, with in-memory storage and
-// random prompts, for practice mode. The crowd is 100 rule-based ghosts.
+// random prompts, for practice mode. The crowd is 1,100 rule-based ghosts per
+// prompt: what the real game uses when the Claude API is unavailable.
 
 import { getPrompt, isValidAnswer, PROMPTS } from '../../prompts.ts';
 import { dailyPromptIds, PROMPTS_PER_DAY } from '../daily.ts';
-import { sampleGhosts } from '../ghostRules.ts';
+import { GHOST_CONFIG } from '../ghostConfig.ts';
+import { generateRuleGhosts, type GhostPlayer } from '../ghostModel.ts';
 import { seededRng, shuffle } from '../rng.ts';
-import { ghostWeight, scoreAnswer, TIERS, type Score } from '../scoring.ts';
+import { ghostWeight, scoreAnswer, type Score } from '../scoring.ts';
 import { ukDateString } from '../ukDate.ts';
 import {
   GRACE_MS,
@@ -34,19 +36,28 @@ export function memoryStorage(): KeyValue {
   return { getItem: (k) => map.get(k) ?? null, setItem: (k, v) => void map.set(k, v) };
 }
 
-const GHOSTS_PER_PROMPT = 100;
+const GHOSTS_PER_PROMPT = GHOST_CONFIG.ruleGhosts + GHOST_CONFIG.aiGhosts;
+
+interface Crowd {
+  ghosts: GhostPlayer[];
+  /** value → number of ghosts who gave it */
+  counts: Map<number, number>;
+  answered: number;
+}
 
 interface Options {
   kind: 'local' | 'practice';
   storage: KeyValue;
   /** Which prompts make up a "day". */
   promptIdsFor: (date: string) => string[];
+  /** The year used for the "current year" salience boost. */
+  yearFor: (date: string) => number;
   now?: () => number;
 }
 
 export function createLocalBackend(opts: Options): Backend {
   const now = opts.now ?? (() => Date.now());
-  const ghostCache = new Map<string, number[]>();
+  const crowdCache = new Map<string, Crowd>();
 
   const load = (date: string): StoredDay => {
     try {
@@ -65,56 +76,63 @@ export function createLocalBackend(opts: Options): Backend {
     }
   };
 
-  const ghostsFor = (date: string, position: number): number[] => {
+  const crowdFor = (date: string, position: number): Crowd => {
     const key = `${date}:${position}`;
-    let g = ghostCache.get(key);
-    if (!g) {
+    let crowd = crowdCache.get(key);
+    if (!crowd) {
       const prompt = getPrompt(opts.promptIdsFor(date)[position - 1]!);
-      g = sampleGhosts(prompt, GHOSTS_PER_PROMPT, seededRng(`ghost:${key}`));
-      ghostCache.set(key, g);
+      const ghosts = generateRuleGhosts(prompt, GHOSTS_PER_PROMPT, seededRng(`ghosts:${key}`), {
+        year: opts.yearFor(date),
+      });
+      const counts = new Map<number, number>();
+      for (const g of ghosts) if (g.value !== null) counts.set(g.value, (counts.get(g.value) ?? 0) + 1);
+      crowd = { ghosts, counts, answered: ghosts.filter((g) => g.value !== null).length };
+      crowdCache.set(key, crowd);
     }
-    return g;
+    return crowd;
   };
 
   const score = (date: string, position: number, value: number): Score => {
     const prompt = getPrompt(opts.promptIdsFor(date)[position - 1]!);
-    const ghosts = ghostsFor(date, position);
+    const crowd = crowdFor(date, position);
     return scoreAnswer({
       sameReal: 1,
       totalReal: 1,
-      sameGhost: ghosts.filter((g) => g === value).length,
-      totalGhost: ghosts.length,
+      sameGhost: crowd.counts.get(value) ?? 0,
+      totalGhost: crowd.answered,
+      ghostCount: crowd.ghosts.length,
       realPlayers: 1,
       clever: prompt.cleverList.includes(value),
     });
   };
 
-  /** What the 100 ghosts would have scored, as stand-ins for other players. */
+  /** What the ghosts would have scored, standing in for other players' totals. */
   const ghostTotals = (date: string): number[] => {
     const ids = opts.promptIdsFor(date);
     const totals = new Array<number>(GHOSTS_PER_PROMPT).fill(0);
     ids.forEach((id, i) => {
       const prompt = getPrompt(id);
-      const ghosts = ghostsFor(date, i + 1);
-      const counts = new Map<number, number>();
-      for (const g of ghosts) counts.set(g, (counts.get(g) ?? 0) + 1);
-      ghosts.forEach((g, k) => {
-        const s = scoreAnswer({
+      const crowd = crowdFor(date, i + 1);
+      crowd.ghosts.forEach((g, k) => {
+        if (g.value === null) return;
+        totals[k]! += scoreAnswer({
           sameReal: 0,
           totalReal: 0,
-          sameGhost: counts.get(g)!,
-          totalGhost: ghosts.length,
+          sameGhost: crowd.counts.get(g.value)!,
+          totalGhost: crowd.answered,
+          ghostCount: crowd.ghosts.length,
           realPlayers: 0,
-          clever: prompt.cleverList.includes(g),
-        });
-        // A ghost can't be a lone wolf against itself.
-        totals[k]! += counts.get(g) === 1 ? TIERS.lone.points : s.points;
+          clever: prompt.cleverList.includes(g.value),
+        }).points;
       });
     });
     return totals;
   };
 
-  const isOver = (day: StoredDay, position: number): boolean => {
+  const today = () => ukDateString(new Date(now()));
+
+  const isOver = (date: string, day: StoredDay, position: number): boolean => {
+    if (opts.kind === 'local' && date < today()) return true;
     if (day.answers[position] !== undefined) return true;
     const started = day.starts[position];
     return started !== undefined && now() - started > TIMER_MS;
@@ -139,10 +157,10 @@ export function createLocalBackend(opts: Options): Backend {
       const totals = ghostTotals(date).sort((a, b) => a - b);
       return {
         date,
-        final: opts.kind === 'local' && date < ukDateString(new Date(now())),
+        final: opts.kind === 'local' && date < today(),
         total: rows.reduce((sum, r) => sum + r.points, 0),
         players: 1,
-        simulated: ghostWeight(1) > 0,
+        simulated: true,
         average: Math.round(totals.reduce((a, b) => a + b, 0) / totals.length),
         top10: totals[Math.floor(totals.length * 0.9)]!,
         rows,
@@ -152,6 +170,7 @@ export function createLocalBackend(opts: Options): Backend {
     async startPrompt(date, position) {
       const day = load(date);
       if (position < 1 || position > PROMPTS_PER_DAY) throw new Error('No such question');
+      if (opts.kind === 'local' && date !== today()) throw new Error('not_today');
       if (position > 1 && day.starts[position - 1] === undefined) {
         throw new Error('Questions must be answered in order');
       }
@@ -178,23 +197,23 @@ export function createLocalBackend(opts: Options): Backend {
 
     async getDistribution(date, position): Promise<Distribution> {
       const day = load(date);
-      if (!isOver(day, position)) throw new Error('No peeking');
-      const counts = new Map<number, number>();
-      for (const g of ghostsFor(date, position)) counts.set(g, (counts.get(g) ?? 0) + 1);
+      if (!isOver(date, day, position)) throw new Error('no_peeking');
+      const crowd = crowdFor(date, position);
       const mine = day.answers[position];
-      // One real player, so w = 1 − 1/200.
-      const w = ghostWeight(1);
-      const total = (mine === undefined ? 0 : 1) + w * GHOSTS_PER_PROMPT;
-      const values = new Set(counts.keys());
+      const w = ghostWeight(1, crowd.ghosts.length);
+      const total = (mine === undefined ? 0 : 1) + w * crowd.answered;
+      const values = new Set(crowd.counts.keys());
       if (mine !== undefined) values.add(mine);
-      const top = [...values]
-        .map((value) => ({
-          value,
-          share: ((value === mine ? 1 : 0) + w * (counts.get(value) ?? 0)) / total,
-        }))
-        .sort((a, b) => b.share - a.share || a.value - b.value)
-        .slice(0, 5);
-      return { players: 1, simulated: true, top };
+      return {
+        players: mine === undefined ? 0 : 1,
+        simulated: true,
+        values: [...values]
+          .map((value) => ({
+            value,
+            share: ((value === mine ? 1 : 0) + w * (crowd.counts.get(value) ?? 0)) / total,
+          }))
+          .sort((a, b) => b.share - a.share || a.value - b.value),
+      };
     },
 
     async getAdminStats(date): Promise<AdminStats> {
@@ -205,19 +224,23 @@ export function createLocalBackend(opts: Options): Backend {
         players: Object.keys(day.answers).length > 0 ? 1 : 0,
         prompts: ids.map((promptId, i) => {
           const position = i + 1;
+          const crowd = crowdFor(date, position);
           const table = new Map<number, { value: number; real: number; rules: number; ai: number }>();
           const cell = (value: number) => {
             let c = table.get(value);
             if (!c) table.set(value, (c = { value, real: 0, rules: 0, ai: 0 }));
             return c;
           };
-          for (const g of ghostsFor(date, position)) cell(g).rules++;
+          for (const [value, n] of crowd.counts) cell(value).rules += n;
           const mine = day.answers[position];
           if (mine !== undefined) cell(mine).real++;
           return {
             position,
             promptId,
             realTotal: mine === undefined ? 0 : 1,
+            realTimeouts: mine === undefined && isOver(date, day, position) && day.starts[position] !== undefined ? 1 : 0,
+            ghostCount: crowd.ghosts.length,
+            ghostTimeouts: crowd.ghosts.length - crowd.answered,
             values: [...table.values()].sort((a, b) => a.value - b.value),
           };
         }),
@@ -226,9 +249,16 @@ export function createLocalBackend(opts: Options): Backend {
   };
 }
 
+const yearOf = (date: string) => Number(date.slice(0, 4));
+
 /** The offline stand-in for the real daily game. */
 export function createLocalDailyBackend(storage: KeyValue): Backend {
-  return createLocalBackend({ kind: 'local', storage, promptIdsFor: (date) => dailyPromptIds(date) });
+  return createLocalBackend({
+    kind: 'local',
+    storage,
+    promptIdsFor: (date) => dailyPromptIds(date),
+    yearFor: yearOf,
+  });
 }
 
 /** Practice: seven random prompts per round, nothing saved. Each "date" is a round id. */
@@ -237,6 +267,7 @@ export function createPracticeBackend(): Backend {
   return createLocalBackend({
     kind: 'practice',
     storage: memoryStorage(),
+    yearFor: () => yearOf(ukDateString()),
     promptIdsFor: (round) => {
       let ids = rounds.get(round);
       if (!ids) {

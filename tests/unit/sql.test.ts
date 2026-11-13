@@ -28,13 +28,19 @@ const distribution = (player: number, position: number, date = today) =>
   rpc(`get_distribution($1::date, $2, $3::uuid)`, [date, position, uuid(player)]);
 
 /** Install a day the way the Edge Function does, with chosen ghosts for position 1. */
-async function installDay(date: string, ghostsPos1: number[]) {
+async function installDay(date: string, ghostsPos1: (number | null)[]) {
   const promptIds = dailyPromptIds(date);
   const prompts = promptIds.map((id, i) => {
     const p = getPrompt(id);
     return { position: i + 1, prompt_id: id, valid: validAnswers(p), clever: p.cleverList };
   });
-  const ghosts = ghostsPos1.map((value, i) => ({ position: 1, value, source: i % 2 ? 'ai' : 'rules' }));
+  const ghosts = ghostsPos1.map((value, i) => ({
+    position: 1,
+    value,
+    ability: (['ultra', 'pretty', 'average', 'weak', 'panicker'] as const)[i % 5],
+    style: (['safe', 'mid', 'risk', 'showoff'] as const)[i % 4],
+    source: i % 2 ? 'ai' : 'rules',
+  }));
   return rpc<boolean>(`install_day($1::date, $2::jsonb, $3::jsonb)`, [date, JSON.stringify(prompts), JSON.stringify(ghosts)]);
 }
 
@@ -53,16 +59,18 @@ describe('score_tier matches the TypeScript scoring', () => {
     const cases = Array.from({ length: 3000 }, () => {
       const totalReal = 1 + Math.floor(rng() * 400);
       const sameReal = 1 + Math.floor(rng() * Math.min(totalReal, 60));
-      const totalGhost = rng() < 0.1 ? 0 : 100;
-      const sameGhost = totalGhost ? Math.floor(rng() * rng() * 40) : 0;
-      const realPlayers = rng() < 0.2 ? totalReal : Math.floor(rng() * 420);
-      return { sameReal, totalReal, sameGhost, totalGhost, realPlayers, clever: rng() < 0.3 };
+      const ghostCount = rng() < 0.1 ? 0 : rng() < 0.5 ? 100 : 1100;
+      const totalGhost = Math.floor(ghostCount * (0.85 + rng() * 0.15));
+      const sameGhost = totalGhost ? Math.floor(rng() * rng() * (ghostCount / 3)) : 0;
+      const realPlayers = rng() < 0.2 ? totalReal : Math.floor(rng() * 650);
+      return { sameReal, totalReal, sameGhost, totalGhost, ghostCount, realPlayers, clever: rng() < 0.3 };
     });
     const res = await db.query<{ i: number; tier: string; share: number }>(
       `select (c->>'i')::int as i, t.tier, t.share
        from jsonb_array_elements($1::jsonb) c,
        lateral score_tier((c->>'sameReal')::int, (c->>'totalReal')::int, (c->>'sameGhost')::int,
-                          (c->>'totalGhost')::int, (c->>'realPlayers')::int, (c->>'clever')::boolean) t`,
+                          (c->>'totalGhost')::int, (c->>'ghostCount')::int, (c->>'realPlayers')::int,
+                          (c->>'clever')::boolean) t`,
       [JSON.stringify(cases.map((c, i) => ({ ...c, i })))],
     );
     expect(res.rows).toHaveLength(cases.length);
@@ -100,7 +108,7 @@ describe('a day in the database', () => {
     expect(await installDay(today, ghosts)).toBe(true);
   });
 
-  it('install_day is idempotent and drops invalid ghosts', async () => {
+  it('install_day is idempotent and stores invalid ghost answers as time-outs', async () => {
     expect(await installDay(today, [1, 2, 3])).toBe(false);
     const n = await db.query<{ n: number }>(`select count(*)::int as n from ghost_answers where date = $1`, [today]);
     expect(n.rows[0]!.n).toBe(100);
@@ -108,9 +116,15 @@ describe('a day in the database', () => {
     const tomorrow = (await db.query<{ d: string }>(`select (uk_today() + 1)::text as d`)).rows[0]!.d;
     const v = validAnswers(getPrompt(dailyPromptIds(tomorrow)[0]!));
     const invalid = -5;
-    expect(await installDay(tomorrow, [v[0]!, invalid, v[1]!])).toBe(true);
-    const m = await db.query<{ n: number }>(`select count(*)::int as n from ghost_answers where date = $1`, [tomorrow]);
-    expect(m.rows[0]!.n).toBe(2);
+    expect(await installDay(tomorrow, [v[0]!, invalid, v[1]!, null])).toBe(true);
+    const m = await db.query<{ n: number; answered: number }>(
+      `select count(*)::int as n, count(value)::int as answered from ghost_answers where date = $1`, [tomorrow],
+    );
+    expect(m.rows[0]).toEqual({ n: 4, answered: 2 });
+    const kinds = await db.query<{ ability: string; style: string }>(
+      `select ability, style from ghost_answers where date = $1 order by id limit 1`, [tomorrow],
+    );
+    expect(kinds.rows[0]).toEqual({ ability: 'ultra', style: 'safe' });
   });
 
   it('shows the worksheet with nothing started', async () => {
@@ -150,9 +164,9 @@ describe('a day in the database', () => {
 
   it('accepts a valid answer once, and scores it live', async () => {
     const res = await submit(1, 1, common);
-    // (1 real + 0.995 × 60 ghosts) ÷ (1 + 0.995 × 100)
+    // 100 ghosts and 1 real player: each ghost weighs 1 − 1/500 = 0.998.
     expect(res).toMatchObject({ ok: true, tier: 'obvious', points: 10, players: 1, simulated: true });
-    expect(res.share).toBeCloseTo((1 + 0.995 * 60) / (1 + 0.995 * 100), 10);
+    expect(res.share).toBeCloseTo((1 + 0.998 * 60) / (1 + 0.998 * 100), 10);
     expect(await submit(1, 1, rareish)).toEqual({ ok: false, reason: 'already' });
   });
 
@@ -182,7 +196,7 @@ describe('a day in the database', () => {
     await db.query(`update prompt_starts set started_at = now() - interval '29 seconds' where player_id = $1`, [uuid(5)]);
     expect(await submit(5, 1, common)).toEqual({ ok: false, reason: 'expired' });
     // Timed out, so now the distribution is visible, and question 2 can start.
-    expect((await distribution(5, 1)).top.length).toBeGreaterThan(0);
+    expect((await distribution(5, 1)).values.length).toBeGreaterThan(0);
     expect((await start(5, 2)).remaining_ms).toBeGreaterThan(0);
     const r = await results(5);
     expect(r.rows[0]).toMatchObject({ started: true, value: null, tier: 'none', points: 0, share: null });
@@ -193,11 +207,13 @@ describe('a day in the database', () => {
   it('returns the top answers with weighted shares', async () => {
     const d = await distribution(1, 1);
     expect(d.players).toBe(4);
-    expect(d.top).toHaveLength(5);
-    expect(d.top[0].value).toBe(common);
-    const w = 1 - 4 / 200;
-    expect(d.top[0].share).toBeCloseTo((1 + w * 60) / (4 + w * 100), 10);
-    for (let i = 1; i < d.top.length; i++) expect(d.top[i].share).toBeLessThanOrEqual(d.top[i - 1].share);
+    expect(d.values[0].value).toBe(common);
+    const w = 1 - 4 / 500;
+    expect(d.values[0].share).toBeCloseTo((1 + w * 60) / (4 + w * 100), 10);
+    for (let i = 1; i < d.values.length; i++) expect(d.values[i].share).toBeLessThanOrEqual(d.values[i - 1].share);
+    // The whole crowd is returned, and the shares add up to 1.
+    expect(d.values.reduce((s: number, v: any) => s + v.share, 0)).toBeCloseTo(1, 10);
+    expect(d.values.some((v: any) => v.value === unseen)).toBe(true);
   });
 
   it('reports the day average and top-10% mark', async () => {
@@ -258,7 +274,22 @@ describe('a day in the database', () => {
     expect(fs.rows[0]).toEqual({ total: 85, tiers: ['outlier', 'none', 'none', 'none', 'none', 'none', 'none'] });
 
     // A past day's distribution is open to anyone, but it can no longer be played.
-    expect((await distribution(99, 1, yesterday)).top.length).toBe(5);
+    expect((await distribution(99, 1, yesterday)).values.length).toBeGreaterThan(5);
+
+    // Calibration snapshot saved for each prompt.
+    const snap = await db.query<{ position: number; prompt_id: string; real_counts: any; ghost_counts: any; ghost_count: number; real_timeouts: number }>(
+      `select position, prompt_id, real_counts, ghost_counts, ghost_count, real_timeouts
+       from calibration_snapshots where date = $1 order by position`, [yesterday],
+    );
+    expect(snap.rows).toHaveLength(7);
+    const q1 = snap.rows[0]!;
+    expect(q1.prompt_id).toBe(ids[0]);
+    expect(q1.ghost_count).toBe(100);
+    expect(q1.real_counts[String(unseen)]).toBe(2);
+    expect(q1.ghost_counts[String(common)]).toEqual({ rules: 30, ai: 30 });
+    // Players 5 (too slow) and 6 (rate-limited) never answered question 1; player 5 abandoned question 2.
+    expect(q1.real_timeouts).toBe(2);
+    expect(snap.rows[1]!.real_timeouts).toBe(1);
     await expect(start(99, 1, yesterday)).rejects.toThrow(/not_today/);
   });
 
@@ -268,6 +299,8 @@ describe('a day in the database', () => {
     expect(a.prompts).toHaveLength(7);
     const q1 = a.prompts[0];
     expect(q1.prompt_id).toBe(ids[0]);
+    expect(q1.ghost_count).toBe(100);
+    expect(q1.ghost_timeouts).toBe(0);
     const sum = (k: string) => q1.values.reduce((s: number, v: any) => s + v[k], 0);
     expect(sum('rules')).toBe(50);
     expect(sum('ai')).toBe(50);
@@ -279,7 +312,7 @@ describe('row level security', () => {
   it('lets anonymous clients call the game RPCs but not read or write tables', async () => {
     await db.exec('set role anon');
     try {
-      for (const table of ['answers', 'ghost_answers', 'prompt_keys', 'prompt_starts', 'final_scores', 'submit_log']) {
+      for (const table of ['answers', 'ghost_answers', 'prompt_keys', 'prompt_starts', 'final_scores', 'submit_log', 'calibration_snapshots']) {
         await expect(db.query(`select * from ${table} limit 1`), table).rejects.toThrow(/permission denied/);
       }
       await expect(

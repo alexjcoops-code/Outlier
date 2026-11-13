@@ -18,8 +18,8 @@ export const SHARED_FILES = [
   'lib/rng.ts',
   'lib/ukDate.ts',
   'lib/daily.ts',
-  'lib/ghostWeights.ts',
-  'lib/ghostRules.ts',
+  'lib/ghostConfig.ts',
+  'lib/ghostModel.ts',
   'lib/ghostAi.ts',
 ];
 

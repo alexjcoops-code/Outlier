@@ -38,15 +38,23 @@ export type SubmitResult =
 export interface Distribution {
   players: number;
   simulated: boolean;
-  /** Most common answers, biggest first. Shares are 0–1 and weighted like the scoring. */
-  top: { value: number; share: number }[];
+  /**
+   * Every answer given, most common first. Shares are 0–1, weighted exactly as
+   * in the scoring, and add up to 1.
+   */
+  values: { value: number; share: number }[];
 }
 
 export interface AdminPromptStats {
   position: number;
   promptId: string;
   realTotal: number;
-  /** Top answers by combined count. Each list is sorted by value. */
+  /** Real players who saw the prompt and ran out of time. */
+  realTimeouts: number;
+  /** All ghosts, and those who ran out of time. */
+  ghostCount: number;
+  ghostTimeouts: number;
+  /** Answer counts per source, sorted by value. */
   values: { value: number; real: number; rules: number; ai: number }[];
 }
 
@@ -63,7 +71,7 @@ export interface Backend {
   /** Start (or re-join) the timer for a prompt. Prompts must be started in order. */
   startPrompt(date: string, position: number): Promise<{ remainingMs: number }>;
   submitAnswer(date: string, position: number, value: number): Promise<SubmitResult>;
-  /** Only available once the player has finished with that prompt. */
+  /** The whole crowd for a prompt. Only once the player has finished with it, or the day is over. */
   getDistribution(date: string, position: number): Promise<Distribution>;
   getAdminStats(date: string, secret: string): Promise<AdminStats>;
 }

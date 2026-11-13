@@ -1,74 +1,81 @@
 import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
-import { getPrompt, isValidAnswer } from '../../src/prompts.ts';
-import { dailyPromptIds } from '../../src/lib/daily.ts';
+import { getPrompt, isValidAnswer, validAnswers } from '../../src/prompts.ts';
+import { ABILITIES } from '../../src/lib/ghostConfig.ts';
 import {
-  GHOSTS_PER_SOURCE,
-  assembleGhosts,
+  assemblePromptGhosts,
+  buildAiCast,
   buildGhostUserMessage,
+  ghostSystemPrompt,
   parseGhostReply,
+  type AiReplyEntry,
 } from '../../src/lib/ghostAi.ts';
 import { seededRng } from '../../src/lib/rng.ts';
 
-const prompts = dailyPromptIds('2026-11-13').map(getPrompt);
+const ctx = { year: 2026 };
+const prompt = getPrompt('prime-u1000');
+const cast = buildAiCast('2026-11-13');
 
-describe('AI ghost reply handling', () => {
-  it('describes each prompt with its position and range', () => {
-    const msg = buildGhostUserMessage(prompts);
-    prompts.forEach((p, i) => expect(msg).toContain(`${i + 1}. ${p.text}`));
-    expect(msg).toContain('Allowed range');
+describe('the AI cast', () => {
+  it('is 100 people in the configured proportions, the same for a given day', () => {
+    expect(cast).toHaveLength(100);
+    expect(ABILITIES.map((a) => cast.filter((c) => c.ability === a).length)).toEqual([10, 20, 40, 20, 10]);
+    expect(buildAiCast('2026-11-13')).toEqual(cast);
+    expect(buildAiCast('2026-11-14')).not.toEqual(cast);
+    expect(new Set(cast.map((c) => c.id)).size).toBe(100);
   });
 
-  it('parses a clean reply, and one wrapped in a code fence', () => {
-    const reply = JSON.stringify({ prompts: [{ position: 1, answers: [1, 2, 3] }, { position: 2, answers: [9] }] });
-    expect(parseGhostReply(reply)?.get(1)).toEqual([1, 2, 3]);
-    expect(parseGhostReply('```json\n' + reply + '\n```')?.get(2)).toEqual([9]);
-  });
-
-  it('returns null for rubbish', () => {
-    for (const bad of ['', 'Sorry, I cannot', '{"prompts": "no"}', '[1,2,3]', '{"prompts": []}', 'null']) {
-      expect(parseGhostReply(bad), bad).toBeNull();
-    }
-  });
-
-  it('drops non-integer answers while parsing', () => {
-    const reply = JSON.stringify({ prompts: [{ position: 1, answers: [7, '8', 2.5, null, 11] }] });
-    expect(parseGhostReply(reply)?.get(1)).toEqual([7, 11]);
+  it('is described to the model with ability, style and persona', () => {
+    const msg = buildGhostUserMessage(prompt, cast);
+    expect(msg).toContain(prompt.text);
+    expect(msg).toContain(`1 | ${cast[0]!.ability} | ${cast[0]!.style} | ${cast[0]!.persona}`);
+    expect(ghostSystemPrompt()).toMatch(/25 seconds/);
   });
 });
 
-describe('assembling the day’s ghosts', () => {
-  it('uses 100 rule-based ghosts per prompt when the API fails', () => {
-    const { ghosts, aiAccepted } = assembleGhosts(prompts, null, seededRng('a'));
-    expect(ghosts).toHaveLength(700);
-    expect(aiAccepted).toBe(0);
-    expect(ghosts.every((g) => g.source === 'rules')).toBe(true);
-    for (const g of ghosts) expect(isValidAnswer(prompts[g.position - 1]!, g.value)).toBe(true);
+describe('reading the reply', () => {
+  it('parses people by id', () => {
+    const reply = JSON.stringify({ people: [{ id: 1, ability: 'ultra', style: 'safe', attempts: [9, 683], final: 683 }] });
+    expect(parseGhostReply(reply)?.get(1)).toEqual({ attempts: [9, 683], final: 683 });
+    expect(parseGhostReply('```json\n' + reply + '\n```')?.get(1)?.final).toBe(683);
   });
 
-  it('keeps valid AI answers and replaces invalid or missing ones with rule-based samples', () => {
-    const ai = new Map<number, number[]>();
-    prompts.forEach((p, i) => {
-      const valid: number[] = [];
-      for (let n = p.min; n <= p.max && valid.length < 40; n++) if (p.validator(n)) valid.push(n);
-      // Position 1: 30 good answers and 20 bad ones. Position 2: only 10 answers. Position 3: 80 answers.
-      if (i === 0) ai.set(1, [...Array.from({ length: 30 }, (_, k) => valid[k % valid.length]!), ...Array<number>(20).fill(-1)]);
-      else if (i === 1) ai.set(2, Array.from({ length: 10 }, (_, k) => valid[k % valid.length]!));
-      else if (i === 2) ai.set(3, Array.from({ length: 80 }, (_, k) => valid[k % valid.length]!));
-      // Positions 4–7: nothing at all.
-    });
-    const { ghosts, aiAccepted, aiRejected } = assembleGhosts(prompts, ai, seededRng('b'));
-    const count = (position: number, source: string) =>
-      ghosts.filter((g) => g.position === position && g.source === source).length;
+  it('returns null for rubbish', () => {
+    for (const bad of ['', 'Sorry, I cannot', '{"people": "no"}', '[1,2,3]', '{"people": []}', 'null']) {
+      expect(parseGhostReply(bad), bad).toBeNull();
+    }
+  });
+});
 
-    expect(ghosts).toHaveLength(700);
-    expect([count(1, 'ai'), count(1, 'rules')]).toEqual([30, 70]);
-    expect([count(2, 'ai'), count(2, 'rules')]).toEqual([10, 90]);
-    expect([count(3, 'ai'), count(3, 'rules')]).toEqual([GHOSTS_PER_SOURCE, 50]);
-    expect([count(4, 'ai'), count(4, 'rules')]).toEqual([0, 100]);
-    expect(aiAccepted).toBe(90);
-    expect(aiRejected).toBe(20);
-    for (const g of ghosts) expect(isValidAnswer(prompts[g.position - 1]!, g.value)).toBe(true);
+describe('assembling a prompt’s ghosts', () => {
+  it('uses 1,100 rule-based ghosts when the API fails', () => {
+    const { ghosts, stats } = assemblePromptGhosts(prompt, 1, cast, null, seededRng('a'), ctx);
+    expect(ghosts).toHaveLength(1100);
+    expect(stats.used).toBe(false);
+    expect(ghosts.every((g) => g.source === 'rules')).toBe(true);
+  });
+
+  it('keeps valid AI answers, counts invalid ones as time-outs, and fills gaps with rule-based ghosts', () => {
+    const valid = validAnswers(prompt);
+    const reply = new Map<number, AiReplyEntry>();
+    for (const c of cast) {
+      if (c.id <= 60) reply.set(c.id, { attempts: [valid[c.id]!], final: valid[c.id]! });
+      else if (c.id <= 70) reply.set(c.id, { attempts: [9, 4], final: 4 }); // invalid: 4 isn't prime
+      else if (c.id <= 80) reply.set(c.id, { attempts: [1], final: -1 }); // ran out of time
+      // ids 81–100 missing from the reply
+    }
+    const { ghosts, stats } = assemblePromptGhosts(prompt, 3, cast, reply, seededRng('b'), ctx);
+    expect(ghosts).toHaveLength(1100);
+    expect(stats).toEqual({ used: true, answered: 60, timedOut: 10, invalid: 10, missing: 20 });
+    const ai = ghosts.filter((g) => g.source === 'ai');
+    expect(ai).toHaveLength(80);
+    expect(ai.filter((g) => g.value === null)).toHaveLength(20);
+    expect(ghosts.filter((g) => g.source === 'rules')).toHaveLength(1020);
+    // AI ghosts keep the ability and style they were cast with.
+    for (const g of ai) expect(cast.some((c) => c.ability === g.ability && c.style === g.style)).toBe(true);
+    // No invalid answer is ever stored.
+    for (const g of ghosts) if (g.value !== null) expect(isValidAnswer(prompt, g.value)).toBe(true);
+    expect(ghosts.every((g) => g.position === 3)).toBe(true);
   });
 });
 

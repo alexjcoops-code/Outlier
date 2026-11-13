@@ -11,6 +11,7 @@ import { ProgressBoxes } from '../components/ProgressBoxes.tsx';
 import { ResultsView } from '../components/ResultsView.tsx';
 import { Reveal } from '../components/Reveal.tsx';
 import { TimerLine } from '../components/TimerLine.tsx';
+import { YesterdayCrowd } from '../components/YesterdayCrowd.tsx';
 
 interface Props {
   backend: Backend;
@@ -96,6 +97,7 @@ export function PlayPage({ backend, date, navigate, onFinished, onAgain }: Props
           </p>
         )}
         {practice && <p className="pencil start__resume">Random questions, simulated marks, nothing saved.</p>}
+        {!practice && !resuming && <YesterdayCrowd backend={backend} today={date} />}
       </section>
     );
   }
@@ -129,6 +131,7 @@ export function PlayPage({ backend, date, navigate, onFinished, onAgain }: Props
         ) : (
           <Reveal
             key={position}
+            prompt={prompt}
             data={phase.data}
             isLast={position === PROMPTS_PER_DAY}
             onNext={() => void game.next()}

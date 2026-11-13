@@ -1,0 +1,206 @@
+// Rule-based ghost players: people of different ability and playing style.
+//
+// For each (ability, style) pair there is an exact answer distribution over the
+// prompt's valid answers. Ghosts sample from it; the calibration script fits
+// the mix of pairs to real answers using the same distributions.
+//
+// Shared with the Edge Functions: dependency-free, explicit .ts imports.
+
+import { validAnswers, type Prompt } from '../prompts.ts';
+import {
+  ABILITIES,
+  GHOST_CONFIG,
+  STYLES,
+  type Ability,
+  type GhostConfig,
+  type SalienceWeights,
+  type Style,
+} from './ghostConfig.ts';
+import { allDigitsSame, isPalindrome } from './maths.ts';
+import { shuffle, type Rng } from './rng.ts';
+
+export interface GhostPlayer {
+  ability: Ability;
+  style: Style;
+  /** The valid answer handed in, or null if they ran out of time. */
+  value: number | null;
+  /** Wrong numbers typed before the right one (not stored; they only cost time). */
+  invalidTries: number;
+}
+
+export interface GhostContext {
+  /** The year of the game day, for the "current year" boost. */
+  year: number;
+  config?: GhostConfig;
+}
+
+const TIMES_TABLE = new Set<number>();
+for (let a = 2; a <= 12; a++) for (let b = 2; b <= 12; b++) TIMES_TABLE.add(a * b);
+
+/**
+ * How readily a person thinks of answer n. `rank` is n's position among the
+ * prompt's valid answers in ascending order (0 = the smallest).
+ */
+export function salience(n: number, rank: number, prompt: Prompt, year: number, w: SalienceWeights): number {
+  let weight = 1 + w.rank.strength / (1 + rank / w.rank.halfLife);
+  if (rank < w.firstFew.count) weight *= w.firstFew.boost;
+
+  if (n <= 12) weight *= w.small.upTo12;
+  else if (n <= 20) weight *= w.small.upTo20;
+  else if (n <= 100) weight *= w.small.upTo100;
+
+  const extraDigits = String(n).length - 3;
+  if (extraDigits > 0) weight *= Math.pow(w.perExtraDigit, extraDigits);
+
+  const round = n % 10 === 0;
+  if (round) weight *= w.endsIn0;
+  else if (n % 10 === 5) weight *= w.endsIn5;
+
+  const famous = w.famous.numbers.includes(n);
+  const clever = prompt.cleverList.includes(n);
+  const repeated = allDigitsSame(n);
+  if (TIMES_TABLE.has(n)) weight *= w.timesTable;
+  if (famous) weight *= w.famous.boost;
+  if (clever) weight *= w.cleverList;
+  if (n >= w.age.min && n <= w.age.max) weight *= w.age.boost;
+  if (n >= w.birthYear.min && n <= w.birthYear.max) weight *= w.birthYear.boost;
+  if (repeated) weight *= n < 100 ? w.repeatedDigits.twoDigit : w.repeatedDigits.longer;
+  if (n === year) weight *= w.currentYear;
+
+  const patterned = round || n % 10 === 5 || famous || clever || repeated || isPalindrome(n) || n === year;
+  if (n >= w.bigNoPattern.from && !patterned) weight *= w.bigNoPattern.factor;
+  const span = prompt.max - prompt.min;
+  if (span > 0 && n > prompt.max - span * w.nearTop.fraction && !round) weight *= w.nearTop.factor;
+
+  return weight;
+}
+
+export interface AnswerDistribution {
+  /** The prompt's valid answers, ascending. */
+  values: number[];
+  /** Probability of each, given the ghost answers at all. Sums to 1. */
+  probs: number[];
+}
+
+const distCache = new WeakMap<GhostConfig, Map<string, AnswerDistribution>>();
+
+/** Valid answers ranked by salience, most salient first. Returns indices into validAnswers(prompt). */
+function salienceOrder(prompt: Prompt, year: number, config: GhostConfig): { order: number[]; sal: number[] } {
+  const values = validAnswers(prompt);
+  const sal = values.map((n, rank) => salience(n, rank, prompt, year, config.salience));
+  const order = values.map((_, i) => i).sort((a, b) => sal[b]! - sal[a]! || a - b);
+  return { order, sal };
+}
+
+/** Exactly how a ghost of this ability and style answers this prompt. */
+export function answerDistribution(
+  prompt: Prompt,
+  ability: Ability,
+  style: Style,
+  ctx: GhostContext,
+): AnswerDistribution {
+  const config = ctx.config ?? GHOST_CONFIG;
+  let cache = distCache.get(config);
+  if (!cache) distCache.set(config, (cache = new Map()));
+  const key = `${prompt.id}|${ctx.year}|${ability}|${style}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+
+  const values = validAnswers(prompt);
+  const a = config.abilities[ability];
+  const shape = config.styleShape;
+  const { order, sal } = salienceOrder(prompt, ctx.year, config);
+  const weights = new Array<number>(values.length).fill(0);
+
+  const cleverIdx = prompt.cleverList.map((n) => values.indexOf(n)).filter((i) => i >= 0);
+  if (style === 'showoff' && cleverIdx.length > 0) {
+    // Show-offs go for the famous, clever-looking numbers, whatever their ability.
+    for (const i of cleverIdx) weights[i] = Math.pow(sal[i]!, a.salienceExponent);
+  } else {
+    const effective: Style = style === 'showoff' ? 'risk' : style;
+    const poolSize = Math.max(1, Math.ceil(a.reach * values.length));
+    const pool = order.slice(0, poolSize);
+    pool.forEach((i, k) => {
+      const q = poolSize > 1 ? k / (poolSize - 1) : 0;
+      let styleWeight: number;
+      if (effective === 'safe') styleWeight = Math.exp(-shape.safeDecay * q);
+      else if (effective === 'risk') styleWeight = Math.exp(shape.riskGrowth * q);
+      else {
+        styleWeight = Math.exp(-(((q - shape.midCentre) / shape.midWidth) ** 2));
+        if (k === 0 && poolSize > 1) styleWeight *= shape.midFirstAnswer;
+      }
+      weights[i] = Math.pow(sal[i]!, a.salienceExponent) * styleWeight;
+    });
+  }
+
+  const total = weights.reduce((s, x) => s + x, 0);
+  const dist = { values, probs: weights.map((x) => x / total) };
+  cache.set(key, dist);
+  return dist;
+}
+
+/** The answer distribution of an ability level, mixing the playing styles in their configured shares. */
+export function abilityDistribution(prompt: Prompt, ability: Ability, ctx: GhostContext): AnswerDistribution {
+  const config = ctx.config ?? GHOST_CONFIG;
+  const values = validAnswers(prompt);
+  const probs = new Array<number>(values.length).fill(0);
+  for (const style of STYLES) {
+    const d = answerDistribution(prompt, ability, style, ctx);
+    d.probs.forEach((p, i) => (probs[i]! += p * config.styles[style].share));
+  }
+  return { values, probs };
+}
+
+/** Shannon entropy in bits. */
+export function entropy(probs: readonly number[]): number {
+  let h = 0;
+  for (const p of probs) if (p > 0) h -= p * Math.log2(p);
+  return h;
+}
+
+function sampleIndex(probs: readonly number[], rng: Rng): number {
+  let target = rng();
+  for (let i = 0; i < probs.length; i++) {
+    target -= probs[i]!;
+    if (target < 0) return i;
+  }
+  // Rounding: fall back to the last answer with any weight.
+  for (let i = probs.length - 1; i >= 0; i--) if (probs[i]! > 0) return i;
+  return 0;
+}
+
+/** Split `count` into whole numbers in proportion to the shares (largest remainder). */
+export function quotas<K extends string>(shares: Record<K, { share: number }>, keys: readonly K[], count: number): K[] {
+  const total = keys.reduce((s, k) => s + shares[k].share, 0);
+  const exact = keys.map((k) => (shares[k].share / total) * count);
+  const whole = exact.map(Math.floor);
+  let left = count - whole.reduce((s, x) => s + x, 0);
+  const byRemainder = keys.map((_, i) => i).sort((a, b) => exact[b]! - whole[b]! - (exact[a]! - whole[a]!) || a - b);
+  for (const i of byRemainder) {
+    if (left-- <= 0) break;
+    whole[i]!++;
+  }
+  return keys.flatMap((k, i) => Array<K>(whole[i]!).fill(k));
+}
+
+/** A cast of `count` ghosts with abilities and styles in exactly the configured proportions. */
+export function castOf(count: number, rng: Rng, config: GhostConfig = GHOST_CONFIG): { ability: Ability; style: Style }[] {
+  const abilities = shuffle(quotas(config.abilities, ABILITIES, count), rng);
+  const styles = shuffle(quotas(config.styles, STYLES, count), rng);
+  return abilities.map((ability, i) => ({ ability, style: styles[i]! }));
+}
+
+/** One ghost of a given ability and style answering a prompt. */
+export function playGhost(prompt: Prompt, ability: Ability, style: Style, rng: Rng, ctx: GhostContext): GhostPlayer {
+  const config = ctx.config ?? GHOST_CONFIG;
+  const a = config.abilities[ability];
+  const invalidTries = sampleIndex(a.invalidTries, rng);
+  if (rng() < a.timeoutRate) return { ability, style, value: null, invalidTries };
+  const d = answerDistribution(prompt, ability, style, ctx);
+  return { ability, style, value: d.values[sampleIndex(d.probs, rng)]!, invalidTries };
+}
+
+/** `count` rule-based ghosts for a prompt. Deterministic for a given rng seed. */
+export function generateRuleGhosts(prompt: Prompt, count: number, rng: Rng, ctx: GhostContext): GhostPlayer[] {
+  return castOf(count, rng, ctx.config).map(({ ability, style }) => playGhost(prompt, ability, style, rng, ctx));
+}

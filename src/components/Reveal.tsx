@@ -1,25 +1,28 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
+import type { Prompt } from '../prompts.ts';
 import { formatShare, TIERS } from '../lib/scoring.ts';
 import type { RevealData } from '../lib/useGame.ts';
+import { CrowdPlot } from './CrowdPlot.tsx';
 import { Circled, RedDash, RedTick, StarStamp } from './Marks.tsx';
 
 interface Props {
+  prompt: Prompt;
   data: RevealData;
   isLast: boolean;
   onNext: () => void;
 }
 
-/** Auto-advance delay. Long enough to read the mark. */
-const ADVANCE_MS = 3200;
+/** Auto-advance delay: long enough to watch the crowd land and read the mark. */
+const ADVANCE_MS = 4800;
 
 export function basedOn(players: number, simulated: boolean): string {
   const who = `${players.toLocaleString('en-GB')} ${players === 1 ? 'player' : 'players'}`;
   return simulated ? `Based on ${who} + simulated answers` : `Based on ${who}`;
 }
 
-/** The teacher marks the answer: tier, points, how many said the same. */
-export function Reveal({ data, isLast, onNext }: Props) {
+/** The teacher marks the answer, and the crowd shows where you landed. */
+export function Reveal({ prompt, data, isLast, onNext }: Props) {
   const reduce = useReducedMotion();
   const nextRef = useRef<HTMLButtonElement>(null);
   const tier = TIERS[data.tier];
@@ -52,16 +55,35 @@ export function Reveal({ data, isLast, onNext }: Props) {
         )}
       </div>
 
+      <div className="reveal__crowd">
+        <p className="reveal__crowd-title">{missed ? 'Where the crowd went' : 'Where you landed'}</p>
+        {data.crowd ? (
+          <CrowdPlot
+            prompt={prompt}
+            values={data.crowd.values}
+            mine={data.value}
+            animate
+            caption={`Each dot is 1% of answers. ${basedOn(data.crowd.players, data.crowd.simulated)}.`}
+          />
+        ) : (
+          <div className="reveal__crowd-wait" aria-hidden={data.crowd === undefined ? undefined : true}>
+            {data.crowd === undefined ? 'Counting the class…' : "Can't reach the staffroom for the class answers."}
+          </div>
+        )}
+      </div>
+
       <div className="reveal__mark">
         {missed ? (
           <span className="hand reveal__scribble" style={{ fontSize: 34 }}>
             out of time
           </span>
         ) : (
-          <span className={`reveal__tier hl hl--swipe tier-${data.tier}`}>{tier.name}</span>
+          <span className={`reveal__tier hl hl--swipe tier-${data.tier}`} style={{ animationDelay: reduce ? '0ms' : '1.3s' }}>
+            {tier.name}
+          </span>
         )}
-        <motion.span {...fade(0.35)}>
-          <Circled className="reveal__points" delay={0.45}>
+        <motion.span {...fade(1.5)}>
+          <Circled className="reveal__points" delay={reduce ? 0 : 1.6}>
             {missed ? '0' : `+${data.points}`}
           </Circled>
         </motion.span>
@@ -69,30 +91,28 @@ export function Reveal({ data, isLast, onNext }: Props) {
       </div>
 
       {!missed && (
-        <motion.p className="pencil reveal__share" {...fade(0.5)}>
+        <motion.p className="pencil reveal__share" {...fade(1.6)}>
           {data.tier === 'lone'
             ? `Nobody else said ${data.value!.toLocaleString('en-GB')}`
-            : `${formatShare(data.share!)} of players said ${data.value!.toLocaleString('en-GB')}`}
+            : `${formatShare(data.share!)} of answers were ${data.value!.toLocaleString('en-GB')}`}
         </motion.p>
       )}
 
       {data.tier === 'lone' && (
-        <motion.p className="hand reveal__scribble" style={{ rotate: -2 }} {...fade(0.7)}>
+        <motion.p className="hand reveal__scribble" style={{ rotate: -2 }} {...fade(1.8)}>
           well spotted!!
         </motion.p>
       )}
       {data.tier === 'clever' && (
-        <motion.p className="hand reveal__scribble" style={{ rotate: -1.5 }} {...fade(0.7)}>
+        <motion.p className="hand reveal__scribble" style={{ rotate: -1.5 }} {...fade(1.8)}>
           everyone thinks of that
         </motion.p>
       )}
       {data.tier === 'outlier' && (
-        <motion.p className="hand reveal__scribble" style={{ rotate: -1.5 }} {...fade(0.7)}>
+        <motion.p className="hand reveal__scribble" style={{ rotate: -1.5 }} {...fade(1.8)}>
           bold.
         </motion.p>
       )}
-
-      {!missed && <p className="pencil reveal__basis">{basedOn(data.players, data.simulated)}</p>}
 
       <div className="reveal__next">
         <button ref={nextRef} type="button" className="stamp stamp--small" onClick={onNext}>

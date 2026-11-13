@@ -389,54 +389,101 @@
 .admin__meta {
   font-size: 12px;
 }
-.admin__table {
+.admin__scores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+  margin: 8px 0 4px;
+}
+.admin__scores dt {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pencil);
+}
+.admin__scores dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 16px;
+}
+.overlay {
   width: 100%;
   margin-top: 6px;
   border-collapse: collapse;
-  table-layout: fixed;
 }
-.admin__table th,
-.admin__table td {
+.overlay th,
+.overlay td {
   height: 24px;
-  padding: 0 6px 0 0;
+  padding: 0 8px 0 0;
   border-bottom: 1px solid var(--grid);
   text-align: left;
   font-size: 13px;
 }
-.admin__table thead th {
+.overlay thead th {
   font-family: var(--mono);
   font-size: 11.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--pencil);
   border-bottom: 1.5px solid var(--ink);
+  font-weight: 400;
 }
-.admin__table th:first-child {
-  width: 76px;
+.overlay tbody th {
+  width: 84px;
 }
-.admin__cell {
+.overlay td {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.overlay__bars {
   position: relative;
-  white-space: nowrap;
+  flex: 1;
+  height: 14px;
 }
-.admin__bar {
-  display: inline-block;
-  height: 11px;
-  vertical-align: middle;
-  margin-right: 5px;
-}
-.admin__bar--real {
-  background: var(--ink);
-}
-.admin__bar--rules {
+.overlay__ghost {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 14px;
   background: repeating-linear-gradient(-52deg, var(--pencil) 0 1.5px, transparent 1.5px 4px);
   outline: 1px solid var(--pencil);
 }
-.admin__bar--ai {
-  background: var(--tier-rare);
-  outline: 1px solid var(--ink);
+.overlay__real {
+  position: absolute;
+  left: 0;
+  top: 5px;
+  height: 4px;
+  background: var(--redpen);
 }
-.admin__num {
-  font-family: var(--mono);
+.overlay__nums {
+  width: 92px;
+  flex: none;
+  text-align: right;
   font-size: 11.5px;
   color: var(--pencil);
+}
+.overlay__key {
+  display: inline-block;
+  width: 14px;
+  height: 9px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.overlay__key--ghost {
+  background: repeating-linear-gradient(-52deg, var(--pencil) 0 1.5px, transparent 1.5px 4px);
+  outline: 1px solid var(--pencil);
+}
+.overlay__key--real {
+  height: 4px;
+  background: var(--redpen);
+}
+
+.result__strip {
+  display: block;
+  margin: 2px 0 0;
+}
+.result__panel .crowd {
+  margin-bottom: 12px;
 }

@@ -113,14 +113,42 @@ The rule exists twice, in `src/lib/scoring.ts` and as `score_tier` in SQL. `test
 
 ### Ghost players
 
-At 23:30 UK time the `prepare-day` function generates 100 ghost answers per prompt for the next day:
+At 23:30 UK time `prepare-day` generates the next day's simulated players, per prompt: **1,000 rule-based ghosts plus 100 played by Claude**, stored in `ghost_answers(date, position, value, ability, style, source)`. A ghost who runs out of time has a null value.
 
-- **50 rule-based.** Every valid answer is weighted by how likely a person is to think of it (small numbers, the first few valid answers, numbers ending in 0 or 5, times-table numbers, famous numbers, ages, birth years, repeated digits) and sampled. All the weights are in `src/lib/ghostWeights.ts`.
-- **50 from Claude.** One request asks the model to play 50 people of mixed ability under time pressure and return JSON. Every answer is validated; invalid or missing ones are replaced with rule-based samples. If the call fails for any reason, the day gets 100 rule-based ghosts.
+Every ghost has an **ability** and, independently, a **playing style**. The proportions and behaviour of each are in `src/lib/ghostConfig.ts`:
 
-The UI always says what the score is based on, for example "Based on 14 players + simulated answers". Ghosts fade out linearly and are gone at 200 real players.
+| Ability | Share | Knows | Time-outs |
+|---|---|---|---|
+| Ultra smart | 10% | almost every valid answer | ~1% |
+| Pretty smart | 20% | the most salient 60% | ~3% |
+| Average | 40% | the most salient 25% | ~8% |
+| Weak | 20% | the most salient 10% | ~20% |
+| Panicker | 10% | the first thing that comes to mind | ~30% |
 
-`/admin` (password: `ADMIN_SECRET`) shows real, rule-based and AI answer distributions side by side for each prompt, with a "gap" figure (total variation distance between real answers and ghosts), for tuning the weights.
+| Style | Share | Picks |
+|---|---|---|
+| Safe | 40% | the top of what they know |
+| Mid | 35% | skips the first idea, a bit further down |
+| Risk-taker | 15% | the least obvious answer they know |
+| Show-off | 10% | the prompt's "Predictably Clever" list, else acts like a risk-taker |
+
+"Salience" is how readily a person thinks of a number: small numbers, the first few valid answers, numbers ending in 0 or 5, times tables, repeated digits, famous numbers, ages, birth years and the current year are boosted; big patternless numbers and the top of the range are penalised. Salience ranks the valid answers (which sets each ability's reach) and weights the choice within reach, raised to a per-ability power: Ultra smart ghosts barely care, Panickers are driven by it. Every (ability, style) pair therefore has an exact answer distribution (`src/lib/ghostModel.ts`), which ghosts sample from.
+
+**AI ghosts.** One Claude call per prompt (all seven at once) asks the model to play the day's 100-person cast, each with an ability, a style and a short persona ("Year 9 student, average at maths, rushing"), under 25-second pressure, returning JSON `{id, ability, style, attempts, final}`. Every final answer goes through the real validator; an invalid one counts as a time-out, and anyone missing from the reply is replaced by a rule-based ghost with the same ability and style. If the call fails, that prompt gets 1,100 rule-based ghosts.
+
+**Mixing with real players.** Each ghost weighs `(100 ÷ ghostCount) × max(0, 1 − realPlayers ÷ 500)`, so all the ghosts together count as about 100 players at the start of the day and nothing by 500 real players. Lone Wolf needs no other real player and fewer than 0.5 weighted ghosts on the same answer. The UI always says "Based on N players + simulated answers".
+
+**Calibration.** When a day is locked, its real and ghost answer counts per prompt are saved to `calibration_snapshots`. `/admin` (password `ADMIN_SECRET`) overlays real against ghost answers for each prompt, with the Jensen–Shannon divergence for all ghosts, rule-based only and AI only, and time-out rates. To get suggested percentages from the last 14 days:
+
+```bash
+SUPABASE_URL=https://<ref>.supabase.co SUPABASE_SERVICE_ROLE_KEY=<service key> npm run ghosts:suggest
+```
+
+The script treats real answers as a mixture of the 20 (ability, style) distributions, fits the mixture by expectation–maximisation, and prints the suggested ability and style shares, the before and after divergence, and the time-out rate each mix predicts. It changes nothing; you edit `ghostConfig.ts`, run `npm run sync:shared` and redeploy `prepare-day`.
+
+### Where did you land?
+
+The game's signature view. After each answer, the whole crowd falls onto a number line as pencil dots, one dot per 1% of answers, piling up where people agree. Your answer drops in last in red ink: on a tall pile you were Obvious, alone in the empty paper you were an outlier. Very tall piles are cut off with a break mark and labelled with their share. The same plot appears as a thin strip on every question in the results, and the start screen shows a clipping of yesterday's crowd with a right answer nobody gave. Crowd data comes from `get_distribution`, which refuses until you have finished that prompt.
 
 ### Not cheatable from the client
 
@@ -145,12 +173,13 @@ supabase/
   functions/prepare-day   nightly: prompts, answer key, ghosts
   functions/admin-stats   data for /admin
   functions/_shared/core  generated copy of src/ logic (npm run sync:shared)
-tests/unit/               validators, selection, scoring, ghosts, SQL (PGlite)
+scripts/suggest-ghost-mix.ts  suggests ghost ability/style shares from real data
+tests/unit/               validators, selection, scoring, ghost model, calibration, SQL (PGlite)
 tests/e2e/                Playwright: full game, resume, practice, number pad
 ```
 
 ## Changing things
 
 - **Add a prompt:** add it to `src/prompts.ts` and add known valid and invalid cases to `tests/unit/validators.test.ts` (the suite fails if a prompt has no cases, fewer than 8 valid answers, or `^`/`*` in its text). Then `npm run sync:shared` and redeploy `prepare-day`.
-- **Tune the ghosts:** edit `src/lib/ghostWeights.ts`, sync, redeploy.
-- **Change the Claude model or prompt:** `MODEL` in `supabase/functions/prepare-day/index.ts`; the instructions are in `src/lib/ghostAi.ts`.
+- **Tune the ghosts:** edit `src/lib/ghostConfig.ts` (use `/admin` and `npm run ghosts:suggest`), sync, redeploy.
+- **Change the Claude model or prompt:** `MODEL` in `supabase/functions/prepare-day/index.ts`; the instructions and personas are in `src/lib/ghostAi.ts`.

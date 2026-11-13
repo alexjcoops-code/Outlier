@@ -27,11 +27,18 @@ export const TIERS: Record<TierId, TierInfo> = {
 export const TIER_ORDER: readonly TierId[] = ['obvious', 'clever', 'fair', 'rare', 'outlier', 'lone'];
 
 export const MAX_TOTAL = 700;
-/** Ghosts carry no weight once this many real players have played today. */
-export const GHOST_FADE_PLAYERS = 200;
+/** All of a day's ghosts together count as this many players… */
+export const GHOST_CROWD = 100;
+/** …fading to nothing by this many real players. */
+export const GHOST_FADE_PLAYERS = 500;
 
-export function ghostWeight(realPlayers: number): number {
-  return Math.max(0, 1 - realPlayers / GHOST_FADE_PLAYERS);
+/**
+ * The weight of one ghost: (100 ÷ ghostCount) × max(0, 1 − realPlayers ÷ 500).
+ * ghostCount includes ghosts who ran out of time.
+ */
+export function ghostWeight(realPlayers: number, ghostCount: number): number {
+  if (ghostCount <= 0) return 0;
+  return (GHOST_CROWD / ghostCount) * Math.max(0, 1 - realPlayers / GHOST_FADE_PLAYERS);
 }
 
 export interface CrowdCounts {
@@ -39,9 +46,13 @@ export interface CrowdCounts {
   sameReal: number;
   /** All real answers to this prompt, including your own. */
   totalReal: number;
+  /** Ghost answers equal to yours. */
   sameGhost: number;
+  /** Ghosts who answered this prompt (not those who ran out of time). */
   totalGhost: number;
-  /** Distinct real players today; sets the ghost weight. */
+  /** Every ghost for this prompt, including those who ran out of time. */
+  ghostCount: number;
+  /** Distinct real players today. */
   realPlayers: number;
   /** Is the answer on this prompt's "famous numbers" list? */
   clever: boolean;
@@ -54,14 +65,17 @@ export interface Score {
   share: number;
 }
 
+/** Lone Wolf needs fewer than this many weighted ghosts on the same answer. */
+export const LONE_GHOST_LIMIT = 0.5;
+
 export function scoreAnswer(c: CrowdCounts): Score {
-  const w = ghostWeight(c.realPlayers);
+  const w = ghostWeight(c.realPlayers, c.ghostCount);
   const same = c.sameReal + w * c.sameGhost;
   const total = c.totalReal + w * c.totalGhost;
   const share = total > 0 ? same / total : 1;
 
   let tier: TierId;
-  if (c.sameReal <= 1 && w * c.sameGhost === 0) tier = 'lone';
+  if (c.sameReal <= 1 && w * c.sameGhost < LONE_GHOST_LIMIT) tier = 'lone';
   else if (share >= 0.2) tier = 'obvious';
   else if (share < 0.03) tier = 'outlier';
   else if (c.clever) tier = 'clever';

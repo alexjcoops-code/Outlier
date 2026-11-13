@@ -1,0 +1,130 @@
+// Every knob for the ghost players lives here. Tune against /admin and the
+// suggestions from `npm run ghosts:suggest`.
+//
+// Shared with the Edge Functions (scripts/sync-shared.mjs): keep it dependency-free.
+
+export type Ability = 'ultra' | 'pretty' | 'average' | 'weak' | 'panicker';
+export type Style = 'safe' | 'mid' | 'risk' | 'showoff';
+
+export const ABILITIES: readonly Ability[] = ['ultra', 'pretty', 'average', 'weak', 'panicker'];
+export const STYLES: readonly Style[] = ['safe', 'mid', 'risk', 'showoff'];
+
+export interface AbilityConfig {
+  /** Share of ghosts with this ability. All shares add up to 1. */
+  share: number;
+  /**
+   * Knowledge reach: the ghost only knows the top `reach` fraction of the
+   * prompt's valid answers, ranked by human salience (at least one answer).
+   */
+  reach: number;
+  /**
+   * How much salience drives the choice inside what they know: an answer's
+   * weight is salience ^ exponent. Near 0: barely affected. Large: almost entirely.
+   */
+  salienceExponent: number;
+  /** Chance of running out of time on a prompt. */
+  timeoutRate: number;
+  /** Chance of 0, 1, 2, 3 wrong tries before the right answer. */
+  invalidTries: readonly [number, number, number, number];
+}
+
+export interface StyleConfig {
+  /** Share of ghosts with this style, assigned independently of ability. Shares add up to 1. */
+  share: number;
+}
+
+export interface GhostConfig {
+  ruleGhosts: number;
+  aiGhosts: number;
+  abilities: Record<Ability, AbilityConfig>;
+  styles: Record<Style, StyleConfig>;
+  /**
+   * How each style picks within what the ghost knows. q runs from 0 (the most
+   * salient answer they know) to 1 (the least).
+   */
+  styleShape: {
+    /** Safe: weight × e^(−safeDecay·q). */
+    safeDecay: number;
+    /** Mid: a bump centred on q = midCentre with this width; the very first answer is skipped. */
+    midCentre: number;
+    midWidth: number;
+    midFirstAnswer: number;
+    /** Risk-taker: weight × e^(riskGrowth·q). */
+    riskGrowth: number;
+  };
+  salience: SalienceWeights;
+}
+
+/** Multipliers on an answer's salience. 1 means "no effect"; below 1 penalises. */
+export interface SalienceWeights {
+  /** Ascending position among the valid answers: the k-th smallest gets 1 + strength ÷ (1 + k ÷ halfLife). */
+  rank: { strength: number; halfLife: number };
+  /** The first few valid answers everybody blurts out. */
+  firstFew: { count: number; boost: number };
+  small: { upTo12: number; upTo20: number; upTo100: number };
+  /** Each digit beyond three. */
+  perExtraDigit: number;
+  endsIn0: number;
+  endsIn5: number;
+  /** Products in the 2–12 times tables (so up to 12 × 12). */
+  timesTable: number;
+  famous: { boost: number; numbers: readonly number[] };
+  /** Anything on the prompt's own "Predictably Clever" list. */
+  cleverList: number;
+  age: { min: number; max: number; boost: number };
+  birthYear: { min: number; max: number; boost: number };
+  /** Repeated digits: 11, 55 … and 111, 777, 4444 … */
+  repeatedDigits: { twoDigit: number; longer: number };
+  /** The year it is. */
+  currentYear: number;
+  /** Penalty: big numbers (from `from` upwards) with nothing memorable about them. */
+  bigNoPattern: { from: number; factor: number };
+  /** Penalty: the top `fraction` of the prompt's range, unless the number is round. */
+  nearTop: { fraction: number; factor: number };
+}
+
+export const GHOST_CONFIG: GhostConfig = {
+  ruleGhosts: 1000,
+  aiGhosts: 100,
+
+  abilities: {
+    ultra: { share: 0.1, reach: 1.0, salienceExponent: 0.15, timeoutRate: 0.01, invalidTries: [0.95, 0.05, 0, 0] },
+    pretty: { share: 0.2, reach: 0.6, salienceExponent: 0.6, timeoutRate: 0.03, invalidTries: [0.7, 0.3, 0, 0] },
+    average: { share: 0.4, reach: 0.25, salienceExponent: 1.0, timeoutRate: 0.08, invalidTries: [0.4, 0.6, 0, 0] },
+    weak: { share: 0.2, reach: 0.1, salienceExponent: 1.5, timeoutRate: 0.2, invalidTries: [0.15, 0.4, 0.3, 0.15] },
+    panicker: { share: 0.1, reach: 0.04, salienceExponent: 2.5, timeoutRate: 0.3, invalidTries: [0.1, 0.4, 0.3, 0.2] },
+  },
+
+  styles: {
+    safe: { share: 0.4 },
+    mid: { share: 0.35 },
+    risk: { share: 0.15 },
+    showoff: { share: 0.1 },
+  },
+
+  styleShape: {
+    safeDecay: 4,
+    midCentre: 0.3,
+    midWidth: 0.25,
+    midFirstAnswer: 0.08,
+    riskGrowth: 3,
+  },
+
+  salience: {
+    rank: { strength: 9, halfLife: 4 },
+    firstFew: { count: 5, boost: 2.2 },
+    small: { upTo12: 1.8, upTo20: 1.4, upTo100: 1.2 },
+    perExtraDigit: 0.7,
+    endsIn0: 1.7,
+    endsIn5: 1.4,
+    timesTable: 1.5,
+    famous: { boost: 2.6, numbers: [7, 13, 37, 42, 69, 100, 101, 1729] },
+    cleverList: 1.8,
+    age: { min: 11, max: 60, boost: 1.25 },
+    birthYear: { min: 1950, max: 2012, boost: 2.4 },
+    repeatedDigits: { twoDigit: 1.25, longer: 2.2 },
+    currentYear: 2.5,
+    bigNoPattern: { from: 1000, factor: 0.5 },
+    nearTop: { fraction: 0.1, factor: 0.6 },
+  },
+};

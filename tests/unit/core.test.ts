@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { PROMPTS, getPrompt, isValidAnswer, validAnswers } from '../../src/prompts.ts';
 import { parseAnswer } from '../../src/lib/parseAnswer.ts';
 import { ghostWeight, scoreAnswer, formatShare } from '../../src/lib/scoring.ts';
-import { sampleGhosts } from '../../src/lib/ghostRules.ts';
-import { seededRng } from '../../src/lib/rng.ts';
 import {
   addDays,
   formatCountdown,
@@ -64,29 +61,42 @@ describe('UK dates', () => {
 });
 
 describe('scoring', () => {
-  const base = { totalReal: 1, sameReal: 1, totalGhost: 100, sameGhost: 0, realPlayers: 1, clever: false };
+  // 100 ghosts and no real players: each ghost weighs exactly 1.
+  const base = { totalReal: 1, sameReal: 1, totalGhost: 100, sameGhost: 0, ghostCount: 100, realPlayers: 0, clever: false };
 
-  it('fades ghosts out by 200 players', () => {
-    expect(ghostWeight(0)).toBe(1);
-    expect(ghostWeight(50)).toBe(0.75);
-    expect(ghostWeight(200)).toBe(0);
-    expect(ghostWeight(5000)).toBe(0);
+  it('weighs all the ghosts together as 100 players, fading out by 500', () => {
+    expect(ghostWeight(0, 100)).toBe(1);
+    expect(ghostWeight(0, 1100) * 1100).toBeCloseTo(100, 10);
+    expect(ghostWeight(250, 1100) * 1100).toBeCloseTo(50, 10);
+    expect(ghostWeight(500, 1100)).toBe(0);
+    expect(ghostWeight(5000, 1100)).toBe(0);
+    expect(ghostWeight(0, 0)).toBe(0);
   });
 
-  it('Lone Wolf: nobody else, real or ghost', () => {
+  it('Lone Wolf: no other real player, and under half a weighted ghost', () => {
     expect(scoreAnswer(base)).toMatchObject({ tier: 'lone', points: 100 });
     expect(scoreAnswer({ ...base, sameGhost: 1 }).tier).not.toBe('lone');
     expect(scoreAnswer({ ...base, sameReal: 2, totalReal: 2 }).tier).not.toBe('lone');
+    // With 1,100 ghosts each weighs 1/11: five matching ghosts is 0.45 of a player, six is 0.55.
+    const big = { ...base, totalGhost: 1000, ghostCount: 1100 };
+    expect(scoreAnswer({ ...big, sameGhost: 5 }).tier).toBe('lone');
+    expect(scoreAnswer({ ...big, sameGhost: 6 }).tier).not.toBe('lone');
   });
 
-  it('a ghost match stops counting once ghosts have faded', () => {
-    const s = scoreAnswer({ ...base, sameGhost: 5, totalReal: 300, realPlayers: 300 });
+  it('ghost matches stop counting once ghosts have faded', () => {
+    const s = scoreAnswer({ ...base, sameGhost: 50, totalReal: 600, realPlayers: 600 });
     expect(s.tier).toBe('lone');
-    expect(s.share).toBeCloseTo(1 / 300);
+    expect(s.share).toBeCloseTo(1 / 600);
+  });
+
+  it('leaves ghosts who ran out of time out of the share, but not out of the weight', () => {
+    // 1,100 ghosts, 1,000 answered: answered ghosts weigh 100 × 1000/1100 ≈ 90.9 players.
+    const s = scoreAnswer({ ...base, totalGhost: 1000, ghostCount: 1100, sameGhost: 110 });
+    expect(s.share).toBeCloseTo((1 + 10) / (1 + 1000 / 11), 10);
   });
 
   it('applies the share thresholds', () => {
-    const at = (sameGhost: number, clever = false) => scoreAnswer({ ...base, realPlayers: 0, sameGhost, clever });
+    const at = (sameGhost: number, clever = false) => scoreAnswer({ ...base, sameGhost, clever });
     // share = (1 + g) / 101
     expect(at(1).tier).toBe('outlier'); // 1.98%
     expect(at(2).tier).toBe('outlier'); // 2.97%
@@ -102,7 +112,7 @@ describe('scoring', () => {
   });
 
   it('Predictably Clever overrides Fair and Rare, but not Obvious, Outlier or Lone Wolf', () => {
-    const at = (sameGhost: number) => scoreAnswer({ ...base, realPlayers: 0, sameGhost, clever: true });
+    const at = (sameGhost: number) => scoreAnswer({ ...base, sameGhost, clever: true });
     expect(at(0).tier).toBe('lone');
     expect(at(1).tier).toBe('outlier');
     expect(at(3)).toMatchObject({ tier: 'clever', points: 15 });
@@ -111,9 +121,9 @@ describe('scoring', () => {
   });
 
   it('weights ghosts down as players arrive', () => {
-    // 100 real players (w = 0.5): 4 real + 10 ghost matches out of 100 real + 100 ghosts.
-    const s = scoreAnswer({ totalReal: 100, sameReal: 4, totalGhost: 100, sameGhost: 10, realPlayers: 100, clever: false });
-    expect(s.share).toBeCloseTo((4 + 5) / (100 + 50));
+    // 250 real players: ghosts together count as 50.
+    const s = scoreAnswer({ totalReal: 250, sameReal: 10, totalGhost: 100, sameGhost: 10, ghostCount: 100, realPlayers: 250, clever: false });
+    expect(s.share).toBeCloseTo((10 + 5) / (250 + 50));
     expect(s.tier).toBe('rare');
   });
 
@@ -121,37 +131,5 @@ describe('scoring', () => {
     expect(formatShare(0.04)).toBe('4%');
     expect(formatShare(0.004)).toBe('under 1%');
     expect(formatShare(0.236)).toBe('24%');
-  });
-});
-
-describe('rule-based ghosts', () => {
-  it('only ever produce valid answers, for every prompt', () => {
-    for (const p of PROMPTS) {
-      const ghosts = sampleGhosts(p, 100, seededRng(`t:${p.id}`));
-      expect(ghosts).toHaveLength(100);
-      for (const g of ghosts) expect(isValidAnswer(p, g), `${p.id}: ${g}`).toBe(true);
-    }
-  });
-
-  it('are deterministic for a seed', () => {
-    const p = getPrompt('prime-u1000');
-    expect(sampleGhosts(p, 50, seededRng('x'))).toEqual(sampleGhosts(p, 50, seededRng('x')));
-    expect(sampleGhosts(p, 50, seededRng('x'))).not.toEqual(sampleGhosts(p, 50, seededRng('y')));
-  });
-
-  it('favour small and famous numbers but still leave a long tail', () => {
-    const p = getPrompt('prime-u1000');
-    const ghosts = sampleGhosts(p, 20000, seededRng('big'));
-    const count = (n: number) => ghosts.filter((g) => g === n).length;
-    expect(count(2)).toBeGreaterThan(count(683) * 5);
-    expect(count(7)).toBeGreaterThan(count(683) * 5);
-    expect(count(37)).toBeGreaterThan(count(41));
-    // First five answers take a big slice, but nowhere near everything.
-    const firstFive = ghosts.filter((g) => g <= 11).length / ghosts.length;
-    expect(firstFive).toBeGreaterThan(0.25);
-    expect(firstFive).toBeLessThan(0.8);
-    // Plenty of valid answers get no ghost at all in a day's 100: room for Lone Wolf.
-    const day = new Set(sampleGhosts(p, 100, seededRng('day')));
-    expect(day.size).toBeLessThan(validAnswers(p).length / 2);
   });
 });

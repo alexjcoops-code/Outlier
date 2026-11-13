@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Backend, DayResults, DayRow, Distribution } from '../lib/backend/types.ts';
 import { teacherComment } from '../lib/comment.ts';
 import { linkHandler } from '../lib/router.ts';
@@ -6,6 +6,7 @@ import { formatShare, MAX_TOTAL, TIERS } from '../lib/scoring.ts';
 import { shareText } from '../lib/share.ts';
 import { getPrompt } from '../prompts.ts';
 import { Countdown } from './Countdown.tsx';
+import { CrowdPlot } from './CrowdPlot.tsx';
 import { Circled, Scribble } from './Marks.tsx';
 import { basedOn } from './Reveal.tsx';
 
@@ -87,7 +88,7 @@ function NumberLine({ total, average, top10 }: { total: number; average: number 
 
 /** Top answers as hatched pencil bars. Your own answer gets the highlighter. */
 function BarChart({ dist, row }: { dist: Distribution; row: DayRow }) {
-  const bars = dist.top.slice();
+  const bars = dist.values.slice(0, 5);
   if (row.value !== null && row.share !== null && !bars.some((b) => b.value === row.value)) {
     bars.push({ value: row.value, share: row.share });
   }
@@ -126,28 +127,29 @@ function BarChart({ dist, row }: { dist: Distribution; row: DayRow }) {
           })}
         </tbody>
       </table>
-      <p className="pencil bars__basis">{basedOn(dist.players, dist.simulated)}</p>
     </div>
   );
 }
 
 function ResultRow({ row, results, backend }: { row: DayRow; results: DayResults; backend: Backend }) {
   const [open, setOpen] = useState(false);
-  const [dist, setDist] = useState<Distribution | 'loading' | 'error' | null>(null);
+  const [dist, setDist] = useState<Distribution | 'loading' | 'error'>('loading');
   const tier = TIERS[row.tier];
   const prompt = getPrompt(row.promptId);
   const panelId = `dist-${row.position}`;
 
+  const load = () => {
+    setDist('loading');
+    backend
+      .getDistribution(results.date, row.position)
+      .then(setDist)
+      .catch(() => setDist('error'));
+  };
+  useEffect(load, [backend, results.date, row.position]);
+
   const toggle = () => {
-    const willOpen = !open;
-    setOpen(willOpen);
-    if (willOpen && (dist === null || dist === 'error')) {
-      setDist('loading');
-      backend
-        .getDistribution(results.date, row.position)
-        .then(setDist)
-        .catch(() => setDist('error'));
-    }
+    setOpen(!open);
+    if (!open && dist === 'error') load();
   };
 
   return (
@@ -169,11 +171,16 @@ function ResultRow({ row, results, backend }: { row: DayRow; results: DayResults
           )}
           <span className="hand result__points">{row.tier === 'none' ? '0' : `+${row.points}`}</span>
         </span>
+        {!open && typeof dist === 'object' && (
+          <span className="result__strip" aria-hidden="true">
+            <CrowdPlot prompt={prompt} values={dist.values} mine={row.value} compact />
+          </span>
+        )}
         <span className="result__meta pencil">
           {row.share !== null &&
             (row.tier === 'lone' ? 'nobody else said this' : `${formatShare(row.share)} said this`)}
           <span className="result__chev" aria-hidden="true">
-            {open ? 'hide answers' : 'top answers'}
+            {open ? 'hide the crowd' : 'see the crowd'}
           </span>
         </span>
       </button>
@@ -181,7 +188,17 @@ function ResultRow({ row, results, backend }: { row: DayRow; results: DayResults
         <div id={panelId} className="result__panel">
           {dist === 'loading' && <Scribble label="Fetching the class answers" />}
           {dist === 'error' && <p className="pencil">Can't reach the staffroom. Tap again in a moment.</p>}
-          {dist && typeof dist === 'object' && <BarChart dist={dist} row={row} />}
+          {typeof dist === 'object' && (
+            <>
+              <CrowdPlot
+                prompt={prompt}
+                values={dist.values}
+                mine={row.value}
+                caption={`Each dot is 1% of answers. ${basedOn(dist.players, dist.simulated)}.`}
+              />
+              <BarChart dist={dist} row={row} />
+            </>
+          )}
         </div>
       )}
     </li>

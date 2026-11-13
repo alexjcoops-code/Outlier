@@ -44,11 +44,14 @@ create table public.answers (
 );
 create index answers_by_value on public.answers (date, position, value);
 
+-- Simulated players. value is null when the ghost ran out of time.
 create table public.ghost_answers (
   id bigint generated always as identity primary key,
   date date not null,
   position smallint not null check (position between 1 and 7),
-  value integer not null,
+  value integer,
+  ability text not null check (ability in ('ultra', 'pretty', 'average', 'weak', 'panicker')),
+  style text not null check (style in ('safe', 'mid', 'risk', 'showoff')),
   source text not null check (source in ('rules', 'ai'))
 );
 create index ghost_answers_by_value on public.ghost_answers (date, position, value);
@@ -59,6 +62,23 @@ create table public.final_scores (
   total integer not null,
   tiers text[] not null,
   primary key (date, player_id)
+);
+
+-- Real against ghost answers per prompt, saved when a day is locked, for tuning
+-- the ghosts (npm run ghosts:suggest reads the last 14 days).
+create table public.calibration_snapshots (
+  date date not null,
+  position smallint not null,
+  prompt_id text not null,
+  -- {"683": 3, "2": 41, ...}: real answers per value
+  real_counts jsonb not null,
+  real_timeouts integer not null,
+  -- {"683": {"rules": 1, "ai": 0}, ...}: ghost answers per value and source
+  ghost_counts jsonb not null,
+  ghost_count integer not null,
+  ghost_timeouts integer not null,
+  created_at timestamptz not null default now(),
+  primary key (date, position)
 );
 
 -- Days whose scores have been locked.
@@ -93,6 +113,7 @@ alter table public.ghost_answers enable row level security;
 alter table public.final_scores enable row level security;
 alter table public.finalised_days enable row level security;
 alter table public.day_stats enable row level security;
+alter table public.calibration_snapshots enable row level security;
 alter table public.submit_log enable row level security;
 
 revoke all on all tables in schema public from anon, authenticated;
@@ -110,6 +131,14 @@ create policy "prompts are public once their day has started"
   to anon, authenticated
   using (date <= public.uk_today());
 
+create function public.ghost_weight(players integer, ghost_count integer) returns double precision
+language sql immutable
+as $$
+  select case when ghost_count > 0
+    then (100.0 / ghost_count) * greatest(0, 1 - players / 500.0)
+    else 0 end
+$$;
+
 create function public.tier_points(tier text) returns integer
 language sql immutable
 as $$
@@ -126,12 +155,17 @@ $$;
 
 -- The scoring rule. Mirrors scoreAnswer() in src/lib/scoring.ts; a test checks they agree.
 --   same_real / total_real: real answers equal to this one / all real answers (both include it)
---   players: distinct real players today, which sets the ghost weight
+--   same_ghost / total_ghost: ghost answers equal to this one / all ghost answers
+--   ghost_count: every ghost for the prompt, including those who ran out of time
+--   players: distinct real players today
+-- Each ghost weighs (100 ÷ ghost_count) × max(0, 1 − players ÷ 500): together
+-- the ghosts count as about 100 players, fading to nothing by 500 real players.
 create function public.score_tier(
   same_real integer,
   total_real integer,
   same_ghost integer,
   total_ghost integer,
+  ghost_count integer,
   players integer,
   clever boolean,
   out tier text,
@@ -140,11 +174,11 @@ create function public.score_tier(
 language plpgsql immutable
 as $$
 declare
-  w double precision := greatest(0, 1 - players / 200.0);
+  w double precision := public.ghost_weight(players, ghost_count);
   total double precision := total_real + w * total_ghost;
 begin
   share := case when total > 0 then (same_real + w * same_ghost) / total else 1 end;
-  if same_real <= 1 and w * same_ghost = 0 then tier := 'lone';
+  if same_real <= 1 and w * same_ghost < 0.5 then tier := 'lone';
   elsif share >= 0.2 then tier := 'obvious';
   elsif share < 0.03 then tier := 'outlier';
   elsif clever then tier := 'clever';
@@ -180,6 +214,7 @@ begin
     (select count(*)::integer from public.answers a where a.date = p_date and a.position = p_position and a.value = p_value),
     (select count(*)::integer from public.answers a where a.date = p_date and a.position = p_position),
     (select count(*)::integer from public.ghost_answers g where g.date = p_date and g.position = p_position and g.value = p_value),
+    (select count(g.value)::integer from public.ghost_answers g where g.date = p_date and g.position = p_position),
     (select count(*)::integer from public.ghost_answers g where g.date = p_date and g.position = p_position),
     players,
     coalesce((select p_value = any (k.clever_values) from public.prompt_keys k where k.date = p_date and k.position = p_position), false)
@@ -187,7 +222,7 @@ begin
   tier := s.tier;
   share := s.share;
   points := public.tier_points(s.tier);
-  simulated := players < 200
+  simulated := players < 500
     and exists (select 1 from public.ghost_answers g where g.date = p_date and g.position = p_position);
 end;
 $$;
@@ -205,15 +240,17 @@ as $$
     select position, count(*)::integer as c from public.answers where date = p_date group by position
   ),
   ghost_counts as (
-    select position, value, count(*)::integer as c from public.ghost_answers where date = p_date group by position, value
+    select position, value, count(*)::integer as c from public.ghost_answers
+    where date = p_date and value is not null group by position, value
   ),
   ghost_totals as (
-    select position, count(*)::integer as c from public.ghost_answers where date = p_date group by position
+    select position, count(value)::integer as answered, count(*)::integer as everyone
+    from public.ghost_answers where date = p_date group by position
   ),
   scored as (
     select a.player_id, a.position,
       (public.score_tier(
-        rc.c, rt.c, coalesce(gc.c, 0), coalesce(gt.c, 0), n.players,
+        rc.c, rt.c, coalesce(gc.c, 0), coalesce(gt.answered, 0), coalesce(gt.everyone, 0), n.players,
         coalesce(a.value = any (k.clever_values), false)
       )).tier as tier
     from public.answers a
@@ -419,7 +456,7 @@ begin
     'final', v_final,
     'total', v_total,
     'players', v_players,
-    'simulated', v_players < 200 and exists (select 1 from ghost_answers where date = p_date),
+    'simulated', v_players < 500 and exists (select 1 from ghost_answers where date = p_date),
     'average', case when v_stats.players > 0 then v_stats.average end,
     'top10', case when v_stats.players > 0 then v_stats.top10 end,
     'rows', v_rows
@@ -429,8 +466,9 @@ $$;
 
 -- ───────────────────────────── RPC: get_distribution ─────────────────────────────
 
--- The most common answers to a prompt. No peeking: only once the player has
--- answered it, run out of time on it, or the day is over.
+-- The whole crowd for a prompt: every answer given, most common first, with
+-- shares weighted exactly as in the scoring. No peeking: only once the player
+-- has answered it, run out of time on it, or the day is over.
 create function public.get_distribution(p_date date, p_position integer, p_player_id uuid)
 returns jsonb
 language plpgsql stable security definer
@@ -439,8 +477,7 @@ as $$
 declare
   v_players integer;
   v_w double precision;
-  v_total double precision;
-  v_top jsonb;
+  v_values jsonb;
 begin
   if not (
     p_date < uk_today()
@@ -455,38 +492,32 @@ begin
   end if;
 
   v_players := day_players(p_date);
-  v_w := greatest(0, 1 - v_players / 200.0);
+  v_w := ghost_weight(
+    v_players,
+    (select count(*)::integer from ghost_answers where date = p_date and position = p_position)
+  );
 
-  with counts as (
-    select value, sum(weight) as weight
-    from (
-      select value, 1::double precision as weight from answers where date = p_date and position = p_position
-      union all
-      select value, v_w from ghost_answers where date = p_date and position = p_position and v_w > 0
-    ) every_answer
-    group by value
-  )
-  select sum(weight) into v_total from counts;
-
-  with counts as (
-    select value, sum(weight) as weight
-    from (
-      select value, 1::double precision as weight from answers where date = p_date and position = p_position
-      union all
-      select value, v_w from ghost_answers where date = p_date and position = p_position and v_w > 0
-    ) every_answer
-    group by value
+  with every_answer as (
+    select value, 1::double precision as weight from answers where date = p_date and position = p_position
+    union all
+    select value, v_w from ghost_answers
+    where date = p_date and position = p_position and value is not null and v_w > 0
   ),
-  top as (
-    select value, weight from counts order by weight desc, value asc limit 5
+  counts as (
+    select value, sum(weight) as weight from every_answer group by value
+  ),
+  total as (select sum(weight) as t from counts)
+  select coalesce(
+    jsonb_agg(jsonb_build_object('value', c.value, 'share', c.weight / total.t) order by c.weight desc, c.value asc),
+    '[]'::jsonb
   )
-  select coalesce(jsonb_agg(jsonb_build_object('value', value, 'share', weight / v_total) order by weight desc, value asc), '[]'::jsonb)
-  into v_top from top;
+  into v_values
+  from counts c, total;
 
   return jsonb_build_object(
     'players', v_players,
-    'simulated', v_players < 200 and exists (select 1 from ghost_answers where date = p_date and position = p_position),
-    'top', v_top
+    'simulated', v_players < 500 and exists (select 1 from ghost_answers where date = p_date and position = p_position),
+    'values', v_values
   );
 end;
 $$;
@@ -511,6 +542,31 @@ begin
   select p_date, ds.player_id, ds.total, ds.tiers from day_scores(p_date) ds
   on conflict do nothing;
   get diagnostics v_count = row_count;
+
+  -- Save real against ghost answers for calibration.
+  insert into calibration_snapshots
+    (date, position, prompt_id, real_counts, real_timeouts, ghost_counts, ghost_count, ghost_timeouts)
+  select d.date, d.position, d.prompt_id,
+    coalesce((
+      select jsonb_object_agg(value::text, n)
+      from (select value, count(*) as n from answers a where a.date = d.date and a.position = d.position group by value) r
+    ), '{}'::jsonb),
+    (select count(*)::integer from prompt_starts s
+      where s.date = d.date and s.position = d.position
+        and not exists (select 1 from answers a where a.date = s.date and a.position = s.position and a.player_id = s.player_id)),
+    coalesce((
+      select jsonb_object_agg(value::text, jsonb_build_object('rules', rules, 'ai', ai))
+      from (
+        select value, count(*) filter (where source = 'rules') as rules, count(*) filter (where source = 'ai') as ai
+        from ghost_answers g where g.date = d.date and g.position = d.position and g.value is not null
+        group by value
+      ) gh
+    ), '{}'::jsonb),
+    (select count(*)::integer from ghost_answers g where g.date = d.date and g.position = d.position),
+    (select count(*)::integer from ghost_answers g where g.date = d.date and g.position = d.position and g.value is null)
+  from daily_prompts d
+  where d.date = p_date
+  on conflict do nothing;
   insert into finalised_days (date) values (p_date) on conflict do nothing;
   return v_count;
 end;
@@ -541,7 +597,7 @@ $$;
 -- Used by the prepare-day Edge Function: writes a day's prompts, answer key and
 -- ghosts in one transaction. Returns false (and changes nothing) if the day exists.
 --   p_prompts: [{ "position": 1, "prompt_id": "...", "valid": [..], "clever": [..] }, ...]
---   p_ghosts:  [{ "position": 1, "value": 7, "source": "rules" }, ...]
+--   p_ghosts:  [{ "position": 1, "value": 7 or null, "ability": "average", "style": "safe", "source": "rules" }, ...]
 create function public.install_day(p_date date, p_prompts jsonb, p_ghosts jsonb) returns boolean
 language plpgsql volatile security definer
 set search_path = public
@@ -566,12 +622,14 @@ begin
     array(select jsonb_array_elements_text(x -> 'clever')::integer)
   from jsonb_array_elements(p_prompts) x;
 
-  -- Ghosts must be valid answers too; anything else is dropped here as a last line of defence.
-  insert into ghost_answers (date, position, value, source)
-  select p_date, (g ->> 'position')::smallint, (g ->> 'value')::integer, g ->> 'source'
+  -- A ghost's answer must be valid (or null: out of time). Anything else is
+  -- stored as a time-out here, as a last line of defence.
+  insert into ghost_answers (date, position, value, ability, style, source)
+  select p_date, (g ->> 'position')::smallint,
+    case when (g ->> 'value')::integer = any (k.valid_values) then (g ->> 'value')::integer end,
+    g ->> 'ability', g ->> 'style', g ->> 'source'
   from jsonb_array_elements(p_ghosts) g
-  join prompt_keys k on k.date = p_date and k.position = (g ->> 'position')::smallint
-  where (g ->> 'value')::integer = any (k.valid_values);
+  join prompt_keys k on k.date = p_date and k.position = (g ->> 'position')::smallint;
 
   return true;
 end;
@@ -590,6 +648,14 @@ as $$
         'position', d.position,
         'prompt_id', d.prompt_id,
         'real_total', (select count(*) from answers a where a.date = d.date and a.position = d.position),
+        'real_timeouts', (
+          select count(*) from prompt_starts s
+          where s.date = d.date and s.position = d.position
+            and s.started_at + interval '28 seconds' < clock_timestamp()
+            and not exists (select 1 from answers a where a.date = s.date and a.position = s.position and a.player_id = s.player_id)
+        ),
+        'ghost_count', (select count(*) from ghost_answers g where g.date = d.date and g.position = d.position),
+        'ghost_timeouts', (select count(*) from ghost_answers g where g.date = d.date and g.position = d.position and g.value is null),
         'values', coalesce((
           select jsonb_agg(jsonb_build_object('value', v.value, 'real', v.real, 'rules', v.rules, 'ai', v.ai) order by v.value)
           from (
@@ -600,7 +666,7 @@ as $$
             from (
               select value, 'real' as source from answers a where a.date = d.date and a.position = d.position
               union all
-              select value, source from ghost_answers g where g.date = d.date and g.position = d.position
+              select value, source from ghost_answers g where g.date = d.date and g.position = d.position and g.value is not null
             ) every_answer
             group by value
           ) v

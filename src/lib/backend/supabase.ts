@@ -122,7 +122,15 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
       const raw = data as {
         date: string;
         players: number;
-        prompts: { position: number; prompt_id: string; real_total: number; values: AdminStats['prompts'][number]['values'] }[];
+        prompts: {
+          position: number;
+          prompt_id: string;
+          real_total: number;
+          real_timeouts: number;
+          ghost_count: number;
+          ghost_timeouts: number;
+          values: AdminStats['prompts'][number]['values'];
+        }[];
       };
       return {
         date: raw.date,
@@ -131,6 +139,9 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
           position: p.position,
           promptId: p.prompt_id,
           realTotal: p.real_total,
+          realTimeouts: p.real_timeouts,
+          ghostCount: p.ghost_count,
+          ghostTimeouts: p.ghost_timeouts,
           values: p.values,
         })),
       };

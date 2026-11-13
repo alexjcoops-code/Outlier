@@ -1,21 +1,98 @@
 import { useState, type FormEvent } from 'react';
 import { Scribble } from '../components/Marks.tsx';
-import type { AdminStats, Backend } from '../lib/backend/types.ts';
+import type { AdminPromptStats, AdminStats, Backend } from '../lib/backend/types.ts';
+import { jensenShannon } from '../lib/divergence.ts';
 import { addDays } from '../lib/ukDate.ts';
 import { getPrompt } from '../prompts.ts';
 
 const SECRET_KEY = 'outlier:admin-secret';
 
-/** Share of a source's answers that went to each value, as a little bar. */
-function Bar({ count, total, kind }: { count: number; total: number; kind: string }) {
-  const pct = total ? (count / total) * 100 : 0;
+const pct = (x: number) => `${(x * 100).toFixed(x < 0.1 ? 1 : 0)}%`;
+
+/** Real answers drawn over the ghost answers, one row per value. Shares, so the sizes compare. */
+function Overlay({ p }: { p: AdminPromptStats }) {
+  const ghostTotal = p.values.reduce((s, v) => s + v.rules + v.ai, 0);
+  const rows = p.values
+    .map((v) => ({
+      value: v.value,
+      real: p.realTotal ? v.real / p.realTotal : 0,
+      ghost: ghostTotal ? (v.rules + v.ai) / ghostTotal : 0,
+    }))
+    .sort((a, b) => Math.max(b.real, b.ghost) - Math.max(a.real, a.ghost) || a.value - b.value)
+    .slice(0, 14)
+    .sort((a, b) => a.value - b.value);
+  const max = Math.max(0.01, ...rows.map((r) => Math.max(r.real, r.ghost)));
   return (
-    <td className="admin__cell">
-      {count > 0 && (
-        <span className={`admin__bar admin__bar--${kind}`} style={{ width: `${Math.max(2, pct * 0.62)}%` }} />
-      )}
-      <span className="admin__num">{count ? `${pct.toFixed(0)}%` : ''}</span>
-    </td>
+    <table className="overlay">
+      <thead>
+        <tr>
+          <th scope="col">Answer</th>
+          <th scope="col">
+            <span className="overlay__key overlay__key--ghost" /> ghosts <span className="overlay__key overlay__key--real" /> real
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.value}>
+            <th scope="row" className="mono">
+              {r.value.toLocaleString('en-GB')}
+            </th>
+            <td>
+              <span className="overlay__bars">
+                <span className="overlay__ghost" style={{ width: `${(r.ghost / max) * 100}%` }} />
+                <span className="overlay__real" style={{ width: `${(r.real / max) * 100}%` }} />
+              </span>
+              <span className="overlay__nums mono">
+                {pct(r.ghost)} · {p.realTotal ? pct(r.real) : '—'}
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function PromptStats({ p }: { p: AdminPromptStats }) {
+  const real = new Map(p.values.filter((v) => v.real).map((v) => [v.value, v.real]));
+  const ghosts = new Map(p.values.filter((v) => v.rules + v.ai).map((v) => [v.value, v.rules + v.ai]));
+  const rules = new Map(p.values.filter((v) => v.rules).map((v) => [v.value, v.rules]));
+  const ai = new Map(p.values.filter((v) => v.ai).map((v) => [v.value, v.ai]));
+  const aiCount = p.values.reduce((s, v) => s + v.ai, 0);
+  const js = (m: Map<number, number>) => (p.realTotal && m.size ? jensenShannon(real, m).toFixed(2) : '—');
+  const realTimeoutRate = p.realTotal + p.realTimeouts ? p.realTimeouts / (p.realTotal + p.realTimeouts) : null;
+
+  return (
+    <div className="admin__prompt">
+      <h2>
+        <span className="mono pencil">Q{p.position}.</span> {getPrompt(p.promptId).text}
+      </h2>
+      <dl className="admin__scores">
+        <div>
+          <dt>JS divergence</dt>
+          <dd>{js(ghosts)}</dd>
+        </div>
+        <div>
+          <dt>rules only</dt>
+          <dd>{js(rules)}</dd>
+        </div>
+        <div>
+          <dt>AI only</dt>
+          <dd>{aiCount ? js(ai) : '—'}</dd>
+        </div>
+        <div>
+          <dt>time-outs</dt>
+          <dd>
+            {realTimeoutRate === null ? '—' : pct(realTimeoutRate)} real · {p.ghostCount ? pct(p.ghostTimeouts / p.ghostCount) : '—'} ghost
+          </dd>
+        </div>
+      </dl>
+      <p className="pencil mono admin__meta">
+        {p.realTotal} real answers · {p.ghostCount} ghosts ({aiCount} answered by AI)
+      </p>
+      <Overlay p={p} />
+    </div>
   );
 }
 
@@ -49,7 +126,11 @@ export function AdminPage({ backend, today }: { backend: Backend; today: string 
   return (
     <section className="admin" aria-labelledby="admin-title">
       <h1 id="admin-title">Staffroom</h1>
-      <p className="pencil">Ghost answers against real ones, per question. Tune src/lib/ghostWeights.ts to close the gaps.</p>
+      <p className="pencil">
+        Ghost answers against real ones, per question. JS divergence runs from 0 (identical) to 1 (nothing in common).
+        Tune <span className="mono">src/lib/ghostConfig.ts</span>; <span className="mono">npm run ghosts:suggest</span> proposes new
+        percentages from the last 14 days.
+      </p>
       <form className="admin__form" onSubmit={load}>
         <label>
           Secret
@@ -85,53 +166,9 @@ export function AdminPage({ backend, today }: { backend: Backend; today: string 
               day after →
             </button>
           </p>
-          {stats.prompts.map((p) => {
-            const rules = p.values.reduce((s, v) => s + v.rules, 0);
-            const ai = p.values.reduce((s, v) => s + v.ai, 0);
-            const top = p.values
-              .slice()
-              .sort((a, b) => b.real + b.rules + b.ai - (a.real + a.rules + a.ai) || a.value - b.value)
-              .slice(0, 12);
-            // Total variation distance between real answers and all ghosts: 0 identical, 1 disjoint.
-            const ghosts = rules + ai;
-            const gap =
-              p.realTotal && ghosts
-                ? p.values.reduce((s, v) => s + Math.abs(v.real / p.realTotal - (v.rules + v.ai) / ghosts), 0) / 2
-                : null;
-            return (
-              <div key={p.position} className="admin__prompt">
-                <h2>
-                  <span className="mono pencil">Q{p.position}.</span> {getPrompt(p.promptId).text}
-                </h2>
-                <p className="pencil mono admin__meta">
-                  {p.realTotal} real · {rules} rule ghosts · {ai} AI ghosts
-                  {gap !== null && ` · gap ${(gap * 100).toFixed(0)}%`}
-                </p>
-                <table className="admin__table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Answer</th>
-                      <th scope="col">Real</th>
-                      <th scope="col">Rules</th>
-                      <th scope="col">AI</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {top.map((v) => (
-                      <tr key={v.value}>
-                        <th scope="row" className="mono">
-                          {v.value.toLocaleString('en-GB')}
-                        </th>
-                        <Bar count={v.real} total={p.realTotal} kind="real" />
-                        <Bar count={v.rules} total={rules} kind="rules" />
-                        <Bar count={v.ai} total={ai} kind="ai" />
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            );
-          })}
+          {stats.prompts.map((p) => (
+            <PromptStats key={p.position} p={p} />
+          ))}
         </>
       )}
     </section>
