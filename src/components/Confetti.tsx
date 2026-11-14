@@ -55,21 +55,26 @@ export function ConfettiLayer() {
     resize();
     window.addEventListener('resize', resize);
 
-    const frame = () => {
+    let last = 0;
+    const frame = (now: number) => {
+      // Tuned at 60 fps; scale every step by the real time since the last frame.
+      const k = last ? Math.min(3, (now - last) / (1000 / 60)) : 1;
+      last = now;
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       const h = window.innerHeight;
       pieces = pieces.filter((p) => p.y < h + 40 && p.life > 0);
       for (const p of pieces) {
-        p.vy += p.kind === 'star' ? 0.22 : 0.17;
-        p.vx *= 0.985;
-        p.vy *= 0.985;
+        p.vy += (p.kind === 'star' ? 0.22 : 0.17) * k;
+        const drag = Math.pow(0.985, k);
+        p.vx *= drag;
+        p.vy *= drag;
         // Paper flutters as it falls.
         const flutter = p.kind === 'star' ? 0 : Math.sin(p.phase) * 0.6;
-        p.phase += 0.12;
-        p.x += p.vx + flutter;
-        p.y += Math.min(p.vy, p.kind === 'star' ? 9 : 3.2);
-        p.rot += p.spin;
-        p.life -= 1;
+        p.phase += 0.12 * k;
+        p.x += (p.vx + flutter) * k;
+        p.y += Math.min(p.vy, p.kind === 'star' ? 9 : 3.2) * k;
+        p.rot += p.spin * k;
+        p.life -= k;
         const alpha = Math.min(1, p.life / 30);
 
         ctx.save();
@@ -132,9 +137,11 @@ export function ConfettiLayer() {
         const isStar = i < b.stars;
         const r = Math.random();
         const kind: Kind = isStar ? 'star' : r < 0.55 ? 'chad' : r < 0.8 ? 'strip' : 'fleck';
-        // Thrown upwards in a fan.
-        const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.95;
-        const speed = (isStar ? 7 : 5) + Math.random() * (isStar ? 8 : 9);
+        // Flicked out to both sides and a little upwards, so it falls beside and below
+        // the mark rather than over the question and your answer.
+        const side = Math.random() < 0.5 ? -1 : 1;
+        const angle = (side < 0 ? Math.PI : 0) - side * (Math.random() * 0.55);
+        const speed = (isStar ? 5 : 4) + Math.random() * (isStar ? 6 : 7);
         pieces.push({
           kind,
           x: b.x + (Math.random() - 0.5) * 30,
@@ -151,6 +158,7 @@ export function ConfettiLayer() {
       }
       if (!running) {
         running = true;
+        last = 0;
         raf = requestAnimationFrame(frame);
       }
     };

@@ -1,3 +1,4 @@
+import { MOTION } from '../lib/motion.ts';
 import { TIER_HEX, formatAnswer } from '../lib/format.ts';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
@@ -8,7 +9,7 @@ import type { RevealData } from '../lib/useGame.ts';
 import { CountUp } from './CountUp.tsx';
 import { CrowdPlot } from './CrowdPlot.tsx';
 import { InkStamp } from './InkStamp.tsx';
-import { Circled, RedDash, RedTick, StarStamp } from './Marks.tsx';
+import { Circled, RedDash, RedTick } from './Marks.tsx';
 
 interface Props {
   prompt: Prompt;
@@ -18,9 +19,9 @@ interface Props {
 }
 
 /** Auto-advance delay: long enough to watch the crowd land and read the mark. */
-const ADVANCE_MS = 6200;
+const ADVANCE_MS = MOTION.advanceMs;
 /** When the mark lands, just after the red ball. */
-const MARK_AT = 2.3;
+const MARK_AT = MOTION.markAt;
 
 const TIER_INK = TIER_HEX;
 
@@ -115,7 +116,6 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
             </span>
           )}
         </motion.span>
-        {data.tier === 'lone' && <StarStamp delay={MARK_AT + 0.9} />}
       </div>
 
       {!missed && (
@@ -123,22 +123,22 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
           {data.tier === 'lone'
             ? `Nobody else said ${formatAnswer(data.value!)}`
             : `${formatShare(data.share!)} of answers were ${formatAnswer(data.value!)}`}
-          {data.tier === 'lone' && <span className="hand reveal__aside"> well spotted!!</span>}
           {data.tier === 'clever' && <span className="hand reveal__aside"> everyone thinks of that</span>}
-          {data.tier === 'outlier' && <span className="hand reveal__aside"> bold.</span>}
         </motion.p>
       )}
 
+      {/* The stamp lands beside the result it's about, never over the rack. */}
+      {fan.stamp && !missed && (
+        <InkStamp
+          text={fan.stamp.text}
+          ink={fan.stamp.ink}
+          delay={MARK_AT + 0.15}
+          scale={data.tier === 'lone' ? 1.05 : 0.9}
+          className="reveal__stamp"
+        />
+      )}
+
       <div className="reveal__crowd">
-        {fan.stamp && (
-          <InkStamp
-            text={fan.stamp.text}
-            ink={fan.stamp.ink}
-            delay={MARK_AT + 0.15}
-            scale={data.tier === 'lone' ? 1.3 : 1}
-            className="reveal__stamp"
-          />
-        )}
         <p className="reveal__crowd-title">{missed ? 'Where the crowd went' : 'Where you landed'}</p>
         {data.crowd ? (
           <CrowdPlot

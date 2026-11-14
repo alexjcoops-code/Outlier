@@ -604,9 +604,9 @@
   position: relative;
 }
 .ink-stamp.reveal__stamp {
-  position: absolute;
-  top: 26px;
-  right: 6px;
+  display: block;
+  width: fit-content;
+  margin: 6px 0 -4px 10px;
   z-index: 3;
 }
 .ink-stamp {
@@ -671,5 +671,31 @@
   }
   100% {
     transform: rotate(-0.6deg) scale(1);
+  }
+}
+
+/* Short phones: the result has to land on screen. Tier and score share one row,
+   the stamp shrinks and tucks under them, so the rack (and your ball) stays in view. */
+@media (max-height: 760px) {
+  .question:has(.reveal) .reveal__mark {
+    gap: 4px 10px;
+    margin-top: 8px;
+    min-height: 0;
+  }
+  .question:has(.reveal) .reveal__tier {
+    font-size: 21px;
+  }
+  .question:has(.reveal) .circled {
+    padding: 5px 13px 7px;
+  }
+  .question:has(.reveal) .reveal__points .circled__text {
+    font-size: 29px;
+  }
+  .question:has(.reveal) .ink-stamp.reveal__stamp {
+    font-size: 13px !important;
+    margin: 8px 0 0 4px;
+  }
+  .question:has(.reveal) .reveal__crowd {
+    margin-top: 8px;
   }
 }

@@ -104,7 +104,8 @@ function drawRack(
     ctx.fillText(short(prompt.max), L.width - L.left, L.floor + 20);
   }
 
-  // The balls: graphite pellets, and one red one.
+  // The balls: flat pencil discs, and yours in red pen with a ring round it, so it
+  // reads by shape as well as colour (docs/art-direction.md: marks are flat).
   for (const b of balls) {
     const sy = 1 - b.squash;
     const sx = 1 + b.squash * 0.7;
@@ -112,24 +113,25 @@ function drawRack(
     ctx.translate(b.x, b.y + r);
     ctx.scale(sx, sy);
     ctx.translate(0, -r);
-    if (compact) {
-      ctx.fillStyle = b.mine ? RED : 'rgba(107,107,107,0.75)';
-    } else {
-      const g = ctx.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.1, 0, 0, r);
-      if (b.mine) {
-        g.addColorStop(0, '#ff9a8a');
-        g.addColorStop(0.55, RED);
-        g.addColorStop(1, '#7f1717');
-      } else {
-        g.addColorStop(0, '#b4b4b4');
-        g.addColorStop(0.6, '#666666');
-        g.addColorStop(1, '#3f3f3f');
-      }
-      ctx.fillStyle = g;
-    }
     ctx.beginPath();
-    ctx.arc(0, 0, b.mine && !compact ? r + 0.6 : r, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    if (b.mine) {
+      ctx.fillStyle = RED;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, 0, r + Math.max(1.6, r * 0.55), 0, Math.PI * 2);
+      ctx.strokeStyle = RED;
+      ctx.lineWidth = compact ? 1 : 1.5;
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = 'rgba(107, 107, 107, 0.42)';
+      ctx.fill();
+      if (!compact) {
+        ctx.strokeStyle = 'rgba(70, 70, 70, 0.8)';
+        ctx.lineWidth = 0.9;
+        ctx.stroke();
+      }
+    }
     ctx.restore();
   }
 

@@ -650,9 +650,13 @@ function RoundReveal({ state, now }: { state: VersusState; now: number }) {
               {ghost(s.seat) && <span className="register__ghost">ghost</span>}
             </span>
             <span className={`answers__value mono ${s.value === null ? 'answers__value--none' : ''}`}>{s.value === null ? 'no answer' : formatAnswer(s.value)}</span>
-            <span className="answers__tier" style={{ background: `var(--tier-${s.tier})` }}>
-              {TIERS[s.tier].name}
-            </span>
+            {s.tier === 'none' ? (
+              <span />
+            ) : (
+              <span className="answers__tier" style={{ background: `var(--tier-${s.tier})` }}>
+                {TIERS[s.tier].name}
+              </span>
+            )}
             <span className="answers__points mono">
               {s.sharedWith.length > 0 ? (
                 <>

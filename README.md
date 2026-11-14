@@ -171,7 +171,7 @@ The rarer the answer, the bigger the fuss (`src/lib/celebrate.ts`):
 | Fair | The points count up into the red circle; one tick. |
 | Rare | Two ticks (a teacher's "very good"), a small burst of hole-punch confetti, a light buzz. |
 | Outlier | The red ball knocks the crowd into the air, a red BOLD stamp slams onto the page, the page jolts, confetti with gold stars. |
-| Lone Wolf | The crowd scatters off the red ball, a big NOBODY ELSE stamp in green pen, a gold star, the page shakes, a shower of confetti and stars, a longer buzz. |
+| Lone Wolf | The crowd scatters off the red ball, a NOBODY ELSE stamp in green pen, the page shakes, confetti and gold stars thrown out to the sides, a longer buzz. |
 
 A good day earns an award stamp on the results page, with confetti when the paper has just been finished: Merit (300+), Distinction (450+), Headteacher's award (600+). Vibration only happens on phones that support it. With reduced motion there is no confetti, shaking, buzzing or flying balls; the stamps and marks simply appear.
 
@@ -226,5 +226,6 @@ tests/e2e/                Playwright: full game, resume, number pad, versus agai
 - To change a question, edit its row in its `family(...)` in `src/prompts.ts`. Every type must keep exactly ten questions. The suite fails if a question has fewer than 8 valid answers, `^`/`*` in its text, more than 135 characters, or shares more than half its answers with another question of its type. The first question of each type also has hand-checked valid and invalid answers in `tests/unit/validators.test.ts`. Then `npm run sync:shared` and redeploy `prepare-day`.
 - `docs/questions.md` lists all 1,000 questions by type, with how many right answers each has. Regenerate it with `npm run questions` after any change (a test checks it's current).
 - To add a type, write a `family('id', 'Name', 'easy' | 'medium' | 'hard', rows, make)` with ten rows, and add hand-checked cases for its first question.
+- The look and feel follow `docs/art-direction.md`: palette roles, shape and motion rules, and what's excluded. Colours and timings live in `src/styles/tokens.css` and `src/lib/motion.ts`.
 - To tune the ghosts, edit `src/lib/ghostConfig.ts` (`/admin` and `npm run ghosts:suggest` tell you what to change), then sync and redeploy.
 - The Claude model is `MODEL` in `supabase/functions/prepare-day/index.ts`. The instructions and personas are in `src/lib/ghostAi.ts`.

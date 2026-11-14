@@ -214,7 +214,7 @@
 }
 .register__total {
   font-weight: 600;
-  border-left: 1.5px solid var(--margin) !important;
+  border-left: 1.5px solid var(--line-margin) !important;
 }
 .register__place {
   width: 2.4em;

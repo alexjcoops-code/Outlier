@@ -2,7 +2,6 @@
   /* Paper and pens */
   --paper: #f5f1e6;
   --grid: #dce3ea;
-  --margin: #d9534f;
   --ink: #1f2a44;
   --pencil: #6b6b6b;
   --redpen: #c62828;
@@ -20,6 +19,24 @@
   --green-ink: #1c7a45;
   --gold: #e8a913;
   --tier-none: transparent;
+
+  /* Roles: what a colour means. Use these in new styles (docs/art-direction.md). */
+  --surface-page: var(--paper);
+  --surface-desk: var(--desk);
+  --line-grid: var(--grid);
+  /* Printed pink, so the margin never competes with the teacher's red pen. */
+  --line-margin: #e48f8c;
+  /* The teacher's attention: your mark, your ball, wrong notes, the last five seconds. */
+  --mark: var(--redpen);
+  --danger-time: var(--redpen);
+  --selected: var(--redpen);
+  --reward-top: var(--green-ink);
+
+  /* Motion (src/lib/motion.ts has the same numbers for script-driven animation). */
+  --t-confirm: 120ms;
+  --t-shake: 200ms;
+  --t-swipe: 300ms;
+  --t-panel: 240ms;
 
   /* Type */
   --mono: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;

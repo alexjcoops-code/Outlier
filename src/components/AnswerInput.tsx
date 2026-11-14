@@ -1,3 +1,4 @@
+import { MOTION } from '../lib/motion.ts';
 import { formatAnswer } from '../lib/format.ts';
 import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -56,7 +57,7 @@ export function AnswerInput({ locked, onSubmit }: Props) {
     clearTimeout(noteTimer.current);
     noteTimer.current = window.setTimeout(() => setNote(null), 1200);
     setValue('');
-    if (!reduce) void shake.start({ x: [0, -6, 6, -6, 6, 0], transition: { duration: 0.2 } });
+    if (!reduce) void shake.start({ x: [0, -6, 6, -6, 6, 0], transition: { duration: MOTION.shakeMs / 1000 } });
     inputRef.current?.focus({ preventScroll: true });
   };
 
