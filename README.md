@@ -171,7 +171,7 @@ The rarer the answer, the bigger the fuss (`src/lib/celebrate.ts`):
 | Fair | The points count up into the red circle; one tick. |
 | Rare | Two ticks (a teacher's "very good"), a small burst of hole-punch confetti, a light buzz. |
 | Outlier | The red ball knocks the crowd into the air, a red BOLD stamp slams onto the page, the page jolts, confetti with gold stars. |
-| Lone Wolf | The crowd scatters off the red ball, a big purple NOBODY ELSE stamp, the page shakes, a shower of confetti and stars, a longer buzz. |
+| Lone Wolf | The crowd scatters off the red ball, a big NOBODY ELSE stamp in green pen, a gold star, the page shakes, a shower of confetti and stars, a longer buzz. |
 
 A good day earns an award stamp on the results page, with confetti when the paper has just been finished: Merit (300+), Distinction (450+), Headteacher's award (600+). Vibration only happens on phones that support it. With reduced motion there is no confetti, shaking, buzzing or flying balls; the stamps and marks simply appear.
 

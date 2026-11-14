@@ -7,14 +7,30 @@
   margin-right: 6px;
 }
 
+/* The lobby is a short worksheet: numbered items, a box to tick. */
+.worksheet {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+.worksheet__item {
+  position: relative;
+  margin-top: 30px;
+}
+.worksheet__item > .margin-note {
+  top: -6px;
+}
+.worksheet__q {
+  display: block;
+  margin-bottom: 6px;
+  padding: 0;
+  font-weight: 560;
+  font-size: 19px;
+  font-variation-settings: 'opsz' 30, 'SOFT' 30;
+}
 .versus__field {
   display: block;
-  margin-top: 26px;
-  max-width: 320px;
-}
-.versus__field > span {
-  display: block;
-  font-size: 13px;
+  max-width: 330px;
 }
 .versus__name,
 .versus__code {
@@ -25,7 +41,7 @@
   border: 0;
   border-bottom: 2px solid var(--ink);
   border-radius: 0;
-  background: rgba(245, 241, 230, 0.6);
+  background: transparent;
   color: var(--ink);
   font-family: var(--hand);
   font-size: 30px;
@@ -38,43 +54,43 @@
 }
 
 .versus__sizes {
-  margin: 22px 0 0;
+  margin: 0;
   padding: 0;
   border: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px 22px;
 }
-.versus__sizes legend {
-  font-size: 13px;
-  margin-bottom: 6px;
-  padding: 0;
-}
-.versus__size {
+.tickbox {
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   min-height: 44px;
-  padding: 0 14px;
-  border: 1.5px dashed var(--pencil);
-  border-radius: 999px;
   font-family: var(--mono);
-  font-size: 15px;
+  font-size: 16px;
   cursor: pointer;
 }
-.versus__size input {
+.tickbox input {
   position: absolute;
   opacity: 0;
-  pointer-events: none;
+  width: 1px;
+  height: 1px;
 }
-.versus__size--on {
-  border: 2px solid var(--redpen);
-  color: var(--redpen);
-  font-weight: 600;
-  transform: rotate(-1.5deg);
+.tickbox__box {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
 }
-.versus__size:has(input:focus-visible) {
-  outline: 2px solid var(--ink);
+.tickbox__box svg {
+  position: absolute;
+  left: -3px;
+  bottom: -2px;
+}
+.tickbox:has(input:focus-visible) .tickbox__box {
+  outline: 2px solid var(--redpen);
   outline-offset: 2px;
 }
 
@@ -85,17 +101,46 @@
   gap: 14px 22px;
   margin-top: 28px;
 }
+.versus__actions--first {
+  margin-top: 6px;
+}
+.versus__hint {
+  font-size: 15px;
+  max-width: 16em;
+  line-height: 1.35;
+}
+.versus__more {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px dashed var(--pencil);
+  display: grid;
+  gap: 10px;
+}
+.versus__more .pencil {
+  font-size: 15px;
+}
 .versus__join {
   display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.versus__join--main {
   align-items: flex-end;
-  gap: 12px;
+  gap: 18px;
 }
 .versus__code {
-  width: 7.5ch;
+  width: 6.2em;
+  height: 34px;
   font-family: var(--mono);
-  font-size: 22px;
-  letter-spacing: 0.12em;
+  font-size: 20px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+.versus__join--main .versus__code {
+  height: 52px;
+  font-size: 30px;
 }
 .versus__error {
   margin-top: 18px;

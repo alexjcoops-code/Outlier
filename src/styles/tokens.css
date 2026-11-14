@@ -6,6 +6,8 @@
   --ink: #1f2a44;
   --pencil: #6b6b6b;
   --redpen: #c62828;
+  /* What the paper lies on, on a wide screen. */
+  --desk: #d8d2c3;
   --highlight: #ffe97a;
 
   /* Tier highlighters */
@@ -14,7 +16,9 @@
   --tier-fair: #ffe97a;
   --tier-rare: #ffb570;
   --tier-outlier: #ff7a8a;
-  --tier-lone: #9b7bff;
+  --tier-lone: #8fdd9c;
+  --green-ink: #1c7a45;
+  --gold: #e8a913;
   --tier-none: transparent;
 
   /* Type */

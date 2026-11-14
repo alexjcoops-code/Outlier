@@ -2,6 +2,7 @@
 // (tests/e2e/fakeSupabase.ts), which runs the real SQL. Real time: about a minute.
 import { expect, test, type Page } from '@playwright/test';
 import { PROMPTS, validAnswers } from '../../src/prompts.ts';
+import { formatAnswer } from '../../src/lib/format.ts';
 
 const byText = new Map(PROMPTS.map((p) => [p.text, p]));
 
@@ -56,7 +57,7 @@ test('two players in a private room: invite link, live rounds, split points, sam
     for (const p of [host, guest]) {
       const rows = p.locator('ol.answers li');
       await expect(rows).toHaveCount(2, { timeout: 10_000 });
-      await expect(rows.filter({ has: p.locator('.answers__name', { hasText: 'Hosty' }) }).locator('.answers__value')).toHaveText(top.toLocaleString('en-GB'));
+      await expect(rows.filter({ has: p.locator('.answers__name', { hasText: 'Hosty' }) }).locator('.answers__value')).toHaveText(formatAnswer(top));
       if (round === 1) await expect(p.getByText('÷ 2 =').first()).toBeVisible();
     }
   }

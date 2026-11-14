@@ -1,3 +1,4 @@
+import { formatAnswer } from '../lib/format.ts';
 import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { RedTick } from './Marks.tsx';
@@ -73,7 +74,7 @@ export function AnswerInput({ locked, onSubmit }: Props) {
     inputRef.current?.focus({ preventScroll: true });
   };
 
-  const shown = locked !== null ? locked.toLocaleString('en-GB') : value;
+  const shown = locked !== null ? formatAnswer(locked) : value;
 
   return (
     <form className="answer" onSubmit={handIn} noValidate>

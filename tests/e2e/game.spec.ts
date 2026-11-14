@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { PROMPTS, validAnswers } from '../../src/prompts.ts';
+import { formatAnswer } from '../../src/lib/format.ts';
 
 const byText = new Map(PROMPTS.map((p) => [p.text, p]));
 
@@ -79,7 +80,7 @@ test('a full game: retries, a time-out, results, share text, resume and history'
       const rack = reveal.locator('figure.crowd');
       await expect(rack).toHaveAttribute('data-mine', 'yes');
       expect(Number(await rack.getAttribute('data-balls'))).toBeGreaterThanOrEqual(20);
-      await expect(reveal.getByRole('img', { name: new RegExp(`Your answer ${answer.toLocaleString('en-GB')}`) })).toBeVisible();
+      await expect(reveal.getByRole('img', { name: new RegExp(`Your answer ${formatAnswer(answer)}`) })).toBeVisible();
     }
     await page.getByRole('button', { name: q === 7 ? 'See marks' : 'Next question' }).click();
   }
@@ -186,7 +187,7 @@ test('versus: a whole match against ghosts, then the register', async ({ page })
     const me = answers.locator('.answers__row--me');
     await expect(me).toContainText('Tester');
     if (round === 3) await expect(me.locator('.answers__value')).toHaveText('no answer');
-    else await expect(me.locator('.answers__value')).toHaveText(valid[valid.length - 1]!.toLocaleString('en-GB'));
+    else await expect(me.locator('.answers__value')).toHaveText(formatAnswer(valid[valid.length - 1]!));
   }
   await stepUntil(page, '#final-title');
 

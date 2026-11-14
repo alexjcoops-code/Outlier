@@ -1,3 +1,4 @@
+import { formatAnswer } from '../lib/format.ts';
 import { useState, type FormEvent } from 'react';
 import { Scribble } from '../components/Marks.tsx';
 import type { AdminPromptStats, AdminStats, Backend } from '../lib/backend/types.ts';
@@ -36,7 +37,7 @@ function Overlay({ p }: { p: AdminPromptStats }) {
         {rows.map((r) => (
           <tr key={r.value}>
             <th scope="row" className="mono">
-              {r.value.toLocaleString('en-GB')}
+              {formatAnswer(r.value)}
             </th>
             <td>
               <span className="overlay__bars">

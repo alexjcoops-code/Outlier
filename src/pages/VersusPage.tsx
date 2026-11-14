@@ -1,3 +1,4 @@
+import { formatAnswer, TIER_HEX, GREEN_INK } from '../lib/format.ts';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { AnswerInput } from '../components/AnswerInput.tsx';
@@ -146,6 +147,8 @@ function Lobby({ backend, navigate, onEnter }: { backend: VersusBackend; navigat
     }
   };
 
+  const ghostsLabel = `Play ${size - 1} ${size === 2 ? 'ghost' : 'ghosts'}`;
+
   const join = (e: FormEvent) => {
     e.preventDefault();
     const c = normaliseCode(code);
@@ -172,66 +175,110 @@ function Lobby({ backend, navigate, onEnter }: { backend: VersusBackend; navigat
         </p>
       )}
 
-      <label className="versus__field">
-        <span className="pencil mono">Name on your paper</span>
-        <input
-          className="versus__name"
-          value={name}
-          maxLength={20}
-          autoComplete="nickname"
-          onChange={(e) => setName(e.target.value)}
-          onBlur={() => setName((n) => cleanName(n) || randomName())}
-        />
-      </label>
-
-      {!invited && (
-        <fieldset className="versus__sizes">
-          <legend className="pencil mono">How many players</legend>
-          {VERSUS_SIZES.map((s) => (
-            <label key={s} className={`versus__size ${s === size ? 'versus__size--on' : ''}`}>
-              <input type="radio" name="size" value={s} checked={s === size} onChange={() => setSize(s)} />
-              {versusLabel(s)}
-            </label>
-          ))}
-        </fieldset>
-      )}
-
-      <div className="versus__actions">
-        {online && !invited && (
-          <>
-            <button type="button" className="stamp" disabled={busy !== null} onClick={() => void go('quick', (n) => backend.quickMatch(n, size))}>
-              {busy === 'quick' ? 'Finding…' : 'Find players'}
-            </button>
-            <button type="button" className="stamp stamp--ghost" disabled={busy !== null} onClick={() => void go('room', (n) => backend.createRoom(n, size))}>
-              {busy === 'room' ? 'Making…' : 'Make a room for friends'}
-            </button>
-          </>
-        )}
-        {online && (
-          <form className="versus__join" onSubmit={join}>
+      <ol className="worksheet">
+        <li className="worksheet__item">
+          <span className="margin-note" aria-hidden="true">
+            1.
+          </span>
+          <label className="versus__field">
+            <span className="worksheet__q">Name on your paper</span>
             <input
-              className="versus__code mono"
-              value={code}
-              placeholder="CODE"
-              aria-label="Room code"
-              autoCapitalize="characters"
-              maxLength={CODE_LENGTH + 2}
-              onChange={(e) => setCode(normaliseCode(e.target.value))}
+              className="versus__name"
+              value={name}
+              maxLength={20}
+              autoComplete="nickname"
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => setName((n) => cleanName(n) || randomName())}
             />
-            <button type="submit" className={`stamp stamp--small ${invited ? '' : 'stamp--ghost'}`} disabled={busy !== null}>
-              {busy === 'join' ? 'Joining…' : 'Join room'}
-            </button>
-          </form>
+          </label>
+        </li>
+
+        {!invited && (
+          <li className="worksheet__item">
+            <span className="margin-note" aria-hidden="true">
+              2.
+            </span>
+            <fieldset className="versus__sizes">
+              <legend className="worksheet__q">How many players?</legend>
+              {VERSUS_SIZES.map((s) => (
+                <label key={s} className="tickbox">
+                  <input type="radio" name="size" value={s} checked={s === size} onChange={() => setSize(s)} />
+                  <span className="tickbox__box" aria-hidden="true">
+                    {s === size && <RedTick size={30} />}
+                  </span>
+                  {versusLabel(s)}
+                </label>
+              ))}
+            </fieldset>
+          </li>
         )}
-        <button
-          type="button"
-          className={`stamp ${online ? 'stamp--ghost stamp--small' : ''}`}
-          disabled={busy !== null}
-          onClick={() => void go('ghosts', (n) => backend.playGhosts(n, size))}
-        >
-          Play {versusLabel(size).replace('1 v ', '')} {size === 2 ? 'ghost' : 'ghosts'}
-        </button>
-      </div>
+
+        <li className="worksheet__item">
+          <span className="margin-note" aria-hidden="true">
+            {invited ? 2 : 3}.
+          </span>
+          {online && invited ? (
+            <form className="versus__join versus__join--main" onSubmit={join}>
+              <input
+                className="versus__code mono"
+                value={code}
+                aria-label="Room code"
+                autoCapitalize="characters"
+                maxLength={CODE_LENGTH + 2}
+                onChange={(e) => setCode(normaliseCode(e.target.value))}
+              />
+              <button type="submit" className="stamp" disabled={busy !== null}>
+                {busy === 'join' ? 'Joining…' : 'Join room'}
+              </button>
+            </form>
+          ) : online ? (
+            <>
+              <div className="versus__actions versus__actions--first">
+                <button type="button" className="stamp" disabled={busy !== null} onClick={() => void go('quick', (n) => backend.quickMatch(n, size))}>
+                  {busy === 'quick' ? 'Finding…' : 'Find players'}
+                </button>
+                <span className="pencil versus__hint">Strangers, live. Starts when the table's full.</span>
+              </div>
+              <ul className="versus__more">
+                <li>
+                  <button type="button" className="linklike" disabled={busy !== null} onClick={() => void go('room', (n) => backend.createRoom(n, size))}>
+                    {busy === 'room' ? 'Making a room…' : 'Make a room for friends'}
+                  </button>{' '}
+                  <span className="pencil">and send them the link</span>
+                </li>
+                <li>
+                  <form className="versus__join" onSubmit={join}>
+                    <span className="pencil">Got a code?</span>
+                    <input
+                      className="versus__code mono"
+                      value={code}
+                      aria-label="Room code"
+                      autoCapitalize="characters"
+                      maxLength={CODE_LENGTH + 2}
+                      onChange={(e) => setCode(normaliseCode(e.target.value))}
+                    />
+                    <button type="submit" className="linklike" disabled={busy !== null}>
+                      {busy === 'join' ? 'Joining…' : 'Join room'}
+                    </button>
+                  </form>
+                </li>
+                <li>
+                  <button type="button" className="linklike" disabled={busy !== null} onClick={() => void go('ghosts', (n) => backend.playGhosts(n, size))}>
+                    {ghostsLabel}
+                  </button>{' '}
+                  <span className="pencil">if nobody's about</span>
+                </li>
+              </ul>
+            </>
+          ) : (
+            <div className="versus__actions versus__actions--first">
+              <button type="button" className="stamp" disabled={busy !== null} onClick={() => void go('ghosts', (n) => backend.playGhosts(n, size))}>
+                {ghostsLabel}
+              </button>
+            </div>
+          )}
+        </li>
+      </ol>
 
       {error && (
         <p className="versus__error" role="alert">
@@ -579,7 +626,7 @@ function RoundReveal({ state, now }: { state: VersusState; now: number }) {
     fired.current = true;
     // A little confetti for a rare answer nobody in the room copied.
     if (me.points >= 60) {
-      burst({ x: window.innerWidth / 2, y: window.innerHeight * 0.35, chads: me.points >= 85 ? 60 : 24, stars: me.tier === 'lone' ? 10 : 0, colour: `var(--tier-${me.tier})` });
+      burst({ x: window.innerWidth / 2, y: window.innerHeight * 0.35, chads: me.points >= 85 ? 60 : 24, stars: me.tier === 'lone' ? 10 : 0, colour: TIER_HEX[me.tier]! });
       buzz([18]);
     }
   }, [me, reduce]);
@@ -602,7 +649,7 @@ function RoundReveal({ state, now }: { state: VersusState; now: number }) {
               {nameOf(s.seat)}
               {ghost(s.seat) && <span className="register__ghost">ghost</span>}
             </span>
-            <span className={`answers__value mono ${s.value === null ? 'answers__value--none' : ''}`}>{s.value === null ? 'no answer' : s.value.toLocaleString('en-GB')}</span>
+            <span className={`answers__value mono ${s.value === null ? 'answers__value--none' : ''}`}>{s.value === null ? 'no answer' : formatAnswer(s.value)}</span>
             <span className="answers__tier" style={{ background: `var(--tier-${s.tier})` }}>
               {TIERS[s.tier].name}
             </span>
@@ -647,7 +694,7 @@ function Final({ state, onAgain, navigate }: { state: VersusState; onAgain: () =
     if (!won || reduce) return;
     const box = ref.current?.getBoundingClientRect();
     const t = setTimeout(() => {
-      burst({ x: box ? box.left + box.width / 2 : window.innerWidth / 2, y: box ? box.top + 40 : 200, chads: 120, stars: 16, colour: 'var(--tier-lone)' });
+      burst({ x: box ? box.left + box.width / 2 : window.innerWidth / 2, y: box ? box.top + 40 : 200, chads: 120, stars: 16, colour: '#ffe97a' });
       buzz([30, 50, 30]);
     }, 500);
     return () => clearTimeout(t);
@@ -659,7 +706,7 @@ function Final({ state, onAgain, navigate }: { state: VersusState; onAgain: () =
         <h1 id="final-title">
           {won ? (shared ? 'Joint top of the class' : 'Top of the class') : `You came ${ordinal(mine?.place ?? totals.length)}`}
         </h1>
-        {won && <InkStamp text={shared ? 'Joint first' : 'Winner'} ink="#5b3fd0" delay={0.3} className="versus__stamp" />}
+        {won && <InkStamp text={shared ? 'Joint first' : 'Winner'} ink={GREEN_INK} delay={0.3} className="versus__stamp" />}
         <p className="pencil start__lede">
           {versusLabel(state.size)}
           {state.kind === 'ghosts' ? ' against ghosts' : ''} · {VERSUS_ROUNDS} questions

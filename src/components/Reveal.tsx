@@ -1,3 +1,4 @@
+import { TIER_HEX, formatAnswer } from '../lib/format.ts';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 import { burst, buzz, FANFARE, shakePage } from '../lib/celebrate.ts';
@@ -21,14 +22,7 @@ const ADVANCE_MS = 6200;
 /** When the mark lands, just after the red ball. */
 const MARK_AT = 2.3;
 
-const TIER_INK: Record<string, string> = {
-  obvious: '#cfcfcf',
-  clever: '#b9d7f0',
-  fair: '#ffe97a',
-  rare: '#ffb570',
-  outlier: '#ff7a8a',
-  lone: '#9b7bff',
-};
+const TIER_INK = TIER_HEX;
 
 export function basedOn(players: number, simulated: boolean): string {
   const who = `${players.toLocaleString('en-GB')} ${players === 1 ? 'player' : 'players'}`;
@@ -88,7 +82,7 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
           <RedDash />
         ) : (
           <>
-            <span className="reveal__value">{data.value!.toLocaleString('en-GB')}</span>
+            <span className="reveal__value">{formatAnswer(data.value!)}</span>
             <RedTick />
           </>
         )}
@@ -127,8 +121,8 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
       {!missed && (
         <motion.p className="pencil reveal__share" {...fade(MARK_AT + 0.4)}>
           {data.tier === 'lone'
-            ? `Nobody else said ${data.value!.toLocaleString('en-GB')}`
-            : `${formatShare(data.share!)} of answers were ${data.value!.toLocaleString('en-GB')}`}
+            ? `Nobody else said ${formatAnswer(data.value!)}`
+            : `${formatShare(data.share!)} of answers were ${formatAnswer(data.value!)}`}
           {data.tier === 'lone' && <span className="hand reveal__aside"> well spotted!!</span>}
           {data.tier === 'clever' && <span className="hand reveal__aside"> everyone thinks of that</span>}
           {data.tier === 'outlier' && <span className="hand reveal__aside"> bold.</span>}

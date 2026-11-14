@@ -6,6 +6,7 @@
 //
 // Physics by matter-js on a canvas. With reduced motion, or in the small
 // strips on the results page, the balls are simply drawn at rest.
+import { formatAnswer } from '../lib/format.ts';
 
 import { useReducedMotion } from 'framer-motion';
 import Matter from 'matter-js';
@@ -52,7 +53,7 @@ interface DrawnBall {
 const INK = '#1f2a44';
 const PENCIL = '#6b6b6b';
 const RED = '#c62828';
-const short = (n: number) => n.toLocaleString('en-GB');
+const short = formatAnswer;
 
 function drawRack(
   ctx: CanvasRenderingContext2D,

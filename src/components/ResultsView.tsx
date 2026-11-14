@@ -1,3 +1,4 @@
+import { formatAnswer } from '../lib/format.ts';
 import { useReducedMotion } from 'framer-motion';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { awardFor, burst, buzz, shakePage } from '../lib/celebrate.ts';
@@ -106,7 +107,7 @@ function BarChart({ dist, row }: { dist: Distribution; row: DayRow }) {
             return (
               <tr key={b.value} className={mine ? 'is-mine' : ''}>
                 <th scope="row" className="bars__value">
-                  <span className={mine ? 'hl' : ''}>{b.value.toLocaleString('en-GB')}</span>
+                  <span className={mine ? 'hl' : ''}>{formatAnswer(b.value)}</span>
                 </th>
                 <td className="bars__bar">
                   <svg width="100%" height="16" aria-hidden="true">
@@ -165,7 +166,7 @@ function ResultRow({ row, results, backend }: { row: DayRow; results: DayResults
         <span className="result__prompt">{prompt.text}</span>
         <span className="result__line">
           <span className="result__value mono">
-            {row.value === null ? '' : row.value.toLocaleString('en-GB')}
+            {row.value === null ? '' : formatAnswer(row.value)}
           </span>
           {row.tier === 'none' ? (
             <span className="hand result__missed">out of time</span>

@@ -107,10 +107,10 @@ export function StarStamp({ delay = 0.55 }: { delay?: number }) {
       transition={{ duration: reduce ? 0 : 0.22, delay: reduce ? 0 : delay, ease: 'easeIn' }}
     >
       <g filter="url(#rough-edge)">
-        <circle cx="30" cy="30" r="25" fill="none" stroke="var(--tier-lone)" strokeWidth="3" />
+        <circle cx="30" cy="30" r="25" fill="none" stroke="var(--gold)" strokeWidth="3" />
         <path
           d="M30 11 L34.6 23.6 L48 24.2 L37.5 32.6 L41.2 45.5 L30 38 L18.8 45.5 L22.5 32.6 L12 24.2 L25.4 23.6 Z"
-          fill="var(--tier-lone)"
+          fill="var(--gold)"
         />
       </g>
     </motion.svg>

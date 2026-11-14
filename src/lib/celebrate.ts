@@ -1,5 +1,6 @@
 // How loudly the page celebrates each tier. The rarer the answer, the bigger
 // the fuss: Obvious gets a plain tick; Lone Wolf shakes the page.
+import { GREEN_INK } from './format.ts';
 
 import type { TierId } from './scoring.ts';
 
@@ -46,7 +47,7 @@ export const FANFARE: Record<TierId, Fanfare> = {
     shake: 1,
     shockwave: 1.4,
     vibrate: [30, 50, 30, 50, 120],
-    stamp: { text: 'Nobody else', ink: '#5b3fd0' },
+    stamp: { text: 'Nobody else', ink: GREEN_INK },
     countUp: true,
     ticks: 3,
   },
@@ -54,7 +55,7 @@ export const FANFARE: Record<TierId, Fanfare> = {
 
 /** Award stamps for the day's total. */
 export function awardFor(total: number): { text: string; ink: string; chads: number; stars: number } | null {
-  if (total >= 600) return { text: "Headteacher's award", ink: '#5b3fd0', chads: 180, stars: 30 };
+  if (total >= 600) return { text: "Headteacher's award", ink: GREEN_INK, chads: 180, stars: 30 };
   if (total >= 450) return { text: 'Distinction', ink: '#c2223f', chads: 110, stars: 14 };
   if (total >= 300) return { text: 'Merit', ink: '#1f2a44', chads: 50, stars: 4 };
   return null;

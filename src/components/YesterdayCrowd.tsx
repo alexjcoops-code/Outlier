@@ -1,3 +1,4 @@
+import { formatAnswer } from '../lib/format.ts';
 import { useEffect, useState } from 'react';
 import type { Backend, Distribution } from '../lib/backend/types.ts';
 import { hashString } from '../lib/rng.ts';
@@ -61,15 +62,15 @@ export function YesterdayCrowd({ backend, today }: { backend: Backend; today: st
       <p className="clipping__prompt">{data.prompt.text}</p>
       <CrowdPlot prompt={data.prompt} values={data.dist.values} mine={data.mine} lone={data.lone} animate />
       <p className="clipping__note">
-        <span className="mono">{formatShare(top.share)}</span> said <span className="mono">{top.value.toLocaleString('en-GB')}</span>.{' '}
+        <span className="mono">{formatShare(top.share)}</span> said <span className="mono">{formatAnswer(top.value)}</span>.{' '}
         {empty !== null ? (
           <>
-            Nobody said <span className="mono">{empty.toLocaleString('en-GB')}</span>.
+            Nobody said <span className="mono">{formatAnswer(empty)}</span>.
           </>
         ) : (
           <>
             Only <span className="mono">{formatShare(rarest.share)}</span> said{' '}
-            <span className="mono">{rarest.value.toLocaleString('en-GB')}</span>.
+            <span className="mono">{formatAnswer(rarest.value)}</span>.
           </>
         )}
       </p>
