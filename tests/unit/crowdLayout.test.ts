@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { getPrompt } from '../../src/prompts.ts';
+import { primeUnder1000, bigPowerOf2, multipleOf7 } from './fixtures.ts';
 import { allocateDots, formatPerBall, rackLayout, restingPositions, scalePosition } from '../../src/lib/crowdLayout.ts';
 
 const opts = { pad: 10, floorGap: 30, top: 34, pitch: 11 };
-const prime = getPrompt('prime-u1000');
+const prime = primeUnder1000;
 
 describe('crowd rack layout', () => {
   it('allocates exactly the requested number of balls', () => {
@@ -12,16 +12,16 @@ describe('crowd rack layout', () => {
   });
 
   it('uses a log scale for wide ranges', () => {
-    const p = getPrompt('pow2-big');
+    const p = bigPowerOf2;
     expect(scalePosition(p, 1000)).toBe(0);
     expect(scalePosition(p, 1_000_000)).toBe(1);
     expect(scalePosition(p, 31_623)).toBeCloseTo(0.5, 2);
     // Narrow ranges stay linear.
-    expect(scalePosition(getPrompt('mult7-500-700'), 600)).toBeCloseTo(0.5, 2);
+    expect(scalePosition(multipleOf7, 600)).toBeCloseTo(0.5, 2);
   });
 
   it('uses 1% balls when they fit, and bigger ones when a pile would overflow', () => {
-    const linear = getPrompt('mult7-500-700');
+    const linear = multipleOf7;
     const flat = Array.from({ length: 10 }, (_, i) => ({ value: 504 + i * 21, share: 0.1 }));
     expect(rackLayout(linear, flat, null, 340, 200, opts).perBall).toBe(0.01);
     const lumpy = [{ value: 7, share: 0.6 }, { value: 683, share: 0.4 }];

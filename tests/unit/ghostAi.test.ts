@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
+import { primeUnder1000 } from './fixtures.ts';
 import { describe, expect, it } from 'vitest';
-import { getPrompt, isValidAnswer, validAnswers } from '../../src/prompts.ts';
+import { isValidAnswer, validAnswers } from '../../src/prompts.ts';
 import { ABILITIES } from '../../src/lib/ghostConfig.ts';
 import {
   assemblePromptGhosts,
@@ -13,7 +14,7 @@ import {
 import { seededRng } from '../../src/lib/rng.ts';
 
 const ctx = { year: 2026 };
-const prompt = getPrompt('prime-u1000');
+const prompt = primeUnder1000;
 const cast = buildAiCast('2026-11-13');
 
 describe('the AI cast', () => {

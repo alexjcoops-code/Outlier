@@ -1,56 +1,101 @@
 // Which seven prompts appear on which day.
 //
 // The choice for a day depends only on the date and on what was used in the
-// previous 13 days, so it is the same for everyone. On the server the history
+// days before it, so it is the same for everyone. On the server the history
 // comes from the daily_prompts table; offline it is rebuilt by replaying every
 // day since EPOCH, which gives the same answer.
+//
+// Two rules keep regular players doing maths rather than remembering:
+//   - a question never comes back within NO_REPEAT_DAYS;
+//   - a question type (family) never comes back within FAMILY_GAP_DAYS, and
+//     never appears twice on one day.
 
 import { PROMPTS, type Prompt } from '../prompts.ts';
 import { seededRng, shuffle } from './rng.ts';
 import { addDays, dayNumber } from './ukDate.ts';
 
 export const PROMPTS_PER_DAY = 7;
-/** A prompt may not appear twice within any window of this many days. */
-export const NO_REPEAT_DAYS = 14;
+/** A question may not appear twice within any window of this many days. */
+export const NO_REPEAT_DAYS = 60;
+/** A family used on one day is barred for this many days after it. */
+export const FAMILY_GAP_DAYS = 3;
 /** Replay starts here. Changing it reshuffles history, so don't. */
 export const EPOCH = '2026-01-01';
 
 /** Difficulty of each slot, in play order: easier first, hardest last. */
 const SLOT_DIFFICULTY = [1, 1, 1, 2, 2, 2, 3] as const;
 
+export interface History {
+  /** Question ids used in the previous NO_REPEAT_DAYS − 1 days. */
+  ids: ReadonlySet<string>;
+  /** Families used in the previous FAMILY_GAP_DAYS days. */
+  families: ReadonlySet<string>;
+}
+
+const familyCache = new WeakMap<readonly Prompt[], Map<string, string>>();
+
+function familyOf(bank: readonly Prompt[], id: string): string | undefined {
+  let map = familyCache.get(bank);
+  if (!map) {
+    map = new Map(bank.map((p) => [p.id, p.family]));
+    familyCache.set(bank, map);
+  }
+  return map.get(id);
+}
+
 /**
- * Pick the day's prompts given the ids used in the previous NO_REPEAT_DAYS − 1 days.
- * Returns ids in play order.
+ * The history that applies to `date`, given the ids used on each earlier day.
+ * Ids that aren't in the bank (questions since retired) still block a repeat
+ * of themselves but have no family.
  */
-export function selectDay(
+export function historyFor(
   date: string,
-  recentIds: ReadonlySet<string>,
+  idsOn: (day: string) => readonly string[],
   bank: readonly Prompt[] = PROMPTS,
-): string[] {
+): History {
+  const ids = new Set<string>();
+  const families = new Set<string>();
+  for (let back = 1; back < NO_REPEAT_DAYS; back++) {
+    for (const id of idsOn(addDays(date, -back))) {
+      ids.add(id);
+      if (back <= FAMILY_GAP_DAYS) {
+        const fam = familyOf(bank, id);
+        if (fam) families.add(fam);
+      }
+    }
+  }
+  return { ids, families };
+}
+
+/** Pick the day's prompts given what came before. Returns ids in play order. */
+export function selectDay(date: string, history: History, bank: readonly Prompt[] = PROMPTS): string[] {
   const rng = seededRng(`outlier-day:${date}`);
   const pool = shuffle(
-    bank.filter((x) => !recentIds.has(x.id)),
+    bank.filter((x) => !history.ids.has(x.id) && !history.families.has(x.family)),
     rng,
   );
-  if (pool.length < PROMPTS_PER_DAY) {
-    throw new Error(`Prompt bank too small: only ${pool.length} prompts free on ${date}`);
-  }
   const chosen: Prompt[] = [];
-  const taken = new Set<string>();
-  for (const want of SLOT_DIFFICULTY) {
-    const exact = pool.find((x) => !taken.has(x.id) && x.difficulty === want);
-    if (exact) {
-      chosen.push(exact);
-      taken.add(exact.id);
-    }
+  const usedIds = new Set<string>();
+  const usedFamilies = new Set<string>();
+  const take = (x: Prompt) => {
+    chosen.push(x);
+    usedIds.add(x.id);
+    usedFamilies.add(x.family);
+  };
+  const free = (x: Prompt) => !usedIds.has(x.id) && !usedFamilies.has(x.family);
+
+  // Hardest slot first: it has the smallest pool.
+  for (const want of [...SLOT_DIFFICULTY].reverse()) {
+    const exact = pool.find((x) => free(x) && x.difficulty === want);
+    if (exact) take(exact);
   }
-  // If a difficulty bucket ran dry, fill the gaps with whatever is free.
+  // If a difficulty ran dry, fill the gaps with any free question of a new family.
   for (const x of pool) {
     if (chosen.length >= PROMPTS_PER_DAY) break;
-    if (!taken.has(x.id)) {
-      chosen.push(x);
-      taken.add(x.id);
-    }
+    if (free(x)) take(x);
+  }
+  if (chosen.length < PROMPTS_PER_DAY) {
+    throw new Error(`Prompt bank too small: only ${chosen.length} prompts free on ${date}`);
   }
   // Stable sort keeps the shuffled order within a difficulty.
   return chosen
@@ -68,19 +113,19 @@ export function dailyPromptIds(date: string, bank: readonly Prompt[] = PROMPTS):
     days = new Map();
     replayCache.set(bank, days);
   }
+  const memo = days;
   const target = dayNumber(date);
   const start = dayNumber(EPOCH);
-  if (target < start) return selectDay(date, new Set(), bank);
+  const empty: History = { ids: new Set(), families: new Set() };
+  if (target < start) return selectDay(date, empty, bank);
 
   // Find the latest day already computed, then walk forward.
   let from = target;
-  while (from > start && !days.has(from)) from--;
-  for (let d = days.has(from) ? from + 1 : from; d <= target; d++) {
-    const recent = new Set<string>();
-    for (let back = 1; back < NO_REPEAT_DAYS; back++) {
-      for (const id of days.get(d - back) ?? []) recent.add(id);
-    }
-    days.set(d, selectDay(addDays(EPOCH, d - start), recent, bank));
+  while (from > start && !memo.has(from)) from--;
+  for (let d = memo.has(from) ? from + 1 : from; d <= target; d++) {
+    const day = addDays(EPOCH, d - start);
+    const history = historyFor(day, (earlier) => memo.get(dayNumber(earlier)) ?? [], bank);
+    memo.set(d, selectDay(day, history, bank));
   }
-  return days.get(target)!;
+  return memo.get(target)!;
 }

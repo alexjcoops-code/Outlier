@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { PROMPTS, getPrompt, isValidAnswer, validAnswers } from '../../src/prompts.ts';
+import { primeUnder1000, multipleOf12 } from './fixtures.ts';
+import { PROMPTS, isValidAnswer, validAnswers } from '../../src/prompts.ts';
 import { ABILITIES, GHOST_CONFIG, STYLES } from '../../src/lib/ghostConfig.ts';
 import {
   abilityDistribution,
@@ -42,7 +43,7 @@ describe('config', () => {
 
 describe('rule-based ghosts', () => {
   it('are deterministic for a fixed seed', () => {
-    const p = getPrompt('prime-u1000');
+    const p = primeUnder1000;
     const a = generateRuleGhosts(p, 1000, seededRng('seed'), ctx);
     const b = generateRuleGhosts(p, 1000, seededRng('seed'), ctx);
     expect(a).toEqual(b);
@@ -73,14 +74,14 @@ describe('rule-based ghosts', () => {
       expect(ultra, p.id).toBeGreaterThan(panic);
     }
     // And in sampled ghosts, not just in theory.
-    const p = getPrompt('prime-u1000');
+    const p = primeUnder1000;
     const ghosts = generateRuleGhosts(p, 5000, seededRng('entropy'), ctx);
     const by = (a: string) => ghosts.filter((g) => g.ability === a).map((g) => g.value);
     expect(sampleEntropy(by('ultra'))).toBeGreaterThan(sampleEntropy(by('panicker')) + 1.5);
   });
 
   it('only know the top of the salience list, by ability', () => {
-    const p = getPrompt('prime-u1000');
+    const p = primeUnder1000;
     const support = (a: 'ultra' | 'average' | 'panicker') =>
       answerDistribution(p, a, 'safe', ctx).probs.filter((x) => x > 0).length;
     const n = validAnswers(p).length;
@@ -90,7 +91,7 @@ describe('rule-based ghosts', () => {
   });
 
   it('show-offs go for the clever list, safe players for the obvious', () => {
-    const p = getPrompt('prime-u1000');
+    const p = primeUnder1000;
     const show = answerDistribution(p, 'average', 'showoff', ctx);
     show.values.forEach((v, i) => {
       if (show.probs[i]! > 0) expect(p.cleverList).toContain(v);
@@ -100,13 +101,13 @@ describe('rule-based ghosts', () => {
     const mean = (d: typeof safe) => d.values.reduce((s, v, i) => s + v * d.probs[i]!, 0);
     expect(mean(risk)).toBeGreaterThan(mean(safe));
     // No clever list: show-offs act like risk-takers.
-    const plain = getPrompt('mult3and4-u100');
+    const plain = multipleOf12;
     expect(plain.cleverList).toHaveLength(0);
     expect(answerDistribution(plain, 'pretty', 'showoff', ctx).probs).toEqual(answerDistribution(plain, 'pretty', 'risk', ctx).probs);
   });
 
   it('favour the most salient answers but leave a long tail', () => {
-    const p = getPrompt('prime-u1000');
+    const p = primeUnder1000;
     const c = counts(generateRuleGhosts(p, 20000, seededRng('tail'), ctx).map((g) => g.value));
     expect((c.get(7) ?? 0) + (c.get(2) ?? 0)).toBeGreaterThan((c.get(683) ?? 0) * 20);
     expect(c.size).toBeGreaterThan(100);
@@ -115,7 +116,7 @@ describe('rule-based ghosts', () => {
 
 describe('ghost weight in a full day', () => {
   it('totals about 100 players at 0 real players and exactly 0 at 500', () => {
-    const p = getPrompt('prime-u1000');
+    const p = primeUnder1000;
     const { ghosts } = assemblePromptGhosts(p, 1, buildAiCast('2026-11-13'), null, seededRng('w'), ctx);
     expect(ghosts).toHaveLength(1100);
     const w0 = ghostWeight(0, ghosts.length);

@@ -155,3 +155,222 @@ export function isProductOfDistinctPrimes(n: number, count: number): boolean {
   const f = primeFactors(n);
   return f.length === count && new Set(f).size === count;
 }
+
+// ───────────── Helpers for the wider question bank ─────────────
+
+export function gcd(a: number, b: number): number {
+  let x = Math.abs(a);
+  let y = Math.abs(b);
+  while (y) [x, y] = [y, x % y];
+  return x;
+}
+
+/** Sum of all the factors of n, including n itself (σ). */
+export function sumFactors(n: number): number {
+  return n < 1 ? 0 : n === 1 ? 1 : sumProperFactors(n) + n;
+}
+
+export function largestPrimeFactor(n: number): number {
+  const f = primeFactors(n);
+  return f[f.length - 1] ?? 1;
+}
+
+export function smallestPrimeFactor(n: number): number {
+  return primeFactors(n)[0] ?? 1;
+}
+
+export function isSquareFree(n: number): boolean {
+  const f = primeFactors(n);
+  return new Set(f).size === f.length;
+}
+
+/** The next prime strictly after n. */
+export function nextPrime(n: number): number {
+  let m = Math.max(2, Math.floor(n) + 1);
+  while (!isPrime(m)) m++;
+  return m;
+}
+
+/** Ways to write even n as p + q with primes p ≤ q. */
+export function goldbachWays(n: number): number {
+  let ways = 0;
+  for (let p = 2; p <= n / 2; p++) if (isPrime(p) && isPrime(n - p)) ways++;
+  return ways;
+}
+
+export function digitSquareSum(n: number): number {
+  return digitsOf(n).reduce((s, d) => s + d * d, 0);
+}
+
+/** Digits of n in base b, most significant first. */
+export function digitsInBase(n: number, b: number): number[] {
+  if (n === 0) return [0];
+  const out: number[] = [];
+  let m = n;
+  while (m > 0) {
+    out.unshift(m % b);
+    m = Math.floor(m / b);
+  }
+  return out;
+}
+
+export function isPalindromeInBase(n: number, b: number): boolean {
+  const d = digitsInBase(n, b);
+  return d.every((x, i) => x === d[d.length - 1 - i]);
+}
+
+/** Number of 1s in the binary form of n. */
+export function binaryOnes(n: number): number {
+  return digitsInBase(n, 2).filter((d) => d === 1).length;
+}
+
+const ROMAN: [number, string][] = [
+  [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'],
+  [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
+];
+
+/** Standard Roman numeral, 1–3999. */
+export function romanNumeral(n: number): string {
+  if (!Number.isInteger(n) || n < 1 || n > 3999) return '';
+  let out = '';
+  let m = n;
+  for (const [value, symbol] of ROMAN) {
+    while (m >= value) {
+      out += symbol;
+      m -= value;
+    }
+  }
+  return out;
+}
+
+const UNITS = [
+  'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen',
+];
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+
+/** British English name of n, 0–9999: "three hundred and forty-two". */
+export function numberName(n: number): string {
+  if (n < 20) return UNITS[n]!;
+  if (n < 100) return TENS[Math.floor(n / 10)]! + (n % 10 ? `-${UNITS[n % 10]}` : '');
+  if (n < 1000) {
+    const rest = n % 100;
+    return `${UNITS[Math.floor(n / 100)]} hundred${rest ? ` and ${numberName(rest)}` : ''}`;
+  }
+  const rest = n % 1000;
+  const joiner = rest === 0 ? '' : rest < 100 ? ' and ' : ' ';
+  return `${UNITS[Math.floor(n / 1000)]} thousand${joiner}${rest ? numberName(rest) : ''}`;
+}
+
+/** Letters in the name of n, ignoring spaces and hyphens. */
+export function letterCount(n: number): number {
+  return numberName(n).replace(/[^a-z]/g, '').length;
+}
+
+/** Steps for n to reach 1: halve if even, otherwise treble and add 1. */
+export function collatzSteps(n: number): number {
+  let steps = 0;
+  let m = n;
+  while (m !== 1) {
+    m = m % 2 === 0 ? m / 2 : 3 * m + 1;
+    steps++;
+  }
+  return steps;
+}
+
+/** How many times you multiply the digits together before reaching one digit. */
+export function multiplicativePersistence(n: number): number {
+  let steps = 0;
+  let m = n;
+  while (m >= 10) {
+    m = digitProduct(m);
+    steps++;
+  }
+  return steps;
+}
+
+/** How many times you add the digits together before reaching one digit. */
+export function additivePersistence(n: number): number {
+  let steps = 0;
+  let m = n;
+  while (m >= 10) {
+    m = digitSum(m);
+    steps++;
+  }
+  return steps;
+}
+
+/** Repeatedly replacing n by the sum of the squares of its digits reaches 1. */
+export function isHappy(n: number): boolean {
+  const seen = new Set<number>();
+  let m = n;
+  while (m !== 1 && !seen.has(m)) {
+    seen.add(m);
+    m = digitSquareSum(m);
+  }
+  return m === 1;
+}
+
+export const UK_COINS = [1, 2, 5, 10, 20, 50, 100, 200] as const;
+
+/** Fewest coins that make n pence exactly (greedy is optimal for UK coins). */
+export function fewestCoins(n: number, coins: readonly number[] = UK_COINS): number {
+  let count = 0;
+  let m = n;
+  for (let i = coins.length - 1; i >= 0; i--) {
+    const c = coins[i]!;
+    count += Math.floor(m / c);
+    m %= c;
+  }
+  return m === 0 ? count : Infinity;
+}
+
+/** Ways to make n as an unordered sum of the given part sizes (each usable any number of times). */
+export function waysToMake(n: number, parts: readonly number[]): number {
+  const ways = new Array<number>(n + 1).fill(0);
+  ways[0] = 1;
+  for (const p of parts) for (let i = p; i <= n; i++) ways[i]! += ways[i - p]!;
+  return ways[n]!;
+}
+
+/** 0 = Sunday … 6 = Saturday, Gregorian calendar. */
+export function weekday(year: number, month: number, day: number): number {
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+}
+
+const reachCache = new Map<string, Set<number>>();
+
+/**
+ * Every positive whole number you can make using each of `nums` exactly once
+ * with +, −, ×, ÷ and brackets, where every step stays a positive whole number.
+ */
+export function reachable(nums: readonly number[]): Set<number> {
+  const key = [...nums].sort((a, b) => a - b).join(',');
+  const hit = reachCache.get(key);
+  if (hit) return hit;
+  const out = new Set<number>();
+  if (nums.length === 1) {
+    out.add(nums[0]!);
+  } else {
+    // Every split into two non-empty groups (each split once).
+    const n = nums.length;
+    for (let mask = 1; mask < (1 << n) - 1; mask++) {
+      if (mask & 1) continue; // the first number always goes right: halves the work
+      const left: number[] = [];
+      const right: number[] = [];
+      nums.forEach((x, i) => (mask & (1 << i) ? left : right).push(x));
+      for (const a of reachable(left)) {
+        for (const b of reachable(right)) {
+          out.add(a + b);
+          out.add(a * b);
+          if (a > b) out.add(a - b);
+          if (b > a) out.add(b - a);
+          if (a % b === 0) out.add(a / b);
+          if (b % a === 0) out.add(b / a);
+        }
+      }
+    }
+  }
+  reachCache.set(key, out);
+  return out;
+}

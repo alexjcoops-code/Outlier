@@ -92,8 +92,12 @@ Those two are public by design. The Anthropic key, admin secret and cron secret 
 ### The day
 
 - The game day is midnight to midnight in `Europe/London`. Dates are worked out with `Intl` in the browser and `at time zone 'Europe/London'` in Postgres, so GMT/BST is never hand-rolled.
-- `src/lib/daily.ts` picks seven prompts with a shuffle seeded by the date, skipping anything used in the previous 13 days, ordered easy to hard (three easy, three medium, one hard).
-- The bank in `src/prompts.ts` has 120 prompts. It has to be large: no repeats within 14 days at seven a day means 91 prompts are unavailable on any given day.
+- `src/lib/daily.ts` picks seven prompts with a shuffle seeded by the date, ordered easy to hard (three easy, three medium, one hard), under two rules:
+  - a question never comes back within 60 days;
+  - a question **type** never comes back within 3 days, and the seven questions on a day are always seven different types. Regular players can't lean on a recent answer: they have to do the maths again.
+- The bank in `src/prompts.ts` has **1,000 questions in 100 types**, ten per type. The ten in a type share an idea ("a prime with a twist", "a 24-hour clock time", "a Roman numeral of a given length") but have different answers: no two share more than half their valid answers, so last week's rare answer is mostly wrong today.
+- Each type is tagged easy, medium or hard, which spreads its ten questions across the three daily slots (easy types: seven easy, two medium, one hard; medium: two, six, two; hard: four medium, six hard). The bank has about 400 easy, 380 medium and 220 hard questions.
+- Ids look like `clock-04` (type, then number). A question id that's no longer in the bank (from an older version, still in a database's history) shows as a retired stand-in instead of breaking the page.
 
 ### Scoring
 
@@ -177,7 +181,7 @@ There is no login, so a player is an anonymous UUID in `localStorage`. Clearing 
 
 ```
 src/
-  prompts.ts              the prompt bank: id, text, difficulty, range, validator, clever list
+  prompts.ts              the prompt bank: 100 types × 10 questions (text, difficulty, range, validator, clever list)
   lib/                    pure game logic (dates, daily selection, scoring, ghosts, parsing)
   lib/backend/            Backend interface; Supabase and offline implementations
   components/, pages/     React UI
@@ -194,6 +198,8 @@ tests/e2e/                Playwright: full game, resume, practice, number pad
 
 ## Changing things
 
-- **Add a prompt:** add it to `src/prompts.ts` and add known valid and invalid cases to `tests/unit/validators.test.ts` (the suite fails if a prompt has no cases, fewer than 8 valid answers, or `^`/`*` in its text). Then `npm run sync:shared` and redeploy `prepare-day`.
+- **Change a question:** edit its row in its `family(...)` in `src/prompts.ts`. Every type must keep exactly ten questions. The suite fails if a question has fewer than 8 valid answers, `^`/`*` in its text, more than 135 characters, or shares more than half its answers with another question of its type. The first question of each type also has hand-checked valid and invalid answers in `tests/unit/validators.test.ts`. Then `npm run sync:shared` and redeploy `prepare-day`.
+- **See every question:** `docs/questions.md` lists all 1,000 by type, with how many right answers each has. Regenerate it with `npm run questions` after any change (a test checks it's current).
+- **Add a type:** add a `family('id', 'Name', 'easy' | 'medium' | 'hard', rows, make)` with ten rows, and add hand-checked cases for its first question.
 - **Tune the ghosts:** edit `src/lib/ghostConfig.ts` (use `/admin` and `npm run ghosts:suggest`), sync, redeploy.
 - **Change the Claude model or prompt:** `MODEL` in `supabase/functions/prepare-day/index.ts`; the instructions and personas are in `src/lib/ghostAi.ts`.

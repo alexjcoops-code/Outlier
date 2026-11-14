@@ -16,7 +16,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { corsHeaders, json, secretsMatch } from '../_shared/http.ts';
 import { getPrompt, validAnswers, type Prompt } from '../_shared/core/prompts.ts';
-import { NO_REPEAT_DAYS, dailyPromptIds, selectDay } from '../_shared/core/lib/daily.ts';
+import { NO_REPEAT_DAYS, dailyPromptIds, historyFor, selectDay, type History } from '../_shared/core/lib/daily.ts';
 import {
   GHOST_SCHEMA,
   assemblePromptGhosts,
@@ -72,8 +72,11 @@ async function askClaude(client: Anthropic, prompt: Prompt, cast: CastMember[]):
   }
 }
 
-/** Prompt ids used in the 13 days before `date`: from the database where known, replayed otherwise. */
-async function recentPromptIds(supabase: SupabaseClient, date: string): Promise<Set<string>> {
+/**
+ * What came before `date`: question ids from the last NO_REPEAT_DAYS − 1 days and
+ * the families of the last few. From the database where known, replayed otherwise.
+ */
+async function recentHistory(supabase: SupabaseClient, date: string): Promise<History> {
   const from = addDays(date, -(NO_REPEAT_DAYS - 1));
   const { data, error } = await supabase
     .from('daily_prompts')
@@ -85,11 +88,7 @@ async function recentPromptIds(supabase: SupabaseClient, date: string): Promise<
   for (const row of data as { date: string; prompt_id: string }[]) {
     byDate.set(row.date, [...(byDate.get(row.date) ?? []), row.prompt_id]);
   }
-  const recent = new Set<string>();
-  for (let d = from; d < date; d = addDays(d, 1)) {
-    for (const id of byDate.get(d) ?? dailyPromptIds(d)) recent.add(id);
-  }
-  return recent;
+  return historyFor(date, (d) => byDate.get(d) ?? dailyPromptIds(d));
 }
 
 Deno.serve(async (req) => {
@@ -131,7 +130,7 @@ Deno.serve(async (req) => {
     if (existing.error) throw new Error(existing.error.message);
     if ((existing.count ?? 0) > 0) return json({ date, created: false });
 
-    const ids = selectDay(date, await recentPromptIds(supabase, date));
+    const ids = selectDay(date, await recentHistory(supabase, date));
     const prompts = ids.map(getPrompt);
     const cast = buildAiCast(date);
 

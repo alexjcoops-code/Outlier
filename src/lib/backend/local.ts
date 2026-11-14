@@ -271,7 +271,11 @@ export function createPracticeBackend(): Backend {
     promptIdsFor: (round) => {
       let ids = rounds.get(round);
       if (!ids) {
-        const picked = shuffle(PROMPTS, seededRng(round)).slice(0, PROMPTS_PER_DAY);
+        // Seven questions of seven different types.
+        const seen = new Set<string>();
+        const picked = shuffle(PROMPTS, seededRng(round))
+          .filter((p) => !seen.has(p.family) && seen.add(p.family))
+          .slice(0, PROMPTS_PER_DAY);
         ids = picked.sort((a, b) => a.difficulty - b.difficulty).map((p) => p.id);
         rounds.set(round, ids);
       }
