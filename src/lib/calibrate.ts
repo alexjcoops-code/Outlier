@@ -2,7 +2,7 @@
 //
 // Each (ability, style) pair has an exact answer distribution (ghostModel.ts).
 // Real answers are treated as a mixture of those 20 distributions, and the
-// mixture weights are fitted by expectation–maximisation. The suggested ability
+// mixture weights are fitted by expectation-maximisation. The suggested ability
 // and style percentages are the fitted weights added up per ability and per style.
 
 import { getPrompt } from '../prompts.ts';
@@ -26,7 +26,7 @@ export interface FitResult {
   answers: number;
   /** Real answers no ghost could ever give (outside every ghost's distribution). */
   unexplained: number;
-  /** Average Jensen–Shannon divergence between real answers and the model, before and after. */
+  /** Average Jensen-Shannon divergence between real answers and the model, before and after. */
   jsBefore: number;
   jsAfter: number;
   /** Observed real time-out rate, and what the configured and suggested mixes predict. */

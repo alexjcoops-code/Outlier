@@ -188,16 +188,16 @@
 
 | # | Question | Level | Answers | e.g. |
 |---|---|---|---|---|
-| 01 | Name an even number under 100 that splits into two primes in exactly 2 ways (order doesn’t matter) | medium | 9 | 10, 20, 68 |
-| 02 | Name an even number under 130 that splits into two primes in exactly 3 ways (order doesn’t matter) | medium | 11 | 22, 44, 128 |
-| 03 | Name an even number under 160 that splits into two primes in exactly 4 ways (order doesn’t matter) | medium | 11 | 34, 58, 152 |
-| 04 | Name an even number under 200 that splits into two primes in exactly 5 ways (order doesn’t matter) | medium | 16 | 48, 94, 188 |
-| 05 | Name an even number under 400 that splits into two primes in exactly 6 ways (order doesn’t matter) | hard | 16 | 60, 134, 332 |
-| 06 | Name an even number under 400 that splits into two primes in exactly 7 ways (order doesn’t matter) | hard | 18 | 78, 208, 398 |
-| 07 | Name an even number under 400 that splits into two primes in exactly 8 ways (order doesn’t matter) | hard | 20 | 84, 214, 368 |
-| 08 | Name an even number under 500 that splits into two primes in exactly 9 ways (order doesn’t matter) | hard | 23 | 90, 254, 488 |
-| 09 | Name an even number under 700 that splits into two primes in exactly 10 ways (order doesn’t matter) | hard | 16 | 114, 344, 632 |
-| 10 | Name an even number under 700 that splits into two primes in exactly 11 ways (order doesn’t matter) | hard | 29 | 144, 412, 692 |
+| 01 | Name an even number under 100 that splits into two primes in exactly 2 ways (order doesn't matter) | medium | 9 | 10, 20, 68 |
+| 02 | Name an even number under 130 that splits into two primes in exactly 3 ways (order doesn't matter) | medium | 11 | 22, 44, 128 |
+| 03 | Name an even number under 160 that splits into two primes in exactly 4 ways (order doesn't matter) | medium | 11 | 34, 58, 152 |
+| 04 | Name an even number under 200 that splits into two primes in exactly 5 ways (order doesn't matter) | medium | 16 | 48, 94, 188 |
+| 05 | Name an even number under 400 that splits into two primes in exactly 6 ways (order doesn't matter) | hard | 16 | 60, 134, 332 |
+| 06 | Name an even number under 400 that splits into two primes in exactly 7 ways (order doesn't matter) | hard | 18 | 78, 208, 398 |
+| 07 | Name an even number under 400 that splits into two primes in exactly 8 ways (order doesn't matter) | hard | 20 | 84, 214, 368 |
+| 08 | Name an even number under 500 that splits into two primes in exactly 9 ways (order doesn't matter) | hard | 23 | 90, 254, 488 |
+| 09 | Name an even number under 700 that splits into two primes in exactly 10 ways (order doesn't matter) | hard | 16 | 114, 344, 632 |
+| 10 | Name an even number under 700 that splits into two primes in exactly 11 ways (order doesn't matter) | hard | 29 | 144, 412, 692 |
 
 ## Runs of primes `prime-runs`
 
@@ -987,12 +987,12 @@
 | 02 | Name a number under 100 whose name in words has exactly 9 letters | easy | 22 | 17, 55, 96 |
 | 03 | Name a number under 100 whose name in words has exactly 10 letters | easy | 24 | 24, 63, 99 |
 | 04 | Name a number under 100 whose name in words has exactly 11 letters | easy | 15 | 23, 75, 98 |
-| 05 | Name a number under 1,000 whose name in words has exactly 16 letters (in British English, like “one hundred and two”) | medium | 12 | 101, 206, 610 |
-| 06 | Name a number under 100 whose name in words has no letter “e” | easy | 19 | 2, 44, 66 |
-| 07 | Name a number under 100 whose name in words contains letter “x” | easy | 19 | 6, 63, 96 |
-| 08 | Name a number under 100 whose name in words contains letter “v” | easy | 29 | 5, 67, 97 |
-| 09 | Name a number under 1,000 whose name in words has exactly 20 letters (in British English, like “one hundred and two”) | medium | 45 | 115, 580, 990 |
-| 10 | Name a number under 1,000 whose name in words has exactly 24 letters (in British English, like “one hundred and two”) | hard | 183 | 123, 571, 999 |
+| 05 | Name a number under 1,000 whose name in words has exactly 16 letters (in British English, like "one hundred and two") | medium | 12 | 101, 206, 610 |
+| 06 | Name a number under 100 whose name in words has no letter "e" | easy | 19 | 2, 44, 66 |
+| 07 | Name a number under 100 whose name in words contains letter "x" | easy | 19 | 6, 63, 96 |
+| 08 | Name a number under 100 whose name in words contains letter "v" | easy | 29 | 5, 67, 97 |
+| 09 | Name a number under 1,000 whose name in words has exactly 20 letters (in British English, like "one hundred and two") | medium | 45 | 115, 580, 990 |
+| 10 | Name a number under 1,000 whose name in words has exactly 24 letters (in British English, like "one hundred and two") | hard | 183 | 123, 571, 999 |
 
 ## Roman numerals `roman`
 
@@ -1066,8 +1066,8 @@
 | 06 | Name a year from 1901 to 2000 when Christmas Day fell on a Saturday | medium | 14 | 1909, 1954, 1999 |
 | 07 | Name a year from 1901 to 2000 when Christmas Day fell on a Sunday | medium | 14 | 1904, 1955, 1994 |
 | 08 | Name a year from 2001 to 2100 when Bonfire Night (5 November) falls on a Saturday | medium | 14 | 2005, 2050, 2095 |
-| 09 | Name a year from 2001 to 2100 when New Year’s Day falls on a Wednesday | hard | 14 | 2003, 2053, 2098 |
-| 10 | Name a year from 2001 to 2100 when Valentine’s Day falls on a Sunday | hard | 14 | 2010, 2055, 2100 |
+| 09 | Name a year from 2001 to 2100 when New Year's Day falls on a Wednesday | hard | 14 | 2003, 2053, 2098 |
+| 10 | Name a year from 2001 to 2100 when Valentine's Day falls on a Sunday | hard | 14 | 2010, 2055, 2100 |
 
 ## Clock times `clock`
 
@@ -1125,7 +1125,7 @@
 | 05 | Name a year from 1700 to 1899 that was a leap year | easy | 48 | 1704, 1804, 1896 |
 | 06 | Name a year from 2000 to 2099 that uses exactly three different digits | easy | 40 | 2001, 2032, 2099 |
 | 07 | Name a year from 1900 to 1999 whose last two digits make a square number (not 00) | medium | 9 | 1901, 1925, 1981 |
-| 08 | Name a year from 2000 to 2099 that is a multiple of the year’s last digit (not 0) | medium | 46 | 2001, 2046, 2095 |
+| 08 | Name a year from 2000 to 2099 that is a multiple of the year's last digit (not 0) | medium | 46 | 2001, 2046, 2095 |
 | 09 | Name a year from 1900 to 2199 that is a multiple of 13 | easy | 23 | 1911, 2054, 2197 |
 | 10 | Name a year from 1000 to 2099 whose digits go up from left to right | hard | 56 | 1234, 1358, 1789 |
 
@@ -1133,16 +1133,16 @@
 
 | # | Question | Level | Answers | e.g. |
 |---|---|---|---|---|
-| 01 | With only 5p and 7p stamps, name an amount under 100 pence that you can’t make exactly | medium | 12 | 1, 9, 23 |
-| 02 | With only 4p and 9p stamps, name an amount under 100 pence that you can’t make exactly | medium | 12 | 1, 10, 23 |
-| 03 | With only 7p and 11p stamps, name an amount between 30 and 99 pence that you can’t make exactly | medium | 10 | 30, 41, 59 |
-| 04 | With only 8p and 13p stamps, name an amount between 40 and 199 pence that you can’t make exactly | medium | 14 | 41, 57, 83 |
-| 05 | With only 9p and 10p stamps, name an amount between 40 and 199 pence that you can’t make exactly | medium | 10 | 41, 52, 71 |
+| 01 | With only 5p and 7p stamps, name an amount under 100 pence that you can't make exactly | medium | 12 | 1, 9, 23 |
+| 02 | With only 4p and 9p stamps, name an amount under 100 pence that you can't make exactly | medium | 12 | 1, 10, 23 |
+| 03 | With only 7p and 11p stamps, name an amount between 30 and 99 pence that you can't make exactly | medium | 10 | 30, 41, 59 |
+| 04 | With only 8p and 13p stamps, name an amount between 40 and 199 pence that you can't make exactly | medium | 14 | 41, 57, 83 |
+| 05 | With only 9p and 10p stamps, name an amount between 40 and 199 pence that you can't make exactly | medium | 10 | 41, 52, 71 |
 | 06 | With only 6p and 9p stamps, name an amount between 20 and 99 pence that you can make exactly | easy | 27 | 21, 60, 99 |
 | 07 | With only 12p and 20p stamps, name an amount between 100 and 299 pence that you can make exactly | easy | 50 | 100, 200, 296 |
-| 08 | With only 11p and 13p stamps, name an amount between 60 and 199 pence that you can’t make exactly | hard | 18 | 60, 82, 119 |
+| 08 | With only 11p and 13p stamps, name an amount between 60 and 199 pence that you can't make exactly | hard | 18 | 60, 82, 119 |
 | 09 | With only 15p and 25p stamps, name an amount between 300 and 499 pence that you can make exactly | medium | 40 | 300, 400, 495 |
-| 10 | With only 6p and 11p stamps, name an amount between 20 and 99 pence that you can’t make exactly | hard | 11 | 20, 31, 49 |
+| 10 | With only 6p and 11p stamps, name an amount between 20 and 99 pence that you can't make exactly | hard | 11 | 20, 31, 49 |
 
 ## Rounding `rounding`
 
@@ -1224,15 +1224,15 @@
 | # | Question | Level | Answers | e.g. |
 |---|---|---|---|---|
 | 01 | A triangle has sides of 5 cm and 9 cm. Name a possible whole-number length for the third side | easy | 9 | 5, 9, 13 |
-| 02 | A triangle’s two shorter sides are 9 cm and 14 cm. Name a possible whole-number length for its longest side | easy | 9 | 14, 18, 22 |
+| 02 | A triangle's two shorter sides are 9 cm and 14 cm. Name a possible whole-number length for its longest side | easy | 9 | 14, 18, 22 |
 | 03 | A triangle has sides of 8 cm and 30 cm. Name a possible whole-number length for the third side | easy | 15 | 23, 30, 37 |
 | 04 | A triangle has sides of 10 cm and 50 cm. Name a possible whole-number length for the third side | easy | 19 | 41, 50, 59 |
 | 05 | A triangle has sides of 12 cm and 75 cm. Name a possible whole-number length for the third side | easy | 23 | 64, 75, 86 |
-| 06 | A triangle’s two shorter sides are 11 cm and 90 cm. Name a possible whole-number length for its longest side | easy | 11 | 90, 95, 100 |
+| 06 | A triangle's two shorter sides are 11 cm and 90 cm. Name a possible whole-number length for its longest side | easy | 11 | 90, 95, 100 |
 | 07 | A triangle has sides of 15 cm and 110 cm. Name a possible whole-number length for the third side | easy | 29 | 96, 110, 124 |
 | 08 | A triangle has sides of 6 cm and 140 cm. Name a possible whole-number length for the third side | medium | 11 | 135, 140, 145 |
-| 09 | A triangle’s two longer sides are 200 cm and 380 cm. Name a possible whole-number length for its shortest side | medium | 20 | 181, 191, 200 |
-| 10 | A triangle’s two shorter sides are 25 cm and 230 cm. Name a possible whole-number length for its longest side | hard | 25 | 230, 242, 254 |
+| 09 | A triangle's two longer sides are 200 cm and 380 cm. Name a possible whole-number length for its shortest side | medium | 20 | 181, 191, 200 |
+| 10 | A triangle's two shorter sides are 25 cm and 230 cm. Name a possible whole-number length for its longest side | hard | 25 | 230, 242, 254 |
 
 ## Make it from four numbers `countdown`
 
@@ -1418,9 +1418,9 @@
 
 | # | Question | Level | Answers | e.g. |
 |---|---|---|---|---|
-| 01 | Name a score over 20 you can get with a single dart (singles, doubles and trebles of 1–20, 25 or 50) | easy | 23 | 21, 36, 60 |
-| 02 | Name a score from 1 to 60 you can’t get with a single dart (singles, doubles and trebles of 1–20, 25 or 50) | easy | 17 | 23, 46, 59 |
-| 03 | Three darts all land in trebles of 1–20. Name a possible total over 60 | easy | 40 | 63, 123, 180 |
+| 01 | Name a score over 20 you can get with a single dart (singles, doubles and trebles of 1 to 20, 25 or 50) | easy | 23 | 21, 36, 60 |
+| 02 | Name a score from 1 to 60 you can't get with a single dart (singles, doubles and trebles of 1 to 20, 25 or 50) | easy | 17 | 23, 46, 59 |
+| 03 | Three darts all land in trebles of 1 to 20. Name a possible total over 60 | easy | 40 | 63, 123, 180 |
 | 04 | A batter hits exactly 15 boundaries in cricket, each a 4 or a 6. Name a number of runs they scored from them | easy | 16 | 60, 76, 90 |
 | 05 | A snooker break goes red (1), black (7), red, black… starting with a red. Name a possible break under 120 | medium | 29 | 1, 57, 113 |
 | 06 | A snooker break goes red (1), pink (6), red, pink… starting with a red. Name a possible break under 120 | medium | 34 | 1, 63, 119 |
@@ -1436,7 +1436,7 @@
 | 01 | Name a number you can get by multiplying the scores on two dice | easy | 18 | 1, 12, 36 |
 | 02 | Name a number bigger than 36 you can get by multiplying the scores on three dice | easy | 20 | 40, 90, 216 |
 | 03 | Name a number bigger than 216 you can get by multiplying the scores on four dice | easy | 28 | 225, 450, 1296 |
-| 04 | Name a number under 25 that you can’t get by multiplying the scores on two dice | easy | 9 | 7, 17, 23 |
+| 04 | Name a number under 25 that you can't get by multiplying the scores on two dice | easy | 9 | 7, 17, 23 |
 | 05 | Two dice are put side by side to make a two-digit number (3 and 5 make 35). Name one that is prime | easy | 8 | 11, 41, 61 |
 | 06 | Ten dice are rolled. Name a total from 40 to 60 they could make | easy | 21 | 40, 50, 60 |
 | 07 | Three dice are rolled. Name a number over 72 you could get by squaring each score and adding them | medium | 9 | 73, 81, 108 |
@@ -1457,7 +1457,7 @@
 | 07 | Name a four-digit number with three digits the same and one different | easy | 324 | 1000, 5553, 9998 |
 | 08 | Name a five-digit number that contains exactly three 0s | medium | 324 | 10001, 50100, 99000 |
 | 09 | Name a four-digit number made of two pairs of matching digits (like 1221 or 3434) | hard | 243 | 1001, 5533, 9988 |
-| 10 | Name a five-digit number that doesn’t use the digits 1, 2 or 3 | easy | 14,406 | 40000, 70000, 99999 |
+| 10 | Name a five-digit number that doesn't use the digits 1, 2 or 3 | easy | 14,406 | 40000, 70000, 99999 |
 
 ## Simplifying fractions `simplify-fractions`
 

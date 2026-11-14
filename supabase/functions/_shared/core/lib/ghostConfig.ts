@@ -67,7 +67,7 @@ export interface SalienceWeights {
   perExtraDigit: number;
   endsIn0: number;
   endsIn5: number;
-  /** Products in the 2–12 times tables (so up to 12 × 12). */
+  /** Products in the 2 to 12 times tables (so up to 12 × 12). */
   timesTable: number;
   famous: { boost: number; numbers: readonly number[] };
   /** Anything on the prompt's own "Predictably Clever" list. */

@@ -60,7 +60,7 @@ beforeAll(async () => {
 });
 
 describe('versus: private rooms', () => {
-  it('joins by code, starts when full, and hides everyone’s ids', async () => {
+  it("joins by code, starts when full, and hides everyone's ids", async () => {
     const id = await create(1, 'private', 2, 'ABCDE', 'Ada!!<script>');
     await expect(start(1, id)).rejects.toThrow(/need_two/);
     let s = await state(1, id);
@@ -193,7 +193,7 @@ describe('versus: quick matches', () => {
     expect(s.players).toHaveLength(2);
   });
 
-  it('doesn’t start a quick match alone, and doesn’t seat newcomers in old ones', async () => {
+  it("doesn't start a quick match alone, and doesn't seat newcomers in old ones", async () => {
     const id = await create(80, 'quick', 2, null);
     await wait(id, 46);
     expect((await state(80, id)).status).toBe('waiting');

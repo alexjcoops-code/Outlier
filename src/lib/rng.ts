@@ -26,7 +26,7 @@ export function seededRng(seed: string | number): Rng {
   };
 }
 
-/** Fisher–Yates shuffle; returns a new array. */
+/** Fisher-Yates shuffle; returns a new array. */
 export function shuffle<T>(items: readonly T[], rng: Rng): T[] {
   const out = items.slice();
   for (let i = out.length - 1; i > 0; i--) {

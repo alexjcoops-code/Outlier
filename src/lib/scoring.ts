@@ -61,7 +61,7 @@ export interface CrowdCounts {
 export interface Score {
   tier: TierId;
   points: number;
-  /** Weighted share of answers equal to yours, 0–1. */
+  /** Weighted share of answers equal to yours, 0 to 1. */
   share: number;
 }
 

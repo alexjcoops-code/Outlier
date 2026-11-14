@@ -111,7 +111,7 @@ export function useGame(backend: Backend, date: string, onFinished?: (r: DayResu
       say(
         data.tier === 'none'
           ? 'Out of time. No points.'
-          : `Accepted — ${TIERS[data.tier].name}, ${data.points} points`,
+          : `Accepted. ${TIERS[data.tier].name}, ${data.points} points`,
       );
     },
     [backend, date, patchRow, say, setPhase],

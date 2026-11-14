@@ -8,9 +8,9 @@ export interface Fanfare {
   chads: number;
   /** Gold star stickers among the confetti. */
   stars: number;
-  /** Page shake strength, 0–1. */
+  /** Page shake strength, 0 to 1. */
   shake: number;
-  /** How hard the player's ball knocks the crowd in the rack, 0–1.5. */
+  /** How hard the player's ball knocks the crowd in the rack, 0 to 1.5. */
   shockwave: number;
   /** Phone vibration pattern (ms), if any. */
   vibrate: number[] | null;
@@ -83,7 +83,7 @@ export function onBurst(listener: (b: Burst) => void): () => void {
   return () => listeners.delete(listener);
 }
 
-/** Jolt the whole page. strength 0–1. */
+/** Jolt the whole page. strength 0 to 1. */
 export function shakePage(strength: number): void {
   const page = document.querySelector<HTMLElement>('.page');
   if (!page?.animate || strength <= 0) return;

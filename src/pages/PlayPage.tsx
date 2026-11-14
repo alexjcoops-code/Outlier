@@ -70,7 +70,7 @@ export function PlayPage({ backend, date, navigate, onFinished }: Props) {
           Name <span className="start__blank" /> Class <span className="start__blank start__blank--short" />
         </p>
         <h1 id="start-title">
-          Today's worksheet <span className="start__dash">—</span>{' '}
+          Today's worksheet <span className="start__dash" aria-hidden="true" />{' '}
           <span className="start__count">7 questions</span>
         </h1>
         <p className="pencil start__lede">

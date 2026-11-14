@@ -96,7 +96,7 @@ test('a full game: retries, a time-out, results, share text, resume and history'
   await expect(page.locator('.countdown')).toContainText(/Next worksheet in \d\d:\d\d:\d\d/);
 
   const share = await page.getByLabel('Share text').innerText();
-  expect(share).toMatch(new RegExp(`^Outlier \\d\\d/\\d\\d/\\d\\d — ${expectedTotal}/700\\n[·○◐●★✦✗]{7}\\n`));
+  expect(share).toMatch(new RegExp(`^Outlier \\d\\d/\\d\\d/\\d\\d: ${expectedTotal}/700\\n[·○◐●★✦✗]{7}\\n`));
   expect(share.split('\n')[1]![3]).toBe('✗');
 
   // Top answers for a question
@@ -147,7 +147,7 @@ test('versus: a whole match against ghosts, then the register', async ({ page })
   await page.goto('/versus');
   await expect(page.getByRole('heading', { name: /Versus/ })).toBeVisible();
   // No server in the test: ghosts only, and it says so.
-  await expect(page.getByText(/running without its server/)).toBeVisible();
+  await expect(page.getByText(/has no server/)).toBeVisible();
   await expect(page.getByRole('link', { name: 'Practice' })).toHaveCount(0);
 
   await page.getByLabel('Name on your paper').fill('Tester');
@@ -185,7 +185,7 @@ test('versus: a whole match against ghosts, then the register', async ({ page })
     await expect(answers.locator('li')).toHaveCount(3);
     const me = answers.locator('.answers__row--me');
     await expect(me).toContainText('Tester');
-    if (round === 3) await expect(me.locator('.answers__value')).toHaveText('—');
+    if (round === 3) await expect(me.locator('.answers__value')).toHaveText('no answer');
     else await expect(me.locator('.answers__value')).toHaveText(valid[valid.length - 1]!.toLocaleString('en-GB'));
   }
   await stepUntil(page, '#final-title');

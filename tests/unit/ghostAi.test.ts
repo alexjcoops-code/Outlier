@@ -48,7 +48,7 @@ describe('reading the reply', () => {
   });
 });
 
-describe('assembling a prompt’s ghosts', () => {
+describe("assembling a prompt's ghosts", () => {
   it('uses 1,100 rule-based ghosts when the API fails', () => {
     const { ghosts, stats } = assemblePromptGhosts(prompt, 1, cast, null, seededRng('a'), ctx);
     expect(ghosts).toHaveLength(1100);
@@ -63,7 +63,7 @@ describe('assembling a prompt’s ghosts', () => {
       if (c.id <= 60) reply.set(c.id, { attempts: [valid[c.id]!], final: valid[c.id]! });
       else if (c.id <= 70) reply.set(c.id, { attempts: [9, 4], final: 4 }); // invalid: 4 isn't prime
       else if (c.id <= 80) reply.set(c.id, { attempts: [1], final: -1 }); // ran out of time
-      // ids 81–100 missing from the reply
+      // ids 81 to 100 missing from the reply
     }
     const { ghosts, stats } = assemblePromptGhosts(prompt, 3, cast, reply, seededRng('b'), ctx);
     expect(ghosts).toHaveLength(1100);

@@ -218,7 +218,7 @@ describe('a day in the database', () => {
 
   it('reports the day average and top-10% mark', async () => {
     const r = await results(1);
-    // Players 1–5 have scores 10, 85, 85, rare-ish, 0.
+    // Players 1 to 5 have scores 10, 85, 85, rare-ish, 0.
     expect(r.average).toBeGreaterThan(0);
     expect(r.top10).toBeGreaterThanOrEqual(r.average);
   });

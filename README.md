@@ -95,8 +95,8 @@ Those two are public by design. The Anthropic key, admin secret and cron secret 
 - The game day is midnight to midnight in `Europe/London`. Dates are worked out with `Intl` in the browser and `at time zone 'Europe/London'` in Postgres, so GMT/BST is never hand-rolled.
 - `src/lib/daily.ts` picks seven prompts with a shuffle seeded by the date, ordered easy to hard (three easy, three medium, one hard), under two rules:
   - a question never comes back within 60 days;
-  - a question **type** never comes back within 3 days, and the seven questions on a day are always seven different types. Regular players can't lean on a recent answer: they have to do the maths again.
-- The bank in `src/prompts.ts` has **1,000 questions in 100 types**, ten per type. The ten in a type share an idea ("a prime with a twist", "a 24-hour clock time", "a Roman numeral of a given length") but have different answers: no two share more than half their valid answers, so last week's rare answer is mostly wrong today.
+  - a question type never comes back within 3 days, and the seven questions on a day are always seven different types. If you play every day you can't lean on a recent answer. You have to do the maths again.
+- The bank in `src/prompts.ts` has 1,000 questions in 100 types, ten per type. The ten in a type share an idea (a prime with a twist, a time on a 24-hour clock, a Roman numeral of a given length) but have different answers. No two share more than half their valid answers, so last week's rare answer is usually wrong today.
 - Each type is tagged easy, medium or hard, which spreads its ten questions across the three daily slots (easy types: seven easy, two medium, one hard; medium: two, six, two; hard: four medium, six hard). The bank has about 400 easy, 380 medium and 220 hard questions.
 - Ids look like `clock-04` (type, then number). A question id that's no longer in the bank (from an older version, still in a database's history) shows as a retired stand-in instead of breaking the page.
 
@@ -105,12 +105,12 @@ Those two are public by design. The Anthropic key, admin secret and cron secret 
 For your answer to a prompt:
 
 ```
-w      = max(0, 1 − realPlayersToday ÷ 200)            ghost weight
+w      = (100 ÷ ghostCount) × max(0, 1 − realPlayersToday ÷ 500)   weight of one ghost
 share  = (real answers equal to yours + w × ghost answers equal to yours)
-       ÷ (all real answers + w × all ghost answers)     your own answer included
+       ÷ (all real answers + w × all ghost answers)                 your own answer included
 ```
 
-Then, in order: Lone Wolf if nobody else gave it (ghosts only count while `w > 0`); Obvious if share ≥ 20%; Outlier if share < 3%; Predictably Clever if it is on the prompt's clever list; Fair if share ≥ 8%; otherwise Rare.
+Then, in order: Lone Wolf if no other real player gave it and fewer than 0.5 weighted ghosts did; Obvious if share ≥ 20%; Outlier if share < 3%; Predictably Clever if it's on the prompt's clever list; Fair if share ≥ 8%; otherwise Rare.
 
 Scores are live and labelled "provisional" until the day ends. `finalise_due_days()` runs just after midnight UK time and copies each player's total and tiers into `final_scores`.
 
@@ -118,9 +118,9 @@ The rule exists twice, in `src/lib/scoring.ts` and as `score_tier` in SQL. `test
 
 ### Ghost players
 
-At 23:30 UK time `prepare-day` generates the next day's simulated players, per prompt: **1,000 rule-based ghosts plus 100 played by Claude**, stored in `ghost_answers(date, position, value, ability, style, source)`. A ghost who runs out of time has a null value.
+At 23:30 UK time `prepare-day` makes the next day's simulated players. Each prompt gets 1,000 rule-based ghosts and 100 played by Claude, stored in `ghost_answers(date, position, value, ability, style, source)`. A ghost who runs out of time has a null value.
 
-Every ghost has an **ability** and, independently, a **playing style**. The proportions and behaviour of each are in `src/lib/ghostConfig.ts`:
+Every ghost has an ability and, separately, a playing style. The proportions and behaviour of each are in `src/lib/ghostConfig.ts`:
 
 | Ability | Share | Knows | Time-outs |
 |---|---|---|---|
@@ -137,23 +137,29 @@ Every ghost has an **ability** and, independently, a **playing style**. The prop
 | Risk-taker | 15% | the least obvious answer they know |
 | Show-off | 10% | the prompt's "Predictably Clever" list, else acts like a risk-taker |
 
-"Salience" is how readily a person thinks of a number: small numbers, the first few valid answers, numbers ending in 0 or 5, times tables, repeated digits, famous numbers, ages, birth years and the current year are boosted; big patternless numbers and the top of the range are penalised. Salience ranks the valid answers (which sets each ability's reach) and weights the choice within reach, raised to a per-ability power: Ultra smart ghosts barely care, Panickers are driven by it. Every (ability, style) pair therefore has an exact answer distribution (`src/lib/ghostModel.ts`), which ghosts sample from.
+"Salience" is how readily a person thinks of a number: small numbers, the first few valid answers, numbers ending in 0 or 5, times tables, repeated digits, famous numbers, ages, birth years and the current year are boosted; big patternless numbers and the top of the range are penalised. Salience ranks the valid answers (which sets each ability's reach) and weights the choice within reach, raised to a per-ability power: Ultra smart ghosts barely care, Panickers are driven by it. So every (ability, style) pair has an exact answer distribution (`src/lib/ghostModel.ts`), and ghosts sample from it.
 
-**AI ghosts.** One Claude call per prompt (all seven at once) asks the model to play the day's 100-person cast, each with an ability, a style and a short persona ("Year 9 student, average at maths, rushing"), under 25-second pressure, returning JSON `{id, ability, style, attempts, final}`. Every final answer goes through the real validator; an invalid one counts as a time-out, and anyone missing from the reply is replaced by a rule-based ghost with the same ability and style. If the call fails, that prompt gets 1,100 rule-based ghosts.
+#### AI ghosts
 
-**Mixing with real players.** Each ghost weighs `(100 ÷ ghostCount) × max(0, 1 − realPlayers ÷ 500)`, so all the ghosts together count as about 100 players at the start of the day and nothing by 500 real players. Lone Wolf needs no other real player and fewer than 0.5 weighted ghosts on the same answer. The UI always says "Based on N players + simulated answers".
+One Claude call per prompt (all seven run at once) asks the model to play the day's 100-person cast, each with an ability, a style and a short persona ("Year 9 student, average at maths, rushing"), under 25-second pressure, returning JSON `{id, ability, style, attempts, final}`. Every final answer goes through the real validator; an invalid one counts as a time-out, and anyone missing from the reply is replaced by a rule-based ghost with the same ability and style. If the call fails, that prompt gets 1,100 rule-based ghosts.
 
-**Calibration.** When a day is locked, its real and ghost answer counts per prompt are saved to `calibration_snapshots`. `/admin` (password `ADMIN_SECRET`) overlays real against ghost answers for each prompt, with the Jensen–Shannon divergence for all ghosts, rule-based only and AI only, and time-out rates. To get suggested percentages from the last 14 days:
+#### Mixing ghosts with real players
+
+Each ghost weighs `(100 ÷ ghostCount) × max(0, 1 − realPlayers ÷ 500)`, so all the ghosts together count as about 100 players at the start of the day and nothing by 500 real players. Lone Wolf needs no other real player and fewer than 0.5 weighted ghosts on the same answer. The UI always says "Based on N players + simulated answers".
+
+#### Calibration
+
+When a day is locked, its real and ghost answer counts per prompt are saved to `calibration_snapshots`. `/admin` (password `ADMIN_SECRET`) overlays real against ghost answers for each prompt. It shows the Jensen-Shannon divergence (for all ghosts, rule-based only and AI only) and time-out rates. To get suggested percentages from the last 14 days:
 
 ```bash
 SUPABASE_URL=https://<ref>.supabase.co SUPABASE_SERVICE_ROLE_KEY=<service key> npm run ghosts:suggest
 ```
 
-The script treats real answers as a mixture of the 20 (ability, style) distributions, fits the mixture by expectation–maximisation, and prints the suggested ability and style shares, the before and after divergence, and the time-out rate each mix predicts. It changes nothing; you edit `ghostConfig.ts`, run `npm run sync:shared` and redeploy `prepare-day`.
+The script treats real answers as a mixture of the 20 (ability, style) distributions, fits the mixture by expectation-maximisation, and prints the suggested ability and style shares, the before and after divergence, and the time-out rate each mix predicts. It changes nothing; you edit `ghostConfig.ts`, run `npm run sync:shared` and redeploy `prepare-day`.
 
 ### Where did you land?
 
-The game's signature view, simulated with real physics (matter-js on a canvas). After each answer the whole crowd pours into a rack of tubes standing on the number line: each answer is a ball (1% of answers, or 2–5% when one answer is so popular its pile would overflow), and the balls bounce, rattle and settle into piles where people agreed. Your red ball drops in last and lands with a squash: on a tall pile you were Obvious, alone in an empty tube you were an outlier. Tap the rack or "Shake it" to throw the balls up and watch them resettle. With reduced motion the balls are drawn at rest. The same plot appears as a thin strip on every question in the results, and the start screen shows a clipping of yesterday's crowd with a right answer nobody gave. Crowd data comes from `get_distribution`, which refuses until you have finished that prompt.
+After each answer the whole crowd pours into a rack of tubes standing on the number line, using a real physics engine (matter-js on a canvas). Each ball is 1% of answers, or 2 to 5% when one answer is so popular its pile would overflow. The balls bounce and settle into piles where people agreed. Your red ball drops in last and lands with a squash: on a tall pile you were Obvious, alone in an empty tube you were an outlier. Tap the rack or "Shake it" to throw the balls up and watch them resettle. With reduced motion the balls are drawn at rest. The same plot appears as a thin strip on every question in the results, and the start screen shows a clipping of yesterday's crowd with a right answer nobody gave. Crowd data comes from `get_distribution`, which refuses until you have finished that prompt.
 
 ### Celebrations
 
@@ -171,17 +177,17 @@ A good day earns an award stamp on the results page, with confetti when the pape
 
 ### Versus
 
-`/versus` is a live mode: you against 1 to 7 other people (1 v 1, 1 v 2, 1 v 3, 1 v 5 or 1 v 7), five questions, 25 seconds each, everyone seeing each question at the same moment.
+`/versus` is the live mode. You play against 1 to 7 other people (1 v 1, 1 v 2, 1 v 3, 1 v 5 or 1 v 7): five questions, 25 seconds each, and everyone sees each question at the same moment. There are three ways in:
 
-- **Find players** puts you in a quick match with strangers of the same size. It starts as soon as the table is full, or after 45 seconds with whoever is there (two or more). If nobody turns up you're offered ghosts instead.
-- **Make a room for friends** gives a five-character code and a link (`/versus?code=K7MPQ`) to send. It starts when full, or when the host presses **Start now**.
-- **Play ghosts** is always there: simulated opponents in the browser, labelled as ghosts, with the same abilities and styles as the daily crowd. Without a Supabase project (offline mode) it's the only option.
+- "Find players" puts you in a quick match with strangers who picked the same size. It starts when the table is full, or after 45 seconds with whoever turned up, as long as that's two or more. If nobody comes, you're offered ghosts instead.
+- "Make a room for friends" gives you a five-character code and a link to send (`/versus?code=K7MPQ`). The room starts when it's full, or when the host presses "Start now".
+- "Play ghosts" is always available. The opponents are simulated in the browser, labelled as ghosts, and use the same abilities and styles as the daily crowd. Without a Supabase project (offline mode) it's the only option.
 
-Scoring: each answer first gets the same tier as in the daily game, judged against the ghost crowd for that question (an obvious answer 10, an outlier 85, a lone wolf 100). Then, if anyone else in the match said the same number, those points are split between you (`60 ÷ 2 = 30`). After each question everyone's answers are shown; at the end, the register ranks the room.
+Each answer first gets the tier it would get in the daily game, judged against the ghost crowd for that question: 10 for an obvious answer, 85 for an outlier, 100 for a lone wolf. If anyone else in the match said the same number, those points are split between you (`60 ÷ 2 = 30`). Everyone's answers are shown after each question, and at the end a register ranks the room.
 
-The five questions are five different types, easy to hard, drawn fresh for each match. The `versus` Edge Function makes matches (it has the question bank and stores each question's answer key); everything else is RPCs (`versus_join`, `versus_state`, `versus_answer`, `versus_start`, `versus_leave`) that check each answer against the key and the server clock. Players only ever see each other's seat numbers and names, never their ids. A match moves along whenever anyone asks for its state, so it needs no timer running on the server. Matches over a day old are deleted nightly.
+The five questions are five different types, easy to hard, picked fresh for each match. The `versus` Edge Function makes matches, because it has the question bank, and stores each question's answer key. Everything else is RPCs (`versus_join`, `versus_state`, `versus_answer`, `versus_start`, `versus_leave`) that check each answer against the key and the server clock. Players only ever see each other's seat numbers and names, never their ids. A match moves along whenever anyone asks for its state, so it needs no timer running on the server. Matches over a day old are deleted nightly.
 
-Scores aren't stored: every browser works them out from the answers with the same code (`src/lib/versus.ts`), so everyone sees the same register.
+Scores aren't stored. Every browser works them out from the answers with the same code (`src/lib/versus.ts`), so everyone sees the same register.
 
 ### Not cheatable from the client
 
@@ -217,8 +223,8 @@ tests/e2e/                Playwright: full game, resume, number pad, versus agai
 
 ## Changing things
 
-- **Change a question:** edit its row in its `family(...)` in `src/prompts.ts`. Every type must keep exactly ten questions. The suite fails if a question has fewer than 8 valid answers, `^`/`*` in its text, more than 135 characters, or shares more than half its answers with another question of its type. The first question of each type also has hand-checked valid and invalid answers in `tests/unit/validators.test.ts`. Then `npm run sync:shared` and redeploy `prepare-day`.
-- **See every question:** `docs/questions.md` lists all 1,000 by type, with how many right answers each has. Regenerate it with `npm run questions` after any change (a test checks it's current).
-- **Add a type:** add a `family('id', 'Name', 'easy' | 'medium' | 'hard', rows, make)` with ten rows, and add hand-checked cases for its first question.
-- **Tune the ghosts:** edit `src/lib/ghostConfig.ts` (use `/admin` and `npm run ghosts:suggest`), sync, redeploy.
-- **Change the Claude model or prompt:** `MODEL` in `supabase/functions/prepare-day/index.ts`; the instructions and personas are in `src/lib/ghostAi.ts`.
+- To change a question, edit its row in its `family(...)` in `src/prompts.ts`. Every type must keep exactly ten questions. The suite fails if a question has fewer than 8 valid answers, `^`/`*` in its text, more than 135 characters, or shares more than half its answers with another question of its type. The first question of each type also has hand-checked valid and invalid answers in `tests/unit/validators.test.ts`. Then `npm run sync:shared` and redeploy `prepare-day`.
+- `docs/questions.md` lists all 1,000 questions by type, with how many right answers each has. Regenerate it with `npm run questions` after any change (a test checks it's current).
+- To add a type, write a `family('id', 'Name', 'easy' | 'medium' | 'hard', rows, make)` with ten rows, and add hand-checked cases for its first question.
+- To tune the ghosts, edit `src/lib/ghostConfig.ts` (`/admin` and `npm run ghosts:suggest` tell you what to change), then sync and redeploy.
+- The Claude model is `MODEL` in `supabase/functions/prepare-day/index.ts`. The instructions and personas are in `src/lib/ghostAi.ts`.

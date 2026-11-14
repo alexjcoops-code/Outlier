@@ -27,7 +27,7 @@ export function allocateDots(values: readonly CrowdValue[], total: number): Map<
   return out;
 }
 
-/** Position along the line, 0–1. Wide ranges use a log scale so small numbers don't all collapse together. */
+/** Position along the line, 0 to 1. Wide ranges use a log scale so small numbers don't all collapse together. */
 export function scalePosition(prompt: Prompt, value: number): number {
   const lo = Math.max(1, prompt.min);
   const hi = Math.max(lo + 1, prompt.max);

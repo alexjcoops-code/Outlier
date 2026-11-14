@@ -165,7 +165,7 @@ function ResultRow({ row, results, backend }: { row: DayRow; results: DayResults
         <span className="result__prompt">{prompt.text}</span>
         <span className="result__line">
           <span className="result__value mono">
-            {row.value === null ? '—' : row.value.toLocaleString('en-GB')}
+            {row.value === null ? '' : row.value.toLocaleString('en-GB')}
           </span>
           {row.tier === 'none' ? (
             <span className="hand result__missed">out of time</span>

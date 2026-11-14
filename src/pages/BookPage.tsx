@@ -58,7 +58,7 @@ export function BookPage({ history, today, streak, navigate }: Props) {
         </div>
         <div>
           <dt>Best</dt>
-          <dd>{played ? `${best} / ${MAX_TOTAL}` : '—'}</dd>
+          <dd>{played ? `${best} / ${MAX_TOTAL}` : 'none'}</dd>
         </div>
       </dl>
 
@@ -128,7 +128,7 @@ export function BookPage({ history, today, streak, navigate }: Props) {
       {picked && entry && (
         <div className="book__detail" role="status">
           <p className="mono">
-            {formatShortDate(picked)} — {entry.total} / {MAX_TOTAL}
+            {formatShortDate(picked)}: {entry.total} / {MAX_TOTAL}
             {!entry.final && <span className="pencil"> (provisional)</span>}
           </p>
           <p className="book__tiers">

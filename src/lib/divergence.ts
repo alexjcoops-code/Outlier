@@ -1,5 +1,5 @@
 /**
- * Jensen–Shannon divergence between two distributions over numbers, in bits:
+ * Jensen-Shannon divergence between two distributions over numbers, in bits:
  * 0 means identical, 1 means nothing in common. Inputs are counts or
  * weights; they are normalised here.
  */

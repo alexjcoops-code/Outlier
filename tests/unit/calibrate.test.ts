@@ -8,7 +8,7 @@ import { fitGhostMix, type Observation } from '../../src/lib/calibrate.ts';
 import { seededRng } from '../../src/lib/rng.ts';
 import { addDays } from '../../src/lib/ukDate.ts';
 
-describe('Jensen–Shannon divergence', () => {
+describe('Jensen-Shannon divergence', () => {
   const m = (o: Record<number, number>) => new Map(Object.entries(o).map(([k, v]) => [Number(k), v]));
   it('is 0 for identical shapes and 1 for disjoint ones', () => {
     expect(jensenShannon(m({ 1: 2, 2: 2 }), m({ 1: 50, 2: 50 }))).toBeCloseTo(0, 10);

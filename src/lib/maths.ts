@@ -229,7 +229,7 @@ const ROMAN: [number, string][] = [
   [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
 ];
 
-/** Standard Roman numeral, 1–3999. */
+/** Standard Roman numeral, 1 to 3999. */
 export function romanNumeral(n: number): string {
   if (!Number.isInteger(n) || n < 1 || n > 3999) return '';
   let out = '';
@@ -249,7 +249,7 @@ const UNITS = [
 ];
 const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
 
-/** British English name of n, 0–9999: "three hundred and forty-two". */
+/** British English name of n, 0 to 9999: "three hundred and forty-two". */
 export function numberName(n: number): string {
   if (n < 20) return UNITS[n]!;
   if (n < 100) return TENS[Math.floor(n / 10)]! + (n % 10 ? `-${UNITS[n % 10]}` : '');

@@ -247,6 +247,11 @@
   font-weight: 600;
   text-align: right;
 }
+.answers__value--none {
+  font-family: var(--hand);
+  font-weight: 500;
+  color: var(--redpen);
+}
 .answers__tier {
   padding: 1px 7px;
   border-radius: 3px;
@@ -271,7 +276,12 @@
   .answers__row {
     grid-template-columns: minmax(0, 1fr) auto auto;
   }
-  .answers__tier {
+  .answers__value--none {
+  font-family: var(--hand);
+  font-weight: 500;
+  color: var(--redpen);
+}
+.answers__tier {
     grid-column: 1;
     grid-row: 2;
     justify-self: start;

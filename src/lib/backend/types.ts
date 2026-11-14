@@ -5,14 +5,14 @@ export const TIMER_MS = 25_000;
 export const GRACE_MS = 3_000;
 
 export interface DayRow {
-  position: number; // 1–7
+  position: number; // 1 to 7
   promptId: string;
   /** Has the player seen this prompt? A started prompt with no answer scores 0. */
   started: boolean;
   value: number | null;
   tier: TierId;
   points: number;
-  /** Weighted share of answers equal to the player's, 0–1. Null if no answer. */
+  /** Weighted share of answers equal to the player's, 0 to 1. Null if no answer. */
   share: number | null;
 }
 
@@ -39,7 +39,7 @@ export interface Distribution {
   players: number;
   simulated: boolean;
   /**
-   * Every answer given, most common first. Shares are 0–1, weighted exactly as
+   * Every answer given, most common first. Shares are 0 to 1, weighted exactly as
    * in the scoring, and add up to 1.
    */
   values: { value: number; share: number }[];

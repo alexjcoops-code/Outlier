@@ -59,7 +59,7 @@ export interface Prompt {
   id: string;
   /** The question type. Two prompts of one family never appear within a few days of each other. */
   family: string;
-  /** Shown to the player. Proper notation only: n², ×, ÷, ≤ — never ^ or *. */
+  /** Shown to the player. Proper notation only: n², ×, ÷, ≤. Never ^ or *. */
   text: string;
   difficulty: Difficulty;
   /** Smallest and largest number worth checking; anything outside is invalid. */
@@ -368,7 +368,7 @@ family('goldbach', 'Sums of two primes', 'hard', [
 ] as const, ([d, k, hi]) =>
   v(
     d,
-    `Name an even number under ${f(hi + 1)} that splits into two primes in exactly ${k} ways (order doesn’t matter)`,
+    `Name an even number under ${f(hi + 1)} that splits into two primes in exactly ${k} ways (order doesn't matter)`,
     4,
     hi,
     (n) => n % 2 === 0 && goldbachWays(n) === k,
@@ -1014,13 +1014,13 @@ family('number-words', 'Numbers as words', 'easy', [
   [2, 'letters', 8, 99], [2, 'letters', 9, 99], [2, 'letters', 10, 99], [2, 'letters', 11, 99], [3, 'letters', 16, 999],
   [2, 'no-e', 0, 99], [2, 'has-x', 0, 99], [2, 'has-v', 0, 99], [3, 'letters', 20, 999], [3, 'letters', 24, 999],
 ] as const, ([d, kind, k, hi]) => {
-  const tail = ' (in British English, like “one hundred and two”)';
+  const tail = ' (in British English, like "one hundred and two")';
   if (kind === 'letters') {
     return v(d, `Name a number under ${f(hi + 1)} whose name in words has exactly ${k} letters${hi > 99 ? tail : ''}`, 1, hi, (n) => letterCount(n) === k);
   }
   const letter = kind === 'no-e' ? 'e' : kind === 'has-x' ? 'x' : 'v';
   const has = kind !== 'no-e';
-  return v(d, `Name a number under ${f(hi + 1)} whose name in words ${has ? 'contains' : 'has no'} letter “${letter}”`, 1, hi, (n) => numberName(n).includes(letter) === has);
+  return v(d, `Name a number under ${f(hi + 1)} whose name in words ${has ? 'contains' : 'has no'} letter "${letter}"`, 1, hi, (n) => numberName(n).includes(letter) === has);
 });
 
 family('roman', 'Roman numerals', 'easy', [
@@ -1102,7 +1102,7 @@ family('calendar', 'Days of the week', 'medium', [
   [3, 12, 25, 1, 1901, 2000], [3, 12, 25, 2, 1901, 2000], [3, 12, 25, 3, 1901, 2000], [3, 12, 25, 4, 1901, 2000], [3, 12, 25, 5, 1901, 2000],
   [3, 12, 25, 6, 1901, 2000], [3, 12, 25, 0, 1901, 2000], [3, 11, 5, 6, 2001, 2100], [3, 1, 1, 3, 2001, 2100], [3, 2, 14, 0, 2001, 2100],
 ] as const, ([d, month, day, wd, lo, hi]) => {
-  const names: Record<string, string> = { '12-25': 'Christmas Day', '1-1': 'New Year’s Day', '11-5': 'Bonfire Night (5 November)', '2-14': 'Valentine’s Day' };
+  const names: Record<string, string> = { '12-25': 'Christmas Day', '1-1': "New Year's Day", '11-5': 'Bonfire Night (5 November)', '2-14': "Valentine's Day" };
   const past = hi <= 2026;
   return v(
     d,
@@ -1179,7 +1179,7 @@ family('years', 'Years', 'easy', [
     leap: ['that was a leap year', isLeapYear],
     'three-digits': ['that uses exactly three different digits', (y) => new Set(String(y)).size === 3],
     'square-end': ['whose last two digits make a square number (not 00)', (y) => y % 100 > 0 && isSquare(y % 100)],
-    'mult-age': ['that is a multiple of the year’s last digit (not 0)', (y) => y % 10 !== 0 && y % (y % 10) === 0],
+    'mult-age': ["that is a multiple of the year's last digit (not 0)", (y) => y % 10 !== 0 && y % (y % 10) === 0],
     mult13: ['that is a multiple of 13', multipleOf(13)],
     ascending: ['whose digits go up from left to right', digitsStrictlyAscending],
   };
@@ -1200,7 +1200,7 @@ family('stamps', 'Stamps', 'medium', [
   const cant = kind === 'cant';
   return v(
     d,
-    `With only ${a}p and ${b}p stamps, name an amount ${span(lo, hi)} pence that you ${cant ? 'can’t' : 'can'} make exactly`,
+    `With only ${a}p and ${b}p stamps, name an amount ${span(lo, hi)} pence that you ${cant ? "can't" : 'can'} make exactly`,
     lo,
     hi,
     (n) => ok(n) !== cant,
@@ -1359,10 +1359,10 @@ family('triangle-sides', 'Triangle sides', 'easy', [
 ] as const, ([d, kind, a, b]) => {
   const fits = (n: number) => n > b - a && n < a + b;
   if (kind === 'longest') {
-    return v(d, `A triangle’s two shorter sides are ${a} cm and ${b} cm. Name a possible whole-number length for its longest side`, b, a + b - 1, (n) => n >= b && fits(n));
+    return v(d, `A triangle's two shorter sides are ${a} cm and ${b} cm. Name a possible whole-number length for its longest side`, b, a + b - 1, (n) => n >= b && fits(n));
   }
   if (kind === 'shortest') {
-    return v(d, `A triangle’s two longer sides are ${a} cm and ${b} cm. Name a possible whole-number length for its shortest side`, 1, a, (n) => n <= a && fits(n));
+    return v(d, `A triangle's two longer sides are ${a} cm and ${b} cm. Name a possible whole-number length for its shortest side`, 1, a, (n) => n <= a && fits(n));
   }
   return v(d, `A triangle has sides of ${a} cm and ${b} cm. Name a possible whole-number length for the third side`, b - a + 1, a + b - 1, fits);
 });
@@ -1572,9 +1572,9 @@ family('game-scores', 'Scores in games', 'easy', [
   for (let s = 1; s <= 20; s++) [s, 2 * s, 3 * s].forEach((x) => single.add(x));
   const alternating = (colour: number) => (n: number) => n % (colour + 1) === 0 || (n + colour) % (colour + 1) === 0;
   const rules: Record<string, [string, number, number, (n: number) => boolean]> = {
-    dart: ['Name a score over 20 you can get with a single dart (singles, doubles and trebles of 1–20, 25 or 50)', 21, 60, (n) => single.has(n)],
-    'no-dart': ['Name a score from 1 to 60 you can’t get with a single dart (singles, doubles and trebles of 1–20, 25 or 50)', 1, 60, (n) => !single.has(n)],
-    trebles: ['Three darts all land in trebles of 1–20. Name a possible total over 60', 61, 180, (n) => n % 3 === 0],
+    dart: ['Name a score over 20 you can get with a single dart (singles, doubles and trebles of 1 to 20, 25 or 50)', 21, 60, (n) => single.has(n)],
+    'no-dart': ["Name a score from 1 to 60 you can't get with a single dart (singles, doubles and trebles of 1 to 20, 25 or 50)", 1, 60, (n) => !single.has(n)],
+    trebles: ['Three darts all land in trebles of 1 to 20. Name a possible total over 60', 61, 180, (n) => n % 3 === 0],
     boundaries: ['A batter hits exactly 15 boundaries in cricket, each a 4 or a 6. Name a number of runs they scored from them', 60, 90, (n) => n % 2 === 0],
     'snooker-black': ['A snooker break goes red (1), black (7), red, black… starting with a red. Name a possible break under 120', 1, 119, alternating(7)],
     'snooker-pink': ['A snooker break goes red (1), pink (6), red, pink… starting with a red. Name a possible break under 120', 1, 119, alternating(6)],
@@ -1602,7 +1602,7 @@ family('dice', 'Dice', 'easy', [
     'two-product': ['Name a number you can get by multiplying the scores on two dice', 1, 36, two],
     'three-product': ['Name a number bigger than 36 you can get by multiplying the scores on three dice', 37, 216, lazySet(() => products(3))],
     'four-product': ['Name a number bigger than 216 you can get by multiplying the scores on four dice', 217, 1296, lazySet(() => products(4))],
-    'not-two-product': ['Name a number under 25 that you can’t get by multiplying the scores on two dice', 1, 24, (n) => !two(n)],
+    'not-two-product': ["Name a number under 25 that you can't get by multiplying the scores on two dice", 1, 24, (n) => !two(n)],
     'side-by-side': ['Two dice are put side by side to make a two-digit number (3 and 5 make 35). Name one that is prime', 11, 66, (n) => isPrime(n) && digitsOf(n).every((x) => x >= 1 && x <= 6)],
     sum10: ['Ten dice are rolled. Name a total from 40 to 60 they could make', 40, 60, () => true],
     'three-squares': ['Three dice are rolled. Name a number over 72 you could get by squaring each score and adding them', 73, 108, lazySet(() => faces.flatMap((x) => faces.flatMap((y) => faces.map((z) => x * x + y * y + z * z))))],
@@ -1632,7 +1632,7 @@ family('digit-counting', 'Counting digits', 'easy', [
       const counts = [...new Set(String(n))].map((c) => count(n, c));
       return counts.length === 2 && counts.every((c) => c === 2);
     }],
-    'no-1-2-3': ['that doesn’t use the digits 1, 2 or 3', (n) => !/[123]/.test(String(n))],
+    'no-1-2-3': ["that doesn't use the digits 1, 2 or 3", (n) => !/[123]/.test(String(n))],
   };
   const [words, test] = rules[kind]!;
   const what = lo === 1000 && hi === 9999 ? 'four-digit number' : lo === 100 && hi === 999 ? 'three-digit number' : lo === 10000 ? 'five-digit number' : `number ${span(lo, hi)}`;

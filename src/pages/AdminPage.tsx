@@ -44,7 +44,7 @@ function Overlay({ p }: { p: AdminPromptStats }) {
                 <span className="overlay__real" style={{ width: `${(r.real / max) * 100}%` }} />
               </span>
               <span className="overlay__nums mono">
-                {pct(r.ghost)} · {p.realTotal ? pct(r.real) : '—'}
+                {pct(r.ghost)} · {p.realTotal ? pct(r.real) : 'n/a'}
               </span>
             </td>
           </tr>
@@ -60,7 +60,7 @@ function PromptStats({ p }: { p: AdminPromptStats }) {
   const rules = new Map(p.values.filter((v) => v.rules).map((v) => [v.value, v.rules]));
   const ai = new Map(p.values.filter((v) => v.ai).map((v) => [v.value, v.ai]));
   const aiCount = p.values.reduce((s, v) => s + v.ai, 0);
-  const js = (m: Map<number, number>) => (p.realTotal && m.size ? jensenShannon(real, m).toFixed(2) : '—');
+  const js = (m: Map<number, number>) => (p.realTotal && m.size ? jensenShannon(real, m).toFixed(2) : 'n/a');
   const realTimeoutRate = p.realTotal + p.realTimeouts ? p.realTimeouts / (p.realTotal + p.realTimeouts) : null;
 
   return (
@@ -79,12 +79,12 @@ function PromptStats({ p }: { p: AdminPromptStats }) {
         </div>
         <div>
           <dt>AI only</dt>
-          <dd>{aiCount ? js(ai) : '—'}</dd>
+          <dd>{aiCount ? js(ai) : 'n/a'}</dd>
         </div>
         <div>
           <dt>time-outs</dt>
           <dd>
-            {realTimeoutRate === null ? '—' : pct(realTimeoutRate)} real · {p.ghostCount ? pct(p.ghostTimeouts / p.ghostCount) : '—'} ghost
+            {realTimeoutRate === null ? 'n/a' : pct(realTimeoutRate)} real · {p.ghostCount ? pct(p.ghostTimeouts / p.ghostCount) : 'n/a'} ghost
           </dd>
         </div>
       </dl>

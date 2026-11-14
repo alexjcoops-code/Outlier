@@ -25,7 +25,7 @@ describe('versus rules', () => {
     expect(ids.map((id) => getPrompt(id).difficulty)).toEqual([1, 1, 2, 2, 3]);
   });
 
-  it('scores the crowd’s favourite low and a rare answer high', () => {
+  it("scores the crowd's favourite low and a rare answer high", () => {
     const p = getPrompt('multiples-01'); // a multiple of 6 under 100
     expect(crowdScore(p, 12, 2026).points).toBeLessThanOrEqual(15);
     expect(crowdScore(p, 66, 2026).points).toBeGreaterThan(crowdScore(p, 12, 2026).points);

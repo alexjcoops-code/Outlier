@@ -25,7 +25,7 @@ test('two players in a private room: invite link, live rounds, split points, sam
   const guest = await (await browser.newContext()).newPage();
 
   await host.goto('/versus');
-  await expect(host.getByText(/running without its server/)).toHaveCount(0);
+  await expect(host.getByText(/has no server/)).toHaveCount(0);
   await host.getByLabel('Name on your paper').fill('Hosty');
   await host.getByText('1 v 1', { exact: true }).click();
   await host.getByRole('button', { name: 'Make a room for friends' }).click();

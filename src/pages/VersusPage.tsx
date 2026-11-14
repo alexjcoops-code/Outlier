@@ -159,7 +159,7 @@ function Lobby({ backend, navigate, onEnter }: { backend: VersusBackend; navigat
   return (
     <section className="versus" aria-labelledby="versus-title">
       <h1 id="versus-title">
-        Versus <span className="start__dash">—</span> <span className="start__count">you against the room</span>
+        Versus <span className="start__dash" aria-hidden="true" /> <span className="start__count">you against the room</span>
       </h1>
       <p className="pencil start__lede">
         {VERSUS_ROUNDS} questions, 25 seconds each, everyone at once. Rare right answers score more, and if someone else in the
@@ -240,8 +240,8 @@ function Lobby({ backend, navigate, onEnter }: { backend: VersusBackend; navigat
       )}
       {!online && (
         <p className="pencil versus__note">
-          This copy of the game is running without its server, so the other players are ghosts: simulated players, always
-          marked as ghosts.
+          This copy of the game has no server, so you can only play ghosts. They're simulated players, and they're always
+          labelled.
         </p>
       )}
       <p className="versus__back">
@@ -292,7 +292,7 @@ function WaitingRoom({
   return (
     <section className="versus" aria-labelledby="waiting-title">
       <h1 id="waiting-title">
-        {state.kind === 'private' ? 'Your room' : 'Finding players'} <span className="start__dash">—</span>{' '}
+        {state.kind === 'private' ? 'Your room' : 'Finding players'} <span className="start__dash" aria-hidden="true" />{' '}
         <span className="start__count">{versusLabel(state.size)}</span>
       </h1>
 
@@ -472,7 +472,7 @@ function Match({
         type="button"
         className="linklike pencil"
         onClick={() => {
-          if (window.confirm('Leave the match? You’ll score nothing for the rest.')) onLeave();
+          if (window.confirm("Leave the match? You'll score nothing for the rest.")) onLeave();
         }}
       >
         Leave match
@@ -544,7 +544,7 @@ function Match({
                   const outcome = await onAnswer(round, n).catch(() => 'offline');
                   if (outcome === 'ok' || outcome === 'already') return true;
                   if (outcome === 'invalid') return false;
-                  setNote(outcome === 'late' ? 'Too late for that one.' : outcome === 'rate_limited' ? 'Slow down a little.' : 'Couldn’t hand that in. Try again.');
+                  setNote(outcome === 'late' ? 'Too late for that one.' : outcome === 'rate_limited' ? 'Slow down a little.' : "Couldn't hand that in. Try again.");
                   return outcome !== 'offline';
                 }}
               />
@@ -602,7 +602,7 @@ function RoundReveal({ state, now }: { state: VersusState; now: number }) {
               {nameOf(s.seat)}
               {ghost(s.seat) && <span className="register__ghost">ghost</span>}
             </span>
-            <span className="answers__value mono">{s.value === null ? '—' : s.value.toLocaleString('en-GB')}</span>
+            <span className={`answers__value mono ${s.value === null ? 'answers__value--none' : ''}`}>{s.value === null ? 'no answer' : s.value.toLocaleString('en-GB')}</span>
             <span className="answers__tier" style={{ background: `var(--tier-${s.tier})` }}>
               {TIERS[s.tier].name}
             </span>

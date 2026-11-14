@@ -35,17 +35,17 @@ interface RawState {
 
 /** Turns server error codes into sentences a player can act on. */
 const MESSAGES: Record<string, string> = {
-  no_such_room: 'There’s no room with that code. Check it and try again.',
+  no_such_room: "There's no room with that code. Check it and try again.",
   room_full: 'That room is full.',
   already_started: 'That match has already started.',
-  not_in_match: 'You’re not in that match.',
+  not_in_match: "You're not in that match.",
   not_host: 'Only the person who made the room can start it.',
   need_two: 'You need at least one other player to start.',
 };
 
 function friendly(message: string): Error {
   const code = Object.keys(MESSAGES).find((k) => message.includes(k));
-  return new Error(code ? MESSAGES[code] : 'Can’t reach the game server. Check your connection and try again.');
+  return new Error(code ? MESSAGES[code] : "Can't reach the game server. Check your connection and try again.");
 }
 
 export function createOnlineVersus(url: string, anonKey: string): VersusBackend {
