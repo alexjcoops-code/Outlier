@@ -1,0 +1,290 @@
+/* ───────────── Versus: lobby, waiting room, register, reveal ───────────── */
+
+.versus__invite {
+  margin-top: 18px;
+}
+.versus__invite .hand {
+  margin-right: 6px;
+}
+
+.versus__field {
+  display: block;
+  margin-top: 26px;
+  max-width: 320px;
+}
+.versus__field > span {
+  display: block;
+  font-size: 13px;
+}
+.versus__name,
+.versus__code {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 2px solid var(--ink);
+  border-radius: 0;
+  background: rgba(245, 241, 230, 0.6);
+  color: var(--ink);
+  font-family: var(--hand);
+  font-size: 30px;
+  caret-color: var(--redpen);
+}
+.versus__name:focus-visible,
+.versus__code:focus-visible {
+  box-shadow: none;
+  border-bottom-color: var(--redpen);
+}
+
+.versus__sizes {
+  margin: 22px 0 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.versus__sizes legend {
+  font-size: 13px;
+  margin-bottom: 6px;
+  padding: 0;
+}
+.versus__size {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px dashed var(--pencil);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 15px;
+  cursor: pointer;
+}
+.versus__size input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.versus__size--on {
+  border: 2px solid var(--redpen);
+  color: var(--redpen);
+  font-weight: 600;
+  transform: rotate(-1.5deg);
+}
+.versus__size:has(input:focus-visible) {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.versus__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+  margin-top: 28px;
+}
+.versus__join {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.versus__code {
+  width: 7.5ch;
+  font-family: var(--mono);
+  font-size: 22px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.versus__error {
+  margin-top: 18px;
+}
+.versus__note {
+  margin-top: 22px;
+  font-size: 14px;
+  max-width: 32em;
+}
+.versus__back {
+  margin-top: 26px;
+}
+.versus__status {
+  margin-top: 14px;
+  font-size: 15px;
+}
+.versus__leave {
+  margin-top: 28px;
+  font-size: 14px;
+}
+.versus__waitnote {
+  margin-top: 14px;
+}
+
+/* The room code, written big on the board. */
+.versus__room {
+  margin-top: 22px;
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+}
+.versus__room .pencil {
+  font-size: 13px;
+}
+.versus__bigcode {
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+/* ───── The register ───── */
+.register {
+  width: 100%;
+  margin-top: 22px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.register th,
+.register td {
+  height: 36px;
+  padding: 0 4px;
+  border-bottom: 1px solid var(--grid);
+  text-align: left;
+  font-weight: 400;
+}
+.register thead th {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--pencil);
+  border-bottom: 1.5px solid var(--ink);
+}
+.register__name {
+  overflow-wrap: anywhere;
+}
+.register__q,
+.register__total {
+  width: 2.6em;
+  text-align: center !important;
+}
+.register__total {
+  font-weight: 600;
+  border-left: 1.5px solid var(--margin) !important;
+}
+.register__place {
+  width: 2.4em;
+  color: var(--redpen);
+  font-weight: 600;
+}
+.register__me .register__name {
+  font-weight: 600;
+}
+.register__left {
+  opacity: 0.5;
+}
+.register__ghost {
+  display: inline-block;
+  white-space: nowrap;
+  margin-left: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--pencil);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--pencil);
+  vertical-align: 2px;
+}
+.register__empty {
+  font-style: italic;
+}
+@media (max-width: 420px) {
+  .register {
+    font-size: 14px;
+  }
+  .register__q,
+  .register__total {
+    width: 2.1em;
+    font-size: 13px;
+  }
+}
+
+/* ───── Countdown ───── */
+.versus__countdown {
+  display: grid;
+  justify-items: center;
+  margin-top: 24px;
+}
+.versus__count {
+  font-family: var(--hand);
+  font-size: 110px;
+  line-height: 1.1;
+  color: var(--redpen);
+}
+
+/* ───── Everyone's answers ───── */
+.answers {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.answers__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  column-gap: 12px;
+  min-height: 46px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--grid);
+}
+.answers__row--me {
+  background: linear-gradient(transparent 62%, rgba(255, 233, 122, 0.55) 62%);
+}
+.answers__name {
+  overflow-wrap: anywhere;
+}
+.answers__value {
+  font-size: 20px;
+  font-weight: 600;
+  text-align: right;
+}
+.answers__tier {
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.answers__points {
+  min-width: 3.4em;
+  text-align: right;
+  font-size: 17px;
+}
+.answers__points .pencil {
+  font-size: 13px;
+}
+.answers__shared {
+  grid-column: 1 / -1;
+  font-size: 20px;
+  margin-top: -6px;
+}
+@media (max-width: 420px) {
+  .answers__row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .answers__tier {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+  }
+}
+
+/* ───── Final ───── */
+.versus__final {
+  position: relative;
+}
+.ink-stamp.versus__stamp {
+  position: absolute;
+  right: 0;
+  top: -10px;
+  z-index: 2;
+}

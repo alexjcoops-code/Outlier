@@ -1,13 +1,12 @@
 // A complete in-browser backend. Used when no Supabase project is configured
-// (local development, the end-to-end test) and, with in-memory storage and
-// random prompts, for practice mode. The crowd is 1,100 rule-based ghosts per
+// (local development, the end-to-end test). The crowd is 1,100 rule-based ghosts per
 // prompt: what the real game uses when the Claude API is unavailable.
 
-import { getPrompt, isValidAnswer, PROMPTS } from '../../prompts.ts';
+import { getPrompt, isValidAnswer } from '../../prompts.ts';
 import { dailyPromptIds, PROMPTS_PER_DAY } from '../daily.ts';
 import { GHOST_CONFIG } from '../ghostConfig.ts';
 import { generateRuleGhosts, type GhostPlayer } from '../ghostModel.ts';
-import { seededRng, shuffle } from '../rng.ts';
+import { seededRng } from '../rng.ts';
 import { ghostWeight, scoreAnswer, type Score } from '../scoring.ts';
 import { ukDateString } from '../ukDate.ts';
 import {
@@ -46,7 +45,7 @@ interface Crowd {
 }
 
 interface Options {
-  kind: 'local' | 'practice';
+  kind: 'local';
   storage: KeyValue;
   /** Which prompts make up a "day". */
   promptIdsFor: (date: string) => string[];
@@ -258,28 +257,5 @@ export function createLocalDailyBackend(storage: KeyValue): Backend {
     storage,
     promptIdsFor: (date) => dailyPromptIds(date),
     yearFor: yearOf,
-  });
-}
-
-/** Practice: seven random prompts per round, nothing saved. Each "date" is a round id. */
-export function createPracticeBackend(): Backend {
-  const rounds = new Map<string, string[]>();
-  return createLocalBackend({
-    kind: 'practice',
-    storage: memoryStorage(),
-    yearFor: () => yearOf(ukDateString()),
-    promptIdsFor: (round) => {
-      let ids = rounds.get(round);
-      if (!ids) {
-        // Seven questions of seven different types.
-        const seen = new Set<string>();
-        const picked = shuffle(PROMPTS, seededRng(round))
-          .filter((p) => !seen.has(p.family) && seen.add(p.family))
-          .slice(0, PROMPTS_PER_DAY);
-        ids = picked.sort((a, b) => a.difficulty - b.difficulty).map((p) => p.id);
-        rounds.set(round, ids);
-      }
-      return ids;
-    },
   });
 }

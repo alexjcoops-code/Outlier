@@ -15,18 +15,15 @@ import { YesterdayCrowd } from '../components/YesterdayCrowd.tsx';
 
 interface Props {
   backend: Backend;
-  /** The game date, or a round id in practice mode. */
+  /** The game date. */
   date: string;
   navigate: (to: string) => void;
   onFinished?: (r: DayResults) => void;
-  /** Practice only: deal a fresh round. */
-  onAgain?: () => void;
 }
 
-export function PlayPage({ backend, date, navigate, onFinished, onAgain }: Props) {
+export function PlayPage({ backend, date, navigate, onFinished }: Props) {
   const game = useGame(backend, date, onFinished);
   const { phase, results } = game;
-  const practice = backend.kind === 'practice';
   // Did the player finish the paper just now (rather than reload the results)?
   const playedNow = useRef(false);
   if (phase.name === 'reveal') playedNow.current = true;
@@ -61,7 +58,7 @@ export function PlayPage({ backend, date, navigate, onFinished, onAgain }: Props
 
   if (phase.name === 'results') {
     return (
-      <ResultsView results={results} backend={backend} navigate={navigate} onAgain={onAgain} fresh={playedNow.current} />
+      <ResultsView results={results} backend={backend} navigate={navigate} fresh={playedNow.current} />
     );
   }
 
@@ -69,12 +66,11 @@ export function PlayPage({ backend, date, navigate, onFinished, onAgain }: Props
     const resuming = phase.position > 1;
     return (
       <section className="start" aria-labelledby="start-title">
-        {/* In practice the corner stamp sits here instead. */}
-        <p className="start__fields pencil mono" aria-hidden="true" style={practice ? { visibility: 'hidden' } : undefined}>
+        <p className="start__fields pencil mono" aria-hidden="true">
           Name <span className="start__blank" /> Class <span className="start__blank start__blank--short" />
         </p>
         <h1 id="start-title">
-          {practice ? 'Practice worksheet' : "Today's worksheet"} <span className="start__dash">—</span>{' '}
+          Today's worksheet <span className="start__dash">—</span>{' '}
           <span className="start__count">7 questions</span>
         </h1>
         <p className="pencil start__lede">
@@ -85,15 +81,9 @@ export function PlayPage({ backend, date, navigate, onFinished, onAgain }: Props
           <button type="button" className="stamp" onClick={game.start}>
             {resuming ? 'Carry on' : 'Start'}
           </button>
-          {practice ? (
-            <a href="/" onClick={linkHandler(navigate, '/')}>
-              Back to today's worksheet
-            </a>
-          ) : (
-            <a href="/practice" onClick={linkHandler(navigate, '/practice')}>
-              Practice instead
-            </a>
-          )}
+          <a href="/versus" onClick={linkHandler(navigate, '/versus')}>
+            Or play people live
+          </a>
         </div>
         {resuming && (
           <p className="pencil start__resume">
@@ -101,8 +91,7 @@ export function PlayPage({ backend, date, navigate, onFinished, onAgain }: Props
             {PROMPTS_PER_DAY}.
           </p>
         )}
-        {practice && <p className="pencil start__resume">Random questions, simulated marks, nothing saved.</p>}
-        {!practice && !resuming && <YesterdayCrowd backend={backend} today={date} />}
+        {!resuming && <YesterdayCrowd backend={backend} today={date} />}
       </section>
     );
   }

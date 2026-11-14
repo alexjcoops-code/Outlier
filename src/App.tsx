@@ -5,7 +5,6 @@ import { HowToPlay } from './components/HowToPlay.tsx';
 import { ConfettiLayer } from './components/Confetti.tsx';
 import { SvgDefs } from './components/Marks.tsx';
 import { createBackend } from './lib/backend/index.ts';
-import { createPracticeBackend } from './lib/backend/local.ts';
 import type { DayResults } from './lib/backend/types.ts';
 import { loadHistory, recordDay, streak } from './lib/history.ts';
 import { linkHandler, useRoute } from './lib/router.ts';
@@ -13,17 +12,18 @@ import { ukDateString } from './lib/ukDate.ts';
 import { AdminPage } from './pages/AdminPage.tsx';
 import { BookPage } from './pages/BookPage.tsx';
 import { PlayPage } from './pages/PlayPage.tsx';
+import { VersusPage } from './pages/VersusPage.tsx';
+import { createVersusBackend } from './lib/versusOnline.ts';
 
 const HELP_SEEN = 'outlier:help-seen';
 
 export function App() {
   const [path, navigate] = useRoute();
   const backend = useMemo(() => createBackend(), []);
-  const practice = useMemo(() => createPracticeBackend(), []);
+  const versus = useMemo(() => createVersusBackend(), []);
   const [today, setToday] = useState(() => ukDateString());
   const [history, setHistory] = useState(loadHistory);
   const [help, setHelp] = useState(false);
-  const [round, setRound] = useState(() => `practice-${Date.now()}`);
 
   // Roll over to the new worksheet at midnight in London, even if the tab stays open.
   useEffect(() => {
@@ -69,25 +69,16 @@ export function App() {
     <MotionConfig reducedMotion="user">
       <SvgDefs />
       <div className="page">
-        {page === '/practice' && <span className="practice-stamp">PRACTICE</span>}
         <div className="column">
           <Header date={today} streak={days} navigate={navigate} onHelp={() => setHelp(true)} />
           <main>
             {page === '/' && (
               <PlayPage key={today} backend={backend} date={today} navigate={navigate} onFinished={onFinished} />
             )}
-            {page === '/practice' && (
-              <PlayPage
-                key={round}
-                backend={practice}
-                date={round}
-                navigate={navigate}
-                onAgain={() => setRound(`practice-${Date.now()}`)}
-              />
-            )}
+            {page === '/versus' && <VersusPage backend={versus} navigate={navigate} />}
             {page === '/book' && <BookPage history={history} today={today} streak={days} navigate={navigate} />}
             {page === '/admin' && <AdminPage backend={backend} today={today} />}
-            {!['/', '/practice', '/book', '/admin'].includes(page) && (
+            {!['/', '/versus', '/book', '/admin'].includes(page) && (
               <div className="notice">
                 <span className="hand">Wrong classroom.</span>
                 <p>
@@ -104,8 +95,8 @@ export function App() {
             <a href="/" onClick={linkHandler(navigate, '/')}>
               Today
             </a>
-            <a href="/practice" onClick={linkHandler(navigate, '/practice')}>
-              Practice
+            <a href="/versus" onClick={linkHandler(navigate, '/versus')}>
+              Versus
             </a>
             <a href="/book" onClick={linkHandler(navigate, '/book')}>
               My book

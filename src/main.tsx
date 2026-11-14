@@ -8,6 +8,7 @@ import './styles/tokens.css';
 import './styles/base.css';
 import './styles/game.css';
 import './styles/results.css';
+import './styles/versus.css';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

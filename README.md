@@ -24,7 +24,7 @@ With no Supabase settings the app runs against a built-in offline backend: the s
 
 ```bash
 npm test          # unit tests (Vitest), including the SQL run in an in-process Postgres
-npm run e2e       # full-game end-to-end tests (Playwright; needs `npx playwright install chromium` once)
+npm run e2e       # end-to-end tests (Playwright; needs `npx playwright install chromium` once)
 npm run typecheck
 npm run build
 ```
@@ -64,6 +64,7 @@ supabase secrets set CRON_SECRET=<the same random string you put in Vault>
 npm run sync:shared            # copies src/ game logic into supabase/functions/_shared/core
 supabase functions deploy prepare-day
 supabase functions deploy admin-stats
+supabase functions deploy versus
 ```
 
 Create the first worksheet straight away rather than waiting for 23:30:
@@ -168,12 +169,27 @@ The rarer the answer, the bigger the fuss (`src/lib/celebrate.ts`):
 
 A good day earns an award stamp on the results page, with confetti when the paper has just been finished: Merit (300+), Distinction (450+), Headteacher's award (600+). Vibration only happens on phones that support it. With reduced motion there is no confetti, shaking, buzzing or flying balls; the stamps and marks simply appear.
 
+### Versus
+
+`/versus` is a live mode: you against 1 to 7 other people (1 v 1, 1 v 2, 1 v 3, 1 v 5 or 1 v 7), five questions, 25 seconds each, everyone seeing each question at the same moment.
+
+- **Find players** puts you in a quick match with strangers of the same size. It starts as soon as the table is full, or after 45 seconds with whoever is there (two or more). If nobody turns up you're offered ghosts instead.
+- **Make a room for friends** gives a five-character code and a link (`/versus?code=K7MPQ`) to send. It starts when full, or when the host presses **Start now**.
+- **Play ghosts** is always there: simulated opponents in the browser, labelled as ghosts, with the same abilities and styles as the daily crowd. Without a Supabase project (offline mode) it's the only option.
+
+Scoring: each answer first gets the same tier as in the daily game, judged against the ghost crowd for that question (an obvious answer 10, an outlier 85, a lone wolf 100). Then, if anyone else in the match said the same number, those points are split between you (`60 ÷ 2 = 30`). After each question everyone's answers are shown; at the end, the register ranks the room.
+
+The five questions are five different types, easy to hard, drawn fresh for each match. The `versus` Edge Function makes matches (it has the question bank and stores each question's answer key); everything else is RPCs (`versus_join`, `versus_state`, `versus_answer`, `versus_start`, `versus_leave`) that check each answer against the key and the server clock. Players only ever see each other's seat numbers and names, never their ids. A match moves along whenever anyone asks for its state, so it needs no timer running on the server. Matches over a day old are deleted nightly.
+
+Scores aren't stored: every browser works them out from the answers with the same code (`src/lib/versus.ts`), so everyone sees the same register.
+
 ### Not cheatable from the client
 
 - Tables have row level security with no client policies, apart from reading which prompts make up today and past days. Everything else goes through `SECURITY DEFINER` RPCs.
 - `submit_answer` checks the value against that day's answer key (generated from the TypeScript validators when the day is prepared), checks the server-side clock started by `start_prompt` (25 seconds plus 3 for the network), allows one answer per prompt, and rate-limits each player id to 20 submissions per 30 seconds.
 - `get_distribution` refuses until you have answered that prompt or run out of time on it.
 - Tomorrow's prompts exist in the database from 23:30 but are hidden by policy until midnight.
+- Versus: other players' answers to the current question stay hidden until the round closes; answers are checked against the stored key and accepted only between the question's start and 28 seconds after it.
 
 There is no login, so a player is an anonymous UUID in `localStorage`. Clearing storage gives a new identity and another go; that is the accepted cost of having no accounts.
 
@@ -190,10 +206,13 @@ supabase/
   migrations/             schema, RLS, RPCs; pg_cron schedules
   functions/prepare-day   nightly: prompts, answer key, ghosts
   functions/admin-stats   data for /admin
+  functions/versus        makes versus matches: questions and answer keys
   functions/_shared/core  generated copy of src/ logic (npm run sync:shared)
 scripts/suggest-ghost-mix.ts  suggests ghost ability/style shares from real data
 tests/unit/               validators, selection, scoring, ghost model, calibration, SQL (PGlite)
-tests/e2e/                Playwright: full game, resume, practice, number pad
+tests/e2e/                Playwright: full game, resume, number pad, versus against ghosts,
+                          and an online versus match between two browsers (fakeSupabase.ts
+                          runs the real migrations in an in-process Postgres)
 ```
 
 ## Changing things

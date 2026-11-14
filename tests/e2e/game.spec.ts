@@ -133,20 +133,76 @@ test('leaving mid-game resumes at the next question; the abandoned one scores 0'
   await expect(page.getByLabel('Question 2: No answer, 0 points')).toBeVisible();
 });
 
-test('practice mode plays the same but saves nothing', async ({ page }) => {
-  await page.goto('/practice');
-  await expect(page.getByText('PRACTICE', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Start' }).click();
-  for (let q = 1; q <= 7; q++) {
-    const valid = await answersOnScreen(page);
-    await page.keyboard.type(String(valid[Math.floor(valid.length / 2)]));
-    await page.keyboard.press('Enter');
-    await page.getByRole('button', { name: q === 7 ? 'See marks' : 'Next question' }).click();
+/** Move the fake clock on in half-second steps until something appears. */
+async function stepUntil(page: Page, selector: string, maxMs = 40_000) {
+  for (let t = 0; t <= maxMs; t += 500) {
+    if (await page.locator(selector).first().isVisible()) return;
+    await page.clock.runFor(500);
   }
-  await expect(page.getByRole('heading', { name: 'Practice paper, marked' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Another paper' })).toBeVisible();
-  await page.goto('/book');
-  await expect(page.getByText('Nothing marked yet.')).toBeVisible();
+  throw new Error(`${selector} never appeared`);
+}
+
+test('versus: a whole match against ghosts, then the register', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('/versus');
+  await expect(page.getByRole('heading', { name: /Versus/ })).toBeVisible();
+  // No server in the test: ghosts only, and it says so.
+  await expect(page.getByText(/running without its server/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Practice' })).toHaveCount(0);
+
+  await page.getByLabel('Name on your paper').fill('Tester');
+  await page.getByText('1 v 2', { exact: true }).click();
+  await page.getByRole('button', { name: 'Play 2 ghosts' }).click();
+
+  // The countdown, with everyone in the register.
+  await expect(page.getByText('Question 1 of 5')).toBeVisible();
+  await expect(page.locator('table.register tbody tr')).toHaveCount(3);
+  await expect(page.locator('table.register').getByText('ghost')).toHaveCount(2);
+
+  for (let round = 1; round <= 5; round++) {
+    await stepUntil(page, 'form.answer');
+    await expect(page.locator('.margin-note')).toHaveText(`Q${round}.`);
+    const heading = page.locator('#prompt-text');
+    const text = (await heading.innerText()).replace(/^Question \d of 5:\s*/, '').trim();
+    const prompt = byText.get(text);
+    if (!prompt) throw new Error(`Prompt not in the bank: "${text}"`);
+    const valid = validAnswers(prompt);
+    if (round === 1) {
+      // A wrong number isn't locked in.
+      const wrong = Array.from({ length: 50 }, (_, i) => i + 1).find((n) => !valid.includes(n))!;
+      await page.keyboard.type(String(wrong));
+      await page.keyboard.press('Enter');
+      await expect(page.getByLabel('Your answer, a whole number')).toHaveValue('');
+    }
+    if (round === 3) {
+      // Let this one run out: the round can't close before the 25 seconds are up.
+    } else {
+      await page.keyboard.type(String(valid[valid.length - 1]));
+      await page.keyboard.press('Enter');
+    }
+    await stepUntil(page, 'ol.answers');
+    const answers = page.locator('ol.answers');
+    await expect(answers.locator('li')).toHaveCount(3);
+    const me = answers.locator('.answers__row--me');
+    await expect(me).toContainText('Tester');
+    if (round === 3) await expect(me.locator('.answers__value')).toHaveText('—');
+    else await expect(me.locator('.answers__value')).toHaveText(valid[valid.length - 1]!.toLocaleString('en-GB'));
+  }
+  await stepUntil(page, '#final-title');
+
+  await expect(page.getByRole('heading', { name: /Top of the class|You came/ })).toBeVisible();
+  const rows = page.locator('table.register--final tbody tr');
+  await expect(rows).toHaveCount(3);
+  const totals = await rows.locator('.register__total').allInnerTexts();
+  const sorted = totals.map(Number);
+  expect([...sorted].sort((a, b) => b - a)).toEqual(sorted);
+  await page.getByRole('button', { name: 'Play again' }).click();
+  await expect(page.getByLabel('Name on your paper')).toHaveValue('Tester');
+});
+
+test('practice mode has gone', async ({ page }) => {
+  await page.goto('/practice');
+  await expect(page.getByText('Wrong classroom.')).toBeVisible();
 });
 
 test('the on-screen number pad works on a small phone, and the mark fits on screen', async ({ page }, testInfo) => {

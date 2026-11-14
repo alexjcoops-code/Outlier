@@ -17,8 +17,6 @@ interface Props {
   results: DayResults;
   backend: Backend;
   navigate: (to: string) => void;
-  /** Practice rounds: no share, no countdown, a button to go again. */
-  onAgain?: () => void;
   /** The paper was just finished (not reloaded): celebrate a good day. */
   fresh?: boolean;
 }
@@ -212,9 +210,8 @@ function ResultRow({ row, results, backend }: { row: DayRow; results: DayResults
   );
 }
 
-export function ResultsView({ results, backend, navigate, onAgain, fresh = false }: Props) {
+export function ResultsView({ results, backend, navigate, fresh = false }: Props) {
   const [copied, setCopied] = useState<'idle' | 'done' | 'failed'>('idle');
-  const practice = backend.kind === 'practice';
   const text = shareText(results, window.location.host);
   const reduce = useReducedMotion();
   const award = awardFor(results.total);
@@ -246,8 +243,8 @@ export function ResultsView({ results, backend, navigate, onAgain, fresh = false
 
   return (
     <section className="results" aria-labelledby="results-title">
-      <h1 id="results-title">{practice ? 'Practice paper, marked' : "Today's worksheet, marked"}</h1>
-      {!practice && !results.final && <span className="provisional">provisional</span>}
+      <h1 id="results-title">Today's worksheet, marked</h1>
+      {!results.final && <span className="provisional">provisional</span>}
 
       <div className="results__total" ref={totalRef}>
         {award && (
@@ -267,9 +264,7 @@ export function ResultsView({ results, backend, navigate, onAgain, fresh = false
       </div>
 
       <p className="pencil results__basis">
-        {practice
-          ? 'Practice marks use simulated answers only. Nothing is saved.'
-          : results.final
+        {results.final
             ? `Final marks. ${basedOn(results.players, results.simulated)}.`
             : `Marks can still change until midnight. ${basedOn(results.players, results.simulated)}.`}
       </p>
@@ -283,36 +278,19 @@ export function ResultsView({ results, backend, navigate, onAgain, fresh = false
       </ol>
 
       <div className="results__actions">
-        {practice ? (
-          <>
-            <button type="button" className="stamp stamp--small" onClick={onAgain}>
-              Another paper
-            </button>
-            <a href="/" onClick={linkHandler(navigate, '/')}>
-              Back to today's worksheet
-            </a>
-          </>
-        ) : (
-          <>
-            <button type="button" className="stamp stamp--small" onClick={copy}>
-              Copy result
-            </button>
-            <a href="/practice" onClick={linkHandler(navigate, '/practice')}>
-              Practice
-            </a>
-          </>
-        )}
+        <button type="button" className="stamp stamp--small" onClick={copy}>
+          Copy result
+        </button>
+        <a href="/versus" onClick={linkHandler(navigate, '/versus')}>
+          Play people live
+        </a>
       </div>
-      {!practice && (
-        <>
-          <p className="pencil results__copied" role="status">
-            {copied === 'done' && 'Copied.'}
-            {copied === 'failed' && "Couldn't copy. Select the text below instead."}
-          </p>
-          <pre className="results__share" aria-label="Share text">{text}</pre>
-          <Countdown />
-        </>
-      )}
+      <p className="pencil results__copied" role="status">
+        {copied === 'done' && 'Copied.'}
+        {copied === 'failed' && "Couldn't copy. Select the text below instead."}
+      </p>
+      <pre className="results__share" aria-label="Share text">{text}</pre>
+      <Countdown />
     </section>
   );
 }

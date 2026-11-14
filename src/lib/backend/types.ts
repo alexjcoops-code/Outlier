@@ -65,7 +65,7 @@ export interface AdminStats {
 }
 
 export interface Backend {
-  kind: 'local' | 'supabase' | 'practice';
+  kind: 'local' | 'supabase';
   /** The day's prompts and the player's progress. Never reveals other people's answers. */
   getResults(date: string): Promise<DayResults>;
   /** Start (or re-join) the timer for a prompt. Prompts must be started in order. */

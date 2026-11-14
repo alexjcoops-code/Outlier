@@ -1,6 +1,7 @@
 // The real backend: Supabase RPCs. All scoring and validation happens in Postgres.
 
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { supabaseClient } from '../supabaseClient.ts';
 import { getPlayerId } from '../player.ts';
 import type { TierId } from '../scoring.ts';
 import { ukDateString } from '../ukDate.ts';
@@ -44,9 +45,7 @@ interface RawResults {
 }
 
 export function createSupabaseBackend(url: string, anonKey: string): Backend {
-  const supabase: SupabaseClient = createClient(url, anonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const supabase: SupabaseClient = supabaseClient(url, anonKey);
   const player = getPlayerId();
 
   async function rpc<T>(name: string, args: Record<string, unknown>): Promise<T> {
