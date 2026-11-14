@@ -170,8 +170,8 @@ The rarer the answer, the bigger the fuss (`src/lib/celebrate.ts`):
 | Obvious, Predictably Clever | A plain mark. |
 | Fair | The points count up into the red circle; one tick. |
 | Rare | Two ticks (a teacher's "very good"), a small burst of hole-punch confetti, a light buzz. |
-| Outlier | The red ball knocks the crowd into the air, a red BOLD stamp slams onto the page, the page jolts, confetti with gold stars. |
-| Lone Wolf | The crowd scatters off the red ball, a NOBODY ELSE stamp in green pen, the page shakes, confetti and gold stars thrown out to the sides, a longer buzz. |
+| Outlier | The red ball knocks the crowd into the air, a red BOLD stamp slams onto the page, the teacher dashes red-pen emphasis lines and two little stars round your score, the page jolts. No confetti. |
+| Lone Wolf | The crowd scatters off the red ball, a NOBODY ELSE stamp in green pen, the page shakes, confetti cut from coloured paper (the highlighter colours) thrown out to the sides, then a shower of it fluttering down the page, a longer buzz. |
 
 A good day earns an award stamp on the results page, with confetti when the paper has just been finished: Merit (300+), Distinction (450+), Headteacher's award (600+). Vibration only happens on phones that support it. With reduced motion there is no confetti, shaking, buzzing or flying balls; the stamps and marks simply appear.
 

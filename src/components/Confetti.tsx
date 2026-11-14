@@ -1,5 +1,6 @@
 // Hole-punch confetti: paper chads, torn strips of squared paper, highlighter
-// flecks and gold star stickers, thrown up from the mark and fluttering down.
+// flecks and gold star stickers, flicked out from the mark and fluttering down.
+// White paper usually; a Lone Wolf gets it cut from coloured paper.
 // One full-screen canvas for the whole app; components fire bursts via celebrate.ts.
 
 import { useReducedMotion } from 'framer-motion';
@@ -18,11 +19,14 @@ interface Piece {
   spin: number;
   size: number;
   colour: string;
+  /** The paper it's cut from. */
+  paper: string;
   phase: number;
   life: number;
 }
 
 const GOLD = '#f2b705';
+const pick = (xs: readonly string[]) => xs[Math.floor(Math.random() * xs.length)]!;
 
 function drawStar(ctx: CanvasRenderingContext2D, r: number) {
   ctx.beginPath();
@@ -86,7 +90,7 @@ export function ConfettiLayer() {
           ctx.scale(1, Math.abs(Math.cos(p.phase * 0.7)) * 0.9 + 0.1);
           ctx.beginPath();
           ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-          ctx.fillStyle = '#fbf8ef';
+          ctx.fillStyle = p.paper;
           ctx.fill();
           ctx.lineWidth = 0.8;
           ctx.strokeStyle = 'rgba(31,42,68,0.35)';
@@ -101,7 +105,7 @@ export function ConfettiLayer() {
           }
         } else if (p.kind === 'strip') {
           ctx.scale(Math.abs(Math.cos(p.phase * 0.5)) * 0.9 + 0.1, 1);
-          ctx.fillStyle = '#f5f1e6';
+          ctx.fillStyle = p.paper;
           ctx.fillRect(-p.size * 0.35, -p.size, p.size * 0.7, p.size * 2);
           ctx.strokeStyle = 'rgba(31,42,68,0.25)';
           ctx.lineWidth = 0.6;
@@ -151,9 +155,30 @@ export function ConfettiLayer() {
           rot: Math.random() * Math.PI * 2,
           spin: (Math.random() - 0.5) * 0.3,
           size: kind === 'star' ? 6 + Math.random() * 6 : kind === 'strip' ? 6 + Math.random() * 4 : 3 + Math.random() * 2.5,
-          colour: kind === 'fleck' ? b.colour : kind === 'chad' && Math.random() < 0.3 ? '#a9bfd6' : '',
+          colour: kind === 'fleck' ? (b.palette ? pick(b.palette) : b.colour) : !b.palette && kind === 'chad' && Math.random() < 0.3 ? '#a9bfd6' : '',
+          paper: b.palette ? pick(b.palette) : kind === 'strip' ? '#f5f1e6' : '#fbf8ef',
           phase: Math.random() * Math.PI * 2,
           life: 240 + Math.random() * 90,
+        });
+      }
+      // A shower: pieces start above the top edge, staggered, and drift down slowly.
+      for (let i = 0; i < (b.shower ?? 0); i++) {
+        const r = Math.random();
+        const isStar = r < 0.08;
+        const kind: Kind = isStar ? 'star' : r < 0.6 ? 'chad' : r < 0.85 ? 'strip' : 'fleck';
+        pieces.push({
+          kind,
+          x: Math.random() * window.innerWidth,
+          y: -20 - Math.random() * window.innerHeight * 0.6,
+          vx: (Math.random() - 0.5) * 1.2,
+          vy: 0.4 + Math.random() * 1.2,
+          rot: Math.random() * Math.PI * 2,
+          spin: (Math.random() - 0.5) * 0.2,
+          size: kind === 'star' ? 6 + Math.random() * 5 : kind === 'strip' ? 6 + Math.random() * 4 : 3 + Math.random() * 2.5,
+          colour: b.palette ? pick(b.palette) : b.colour,
+          paper: b.palette ? pick(b.palette) : kind === 'strip' ? '#f5f1e6' : '#fbf8ef',
+          phase: Math.random() * Math.PI * 2,
+          life: 520 + Math.random() * 120,
         });
       }
       if (!running) {

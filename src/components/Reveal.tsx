@@ -1,5 +1,5 @@
 import { MOTION } from '../lib/motion.ts';
-import { TIER_HEX, formatAnswer } from '../lib/format.ts';
+import { CONFETTI_COLOURS, TIER_HEX, formatAnswer } from '../lib/format.ts';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 import { burst, buzz, FANFARE, shakePage } from '../lib/celebrate.ts';
@@ -9,7 +9,7 @@ import type { RevealData } from '../lib/useGame.ts';
 import { CountUp } from './CountUp.tsx';
 import { CrowdPlot } from './CrowdPlot.tsx';
 import { InkStamp } from './InkStamp.tsx';
-import { Circled, RedDash, RedTick } from './Marks.tsx';
+import { Circled, Emphasis, RedDash, RedTick } from './Marks.tsx';
 
 interface Props {
   prompt: Prompt;
@@ -51,6 +51,8 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
           chads: fan.chads,
           stars: fan.stars,
           colour: TIER_INK[data.tier] ?? '#ffe97a',
+          palette: fan.coloured ? CONFETTI_COLOURS : undefined,
+          shower: fan.coloured ? 70 : 0,
         });
       }
       shakePage(fan.shake);
@@ -107,6 +109,7 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
           <Circled className="reveal__points" delay={reduce ? 0 : MARK_AT + 0.3}>
             {missed ? '0' : fan.countUp ? <CountUp to={data.points} prefix="+" delay={MARK_AT + 0.2} /> : `+${data.points}`}
           </Circled>
+          {fan.emphasis && !missed && <Emphasis delay={reduce ? 0 : MARK_AT + 0.55} className="reveal__emphasis" />}
           {/* the teacher's ticks, scribbled on the corner of the circle */}
           {fan.ticks > 0 && (
             <span className="reveal__ticks" aria-hidden="true">

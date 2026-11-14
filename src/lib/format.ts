@@ -18,5 +18,8 @@ export const TIER_HEX: Record<string, string> = {
   none: '#cfcfcf',
 };
 
+/** Coloured paper for the Lone Wolf confetti: the highlighter colours. */
+export const CONFETTI_COLOURS: readonly string[] = ['#ffe97a', '#ffb570', '#ff7a8a', '#8fdd9c', '#b9d7f0'];
+
 /** The teacher's green pen: Lone Wolf stamps and top awards. */
 export const GREEN_INK = '#1c7a45';

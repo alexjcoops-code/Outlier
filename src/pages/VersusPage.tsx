@@ -1,9 +1,9 @@
-import { formatAnswer, TIER_HEX, GREEN_INK } from '../lib/format.ts';
+import { CONFETTI_COLOURS, GREEN_INK, TIER_HEX, formatAnswer } from '../lib/format.ts';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { AnswerInput } from '../components/AnswerInput.tsx';
 import { InkStamp } from '../components/InkStamp.tsx';
-import { Circled, RedDash, RedTick, Scribble } from '../components/Marks.tsx';
+import { Circled, Emphasis, RedDash, RedTick, Scribble } from '../components/Marks.tsx';
 import { TimerLine } from '../components/TimerLine.tsx';
 import { TIMER_MS } from '../lib/backend/types.ts';
 import { burst, buzz } from '../lib/celebrate.ts';
@@ -626,7 +626,9 @@ function RoundReveal({ state, now }: { state: VersusState; now: number }) {
     fired.current = true;
     // A little confetti for a rare answer nobody in the room copied.
     if (me.points >= 60) {
-      burst({ x: window.innerWidth / 2, y: window.innerHeight * 0.35, chads: me.points >= 85 ? 60 : 24, stars: me.tier === 'lone' ? 10 : 0, colour: TIER_HEX[me.tier]! });
+      // Lone Wolf: coloured confetti. Outlier: red-pen emphasis round the score (below), no confetti.
+      if (me.tier === 'lone') burst({ x: window.innerWidth / 2, y: window.innerHeight * 0.35, chads: 60, stars: 8, colour: TIER_HEX.lone!, palette: CONFETTI_COLOURS, shower: 60 });
+      else if (me.tier !== 'outlier') burst({ x: window.innerWidth / 2, y: window.innerHeight * 0.35, chads: 18, stars: 0, colour: TIER_HEX[me.tier]! });
       buzz([18]);
     }
   }, [me, reduce]);
@@ -666,7 +668,10 @@ function RoundReveal({ state, now }: { state: VersusState; now: number }) {
                   {s.points}
                 </>
               ) : s.seat === state.mySeat && s.points > 0 ? (
-                <Circled delay={0.5}>{s.points}</Circled>
+                <span className="answers__mine">
+                  <Circled delay={0.5}>{s.points}</Circled>
+                  {s.tier === 'outlier' && <Emphasis delay={reduce ? 0 : 0.8} className="answers__emphasis" />}
+                </span>
               ) : (
                 s.points
               )}

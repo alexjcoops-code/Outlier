@@ -21,9 +21,13 @@ export interface Fanfare {
   countUp: boolean;
   /** Red ticks next to the points: 2 is a teacher's "very good". */
   ticks: number;
+  /** Confetti cut from coloured paper rather than white. */
+  coloured: boolean;
+  /** Red-pen emphasis strokes and little stars dashed round the score. */
+  emphasis: boolean;
 }
 
-const QUIET: Fanfare = { chads: 0, stars: 0, shake: 0, shockwave: 0, vibrate: null, stamp: null, countUp: false, ticks: 0 };
+const QUIET: Fanfare = { chads: 0, stars: 0, shake: 0, shockwave: 0, vibrate: null, stamp: null, countUp: false, ticks: 0, coloured: false, emphasis: false };
 
 export const FANFARE: Record<TierId, Fanfare> = {
   none: QUIET,
@@ -32,14 +36,17 @@ export const FANFARE: Record<TierId, Fanfare> = {
   fair: { ...QUIET, countUp: true, ticks: 1 },
   rare: { ...QUIET, countUp: true, ticks: 2, chads: 14, shockwave: 0.3, vibrate: [18] },
   outlier: {
-    chads: 36,
-    stars: 3,
+    // No confetti: the teacher dashes red-pen marks round the score instead.
+    chads: 0,
+    stars: 0,
     shake: 0.5,
     shockwave: 0.75,
     vibrate: [25, 40, 25],
     stamp: { text: 'Bold', ink: '#c2223f' },
     countUp: true,
     ticks: 2,
+    coloured: false,
+    emphasis: true,
   },
   lone: {
     chads: 80,
@@ -50,6 +57,8 @@ export const FANFARE: Record<TierId, Fanfare> = {
     stamp: { text: 'Nobody else', ink: GREEN_INK },
     countUp: true,
     ticks: 3,
+    coloured: true,
+    emphasis: false,
   },
 };
 
@@ -71,6 +80,10 @@ export interface Burst {
   stars: number;
   /** Highlighter colour mixed into the confetti. */
   colour: string;
+  /** Cut the chads and strips from these coloured papers instead of white. */
+  palette?: readonly string[];
+  /** Extra pieces that flutter down from the top of the screen, as if thrown over the class. */
+  shower?: number;
 }
 
 const listeners = new Set<(b: Burst) => void>();

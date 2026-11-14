@@ -343,3 +343,8 @@
   top: -10px;
   z-index: 2;
 }
+
+.answers__mine {
+  position: relative;
+  display: inline-block;
+}

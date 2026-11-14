@@ -699,3 +699,14 @@
     margin-top: 8px;
   }
 }
+
+/* Outlier: red-pen emphasis dashed round the circled score. */
+.emphasis {
+  position: absolute;
+  left: -22%;
+  top: -40%;
+  width: 144%;
+  height: 180%;
+  overflow: visible;
+  pointer-events: none;
+}

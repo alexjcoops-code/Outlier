@@ -54,6 +54,50 @@ export function RedTick({ size = 40, delay = 0 }: { size?: number; delay?: numbe
   );
 }
 
+/**
+ * The teacher's "!!": quick red-pen strokes dashed out round a mark, then two
+ * little stars. For an Outlier: smaller than the Lone Wolf's confetti, and drawn
+ * rather than thrown.
+ */
+export function Emphasis({ delay = 0, className = '' }: { delay?: number; className?: string }) {
+  const reduce = useReducedMotion();
+  // Strokes radiate from an ellipse round the centre of a 200 × 120 box: over the
+  // top and out to the right. The left is the tier's name, the top right is the
+  // ticks' and underneath is the line of text, so all three stay clear.
+  const angles = [214, 236, 258, 280, 352, 14, 38];
+  const strokes = angles.map((deg, i) => {
+    const a = (deg * Math.PI) / 180;
+    const inner = 1.12 + (i % 2) * 0.06;
+    const outer = inner + 0.2 + (i % 3) * 0.06;
+    const pt = (k: number) => `${(100 + Math.cos(a) * 86 * k).toFixed(1)} ${(60 + Math.sin(a) * 48 * k).toFixed(1)}`;
+    return `M${pt(inner)} L${pt(outer)}`;
+  });
+  const star = (cx: number, cy: number, r: number) => {
+    const pts = Array.from({ length: 10 }, (_, i) => {
+      const a = (i * Math.PI) / 5 - Math.PI / 2;
+      const rr = i % 2 ? r * 0.45 : r;
+      return `${(cx + Math.cos(a) * rr).toFixed(1)} ${(cy + Math.sin(a) * rr).toFixed(1)}`;
+    });
+    return `M${pts.join(' L')} Z`;
+  };
+  const step = (i: number) => ({
+    initial: reduce ? false : ({ pathLength: 0, opacity: 0 } as const),
+    animate: { pathLength: 1, opacity: 1 },
+    transition: { duration: reduce ? 0 : 0.14, delay: reduce ? 0 : delay + i * 0.045, ease: 'easeOut' as const },
+  });
+  return (
+    <svg className={`emphasis ${className}`} viewBox="0 0 200 120" aria-hidden="true">
+      <g fill="none" stroke="var(--redpen)" strokeLinecap="round" strokeLinejoin="round">
+        {strokes.map((d, i) => (
+          <motion.path key={d} d={d} strokeWidth="3" {...step(i)} />
+        ))}
+        <motion.path d={star(196, 70, 8)} strokeWidth="2.2" {...step(strokes.length + 1)} />
+        <motion.path d={star(18, 2, 6.5)} strokeWidth="2" {...step(strokes.length + 3)} />
+      </g>
+    </svg>
+  );
+}
+
 /** A red-pen dash: nothing handed in. */
 export function RedDash() {
   const draw = useDraw(0.25);
