@@ -21,6 +21,7 @@ const db = new PGlite();
 await db.exec('create role anon nologin; create role authenticated nologin; create role service_role nologin;');
 await db.exec(migration('20261113000000_init.sql'));
 await db.exec(migration('20261114000000_versus.sql'));
+await db.exec(migration('20261116000000_harder_tiers.sql'));
 
 const ALLOWED = new Set(['versus_join', 'versus_state', 'versus_answer', 'versus_start', 'versus_leave']);
 

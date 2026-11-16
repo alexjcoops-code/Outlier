@@ -7,11 +7,13 @@ Every day at midnight UK time everyone gets the same seven prompts, such as "Nam
 | Tier | Points | Rule |
 |---|---|---|
 | Obvious | 10 | 20% or more of answers |
-| Predictably Clever | 15 | on the prompt's "famous numbers" list (unless 20% or more, or under 3%) |
-| Fair | 30 | 8% to under 20% |
-| Rare | 60 | 3% to under 8% |
-| Outlier | 85 | under 3% |
-| Lone Wolf | 100 | nobody else, real or simulated, gave it |
+| Predictably Clever | 15 | on the prompt's "famous numbers" list (unless it's Obvious, an Outlier or a Lone Wolf) |
+| Fair | 30 | 4% to under 20% of everyone else |
+| Rare | 60 | 1 in 200 to under 4% of everyone else |
+| Outlier | 85 | fewer than 1 in 200 of everyone else |
+| Lone Wolf | 100 | nobody else at all, real or simulated, gave it |
+
+"Everyone else" leaves your own answer out. That matters early in a day, when the crowd is mostly ghosts counting as about 100 players: one other person is already 1% of them.
 
 ## Quick start (no accounts needed)
 
@@ -110,7 +112,17 @@ share  = (real answers equal to yours + w × ghost answers equal to yours)
        ÷ (all real answers + w × all ghost answers)                 your own answer included
 ```
 
-Then, in order: Lone Wolf if no other real player gave it and fewer than 0.5 weighted ghosts did; Obvious if share ≥ 20%; Outlier if share < 3%; Predictably Clever if it's on the prompt's clever list; Fair if share ≥ 8%; otherwise Rare.
+`others` is the same share with your own answer taken out. Then, in order: Lone Wolf if no other real player and no ghost gave it; Obvious if share ≥ 20%; Outlier if others < 0.5%; Predictably Clever if it's on the prompt's clever list; Fair if others ≥ 4%; otherwise Rare.
+
+The thresholds come from `npm run sim:tiers`, which plays all 1,000 questions against a simulated crowd with four kinds of player and compares rule sets. With the current rules, at the start of a day:
+
+| Player | Lone Wolf | Outlier | Typical day |
+|---|---|---|---|
+| Typical (answers like the crowd) | 0.6% | 2.4% | 181 |
+| Bold (a strong player going for something unusual) | 4.4% | 20.9% | 409 |
+| Rare-hunter (knows every answer, avoids the obvious half) | 11.5% | 49.0% | 521 |
+
+Before 16 November 2026 Lone Wolf allowed up to five matching ghosts and Outlier was "under 3%, counting yourself": a bold player got Lone Wolf 28.5% of the time and averaged 513 a day. `supabase/migrations/20261116000000_harder_tiers.sql` replaces `score_tier` with the new rules.
 
 Scores are live and labelled "provisional" until the day ends. `finalise_due_days()` runs just after midnight UK time and copies each player's total and tiers into `final_scores`.
 
@@ -145,7 +157,7 @@ One Claude call per prompt (all seven run at once) asks the model to play the da
 
 #### Mixing ghosts with real players
 
-Each ghost weighs `(100 ÷ ghostCount) × max(0, 1 − realPlayers ÷ 500)`, so all the ghosts together count as about 100 players at the start of the day and nothing by 500 real players. Lone Wolf needs no other real player and fewer than 0.5 weighted ghosts on the same answer. The UI always says "Based on N players + simulated answers".
+Each ghost weighs `(100 ÷ ghostCount) × max(0, 1 − realPlayers ÷ 500)`, so all the ghosts together count as about 100 players at the start of the day and nothing by 500 real players. Lone Wolf needs nobody else at all on the same answer: no other real player and, while ghosts still count, no ghost. The UI always says "Based on N players + simulated answers".
 
 #### Calibration
 
@@ -227,5 +239,6 @@ tests/e2e/                Playwright: full game, resume, number pad, versus agai
 - `docs/questions.md` lists all 1,000 questions by type, with how many right answers each has. Regenerate it with `npm run questions` after any change (a test checks it's current).
 - To add a type, write a `family('id', 'Name', 'easy' | 'medium' | 'hard', rows, make)` with ten rows, and add hand-checked cases for its first question.
 - The look and feel follow `docs/art-direction.md`: palette roles, shape and motion rules, and what's excluded. Colours and timings live in `src/styles/tokens.css` and `src/lib/motion.ts`.
+- To change how hard the tiers are, edit the thresholds in `src/lib/scoring.ts` and the matching SQL in a new migration, then check the effect with `npm run sim:tiers` (it lists the old rules and some alternatives for comparison).
 - To tune the ghosts, edit `src/lib/ghostConfig.ts` (`/admin` and `npm run ghosts:suggest` tell you what to change), then sync and redeploy.
 - The Claude model is `MODEL` in `supabase/functions/prepare-day/index.ts`. The instructions and personas are in `src/lib/ghostAi.ts`.

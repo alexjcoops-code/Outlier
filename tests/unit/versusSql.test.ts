@@ -57,6 +57,7 @@ beforeAll(async () => {
   await db.exec('create role anon nologin; create role authenticated nologin; create role service_role nologin;');
   await db.exec(read('20261113000000_init.sql'));
   await db.exec(read('20261114000000_versus.sql'));
+  await db.exec(read('20261116000000_harder_tiers.sql'));
 });
 
 describe('versus: private rooms', () => {

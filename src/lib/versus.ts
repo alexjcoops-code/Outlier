@@ -104,12 +104,16 @@ function crowdShares(prompt: Prompt, year: number): Map<number, number> {
 export function crowdScore(prompt: Prompt, value: number, year: number): { tier: TierId; points: number; share: number } {
   if (!isValidAnswer(prompt, value)) return { tier: 'none', points: 0, share: 0 };
   const share = crowdShares(prompt, year).get(value) ?? 0;
-  // A crowd of 1,000 imagined players with no real ones: the same rule as the daily game.
-  const crowd = 1000;
+  // The same rule as the daily game, against a day's worth of ghosts (1,100) and
+  // no other real players, in whole ghosts. Fewer than one expected ghost counts
+  // as nobody: that matches how often a sampled daily crowd leaves an answer
+  // empty (scripts/simulate-tiers.ts; about 4% Lone Wolf for a strong player).
+  const crowd = 1100;
+  const expected = share * crowd;
   return scoreAnswer({
     sameReal: 1,
     totalReal: 1,
-    sameGhost: share * crowd,
+    sameGhost: expected < 1 ? 0 : Math.max(1, Math.round(expected)),
     totalGhost: crowd,
     ghostCount: crowd,
     realPlayers: 0,

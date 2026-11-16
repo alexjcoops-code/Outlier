@@ -17,9 +17,9 @@ export interface TierInfo {
 export const TIERS: Record<TierId, TierInfo> = {
   obvious: { id: 'obvious', name: 'Obvious', points: 10, symbol: '·', rule: '1 in 5 or more said it' },
   clever: { id: 'clever', name: 'Predictably Clever', points: 15, symbol: '○', rule: 'famous number' },
-  fair: { id: 'fair', name: 'Fair', points: 30, symbol: '◐', rule: '8% to 20% said it' },
-  rare: { id: 'rare', name: 'Rare', points: 60, symbol: '●', rule: '3% to 8% said it' },
-  outlier: { id: 'outlier', name: 'Outlier', points: 85, symbol: '★', rule: 'under 3% said it' },
+  fair: { id: 'fair', name: 'Fair', points: 30, symbol: '◐', rule: '4% to 20% said it' },
+  rare: { id: 'rare', name: 'Rare', points: 60, symbol: '●', rule: '1 in 200 to 4% said it' },
+  outlier: { id: 'outlier', name: 'Outlier', points: 85, symbol: '★', rule: 'fewer than 1 in 200 said it' },
   lone: { id: 'lone', name: 'Lone Wolf', points: 100, symbol: '✦', rule: 'nobody else said it' },
   none: { id: 'none', name: 'No answer', points: 0, symbol: '✗', rule: 'out of time' },
 };
@@ -66,21 +66,31 @@ export interface Score {
   share: number;
 }
 
-/** Lone Wolf needs fewer than this many weighted ghosts on the same answer. */
-export const LONE_GHOST_LIMIT = 0.5;
+/**
+ * Tier thresholds, set with scripts/simulate-tiers.ts. Outlier and Rare are judged
+ * on the share of OTHER players' answers (yours left out), so a crowd of about a
+ * hundred can still produce an Outlier: fewer than 1 in 200 others said it.
+ * Lone Wolf means nobody else at all: no other real player and no ghost.
+ */
+export const OBVIOUS_SHARE = 0.2;
+export const OUTLIER_OTHERS = 0.005;
+export const FAIR_OTHERS = 0.04;
 
 export function scoreAnswer(c: CrowdCounts): Score {
   const w = ghostWeight(c.realPlayers, c.ghostCount);
   const same = c.sameReal + w * c.sameGhost;
   const total = c.totalReal + w * c.totalGhost;
   const share = total > 0 ? same / total : 1;
+  // Everyone else: take away the answer being scored (a real player's, or a ghost's own weight).
+  const self = c.sameReal >= 1 ? 1 : w;
+  const others = total > 0 ? Math.max(0, same - self) / total : 0;
 
   let tier: TierId;
-  if (c.sameReal <= 1 && w * c.sameGhost < LONE_GHOST_LIMIT) tier = 'lone';
-  else if (share >= 0.2) tier = 'obvious';
-  else if (share < 0.03) tier = 'outlier';
+  if (c.sameReal <= 1 && w * c.sameGhost === 0) tier = 'lone';
+  else if (share >= OBVIOUS_SHARE) tier = 'obvious';
+  else if (others < OUTLIER_OTHERS) tier = 'outlier';
   else if (c.clever) tier = 'clever';
-  else if (share >= 0.08) tier = 'fair';
+  else if (others >= FAIR_OTHERS) tier = 'fair';
   else tier = 'rare';
 
   return { tier, points: TIERS[tier].points, share };

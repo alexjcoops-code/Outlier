@@ -73,14 +73,14 @@ describe('scoring', () => {
     expect(ghostWeight(0, 0)).toBe(0);
   });
 
-  it('Lone Wolf: no other real player, and under half a weighted ghost', () => {
+  it('Lone Wolf: nobody else at all, real or ghost', () => {
     expect(scoreAnswer(base)).toMatchObject({ tier: 'lone', points: 100 });
     expect(scoreAnswer({ ...base, sameGhost: 1 }).tier).not.toBe('lone');
     expect(scoreAnswer({ ...base, sameReal: 2, totalReal: 2 }).tier).not.toBe('lone');
-    // With 1,100 ghosts each weighs 1/11: five matching ghosts is 0.45 of a player, six is 0.55.
+    // With 1,100 ghosts each weighs 1/11, but even one matching ghost means somebody else said it.
     const big = { ...base, totalGhost: 1000, ghostCount: 1100 };
-    expect(scoreAnswer({ ...big, sameGhost: 5 }).tier).toBe('lone');
-    expect(scoreAnswer({ ...big, sameGhost: 6 }).tier).not.toBe('lone');
+    expect(scoreAnswer({ ...big, sameGhost: 0 }).tier).toBe('lone');
+    expect(scoreAnswer({ ...big, sameGhost: 1 }).tier).toBe('outlier');
   });
 
   it('ghost matches stop counting once ghosts have faded', () => {
@@ -95,36 +95,49 @@ describe('scoring', () => {
     expect(s.share).toBeCloseTo((1 + 10) / (1 + 1000 / 11), 10);
   });
 
-  it('applies the share thresholds', () => {
-    const at = (sameGhost: number, clever = false) => scoreAnswer({ ...base, sameGhost, clever });
-    // share = (1 + g) / 101
-    expect(at(1).tier).toBe('outlier'); // 1.98%
-    expect(at(2).tier).toBe('outlier'); // 2.97%
-    expect(at(3).tier).toBe('rare'); // 3.96%
-    expect(at(7).tier).toBe('rare'); // 7.92%
-    expect(at(8).tier).toBe('fair'); // 8.91%
-    expect(at(19).tier).toBe('fair'); // 19.8%
-    expect(at(20).tier).toBe('obvious'); // 20.8%
-    expect(at(8).points).toBe(30);
-    expect(at(3).points).toBe(60);
-    expect(at(1).points).toBe(85);
-    expect(at(20).points).toBe(10);
+  // 1,000 real players and the ghosts faded out: each other player is 0.1% of everyone else.
+  const crowd = (sameReal: number, clever = false) =>
+    scoreAnswer({ totalReal: 1000, sameReal, totalGhost: 0, sameGhost: 0, ghostCount: 0, realPlayers: 1000, clever });
+
+  it('applies the thresholds to everyone else\'s answers', () => {
+    expect(crowd(1).tier).toBe('lone'); // nobody else
+    expect(crowd(2).tier).toBe('outlier'); // 0.1% of the others
+    expect(crowd(5).tier).toBe('outlier'); // 0.4%
+    expect(crowd(6).tier).toBe('rare'); // 0.5%: 1 in 200
+    expect(crowd(40).tier).toBe('rare'); // 3.9%
+    expect(crowd(41).tier).toBe('fair'); // 4.0%
+    expect(crowd(199).tier).toBe('fair'); // 19.9% said it
+    expect(crowd(200).tier).toBe('obvious'); // 20%
+    expect(crowd(41).points).toBe(30);
+    expect(crowd(6).points).toBe(60);
+    expect(crowd(2).points).toBe(85);
+    expect(crowd(200).points).toBe(10);
+  });
+
+  it("a crowd of about 100 can't make an Outlier: one other person is already 1%", () => {
+    expect(scoreAnswer({ ...base, sameGhost: 1 }).tier).toBe('rare'); // 1 of 101
   });
 
   it('Predictably Clever overrides Fair and Rare, but not Obvious, Outlier or Lone Wolf', () => {
-    const at = (sameGhost: number) => scoreAnswer({ ...base, sameGhost, clever: true });
-    expect(at(0).tier).toBe('lone');
-    expect(at(1).tier).toBe('outlier');
-    expect(at(3)).toMatchObject({ tier: 'clever', points: 15 });
-    expect(at(10).tier).toBe('clever');
-    expect(at(25).tier).toBe('obvious');
+    expect(crowd(1, true).tier).toBe('lone');
+    expect(crowd(3, true).tier).toBe('outlier');
+    expect(crowd(11, true)).toMatchObject({ tier: 'clever', points: 15 });
+    expect(crowd(100, true).tier).toBe('clever');
+    expect(crowd(250, true).tier).toBe('obvious');
   });
 
   it('weights ghosts down as players arrive', () => {
     // 250 real players: ghosts together count as 50.
     const s = scoreAnswer({ totalReal: 250, sameReal: 10, totalGhost: 100, sameGhost: 10, ghostCount: 100, realPlayers: 250, clever: false });
     expect(s.share).toBeCloseTo((10 + 5) / (250 + 50));
-    expect(s.tier).toBe('rare');
+    // Everyone else: 14 of 300, 4.7%.
+    expect(s.tier).toBe('fair');
+  });
+
+  it('leaves a ghost\'s own weight out when scoring a ghost\'s answer', () => {
+    // 1,100 ghosts, none real: a ghost alone on its answer has nobody else.
+    const s = scoreAnswer({ totalReal: 0, sameReal: 0, totalGhost: 1000, sameGhost: 1, ghostCount: 1100, realPlayers: 0, clever: false });
+    expect(s.tier).toBe('outlier');
   });
 
   it('formats shares', () => {

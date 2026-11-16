@@ -49,6 +49,7 @@ beforeAll(async () => {
   // Supabase provides these roles; a bare Postgres does not.
   await db.exec('create role anon nologin; create role authenticated nologin; create role service_role nologin;');
   await db.exec(MIGRATION);
+  await db.exec(readFileSync(new URL('../../supabase/migrations/20261116000000_harder_tiers.sql', import.meta.url), 'utf8'));
   today = (await db.query<{ d: string }>(`select uk_today()::text as d`)).rows[0]!.d;
   ids = dailyPromptIds(today);
 });
@@ -177,11 +178,13 @@ describe('a day in the database', () => {
 
     await start(3, 1);
     const second = await submit(3, 1, unseen);
-    expect(second.tier).toBe('outlier');
+    // Two of about 102 (3 real players + 100 ghosts): each is 1% of everyone else,
+    // the Rare band, and the biggest answer is on the clever list, which wins.
+    expect(second.tier).toBe('clever');
     // Player 2's score has changed during the day: no longer alone.
     const r2 = await results(2);
-    expect(r2.rows[0]).toMatchObject({ value: unseen, tier: 'outlier', points: 85, started: true });
-    expect(r2.total).toBe(85);
+    expect(r2.rows[0]).toMatchObject({ value: unseen, tier: 'clever', points: 15, started: true });
+    expect(r2.total).toBe(15);
     expect(r2.players).toBe(3);
   });
 
@@ -271,7 +274,7 @@ describe('a day in the database', () => {
     const fs = await db.query<{ total: number; tiers: string[] }>(
       `select total, tiers from final_scores where date = $1 and player_id = $2`, [yesterday, uuid(2)],
     );
-    expect(fs.rows[0]).toEqual({ total: 85, tiers: ['outlier', 'none', 'none', 'none', 'none', 'none', 'none'] });
+    expect(fs.rows[0]).toEqual({ total: 15, tiers: ['clever', 'none', 'none', 'none', 'none', 'none', 'none'] });
 
     // A past day's distribution is open to anyone, but it can no longer be played.
     expect((await distribution(99, 1, yesterday)).values.length).toBeGreaterThan(5);
