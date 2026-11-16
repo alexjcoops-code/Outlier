@@ -14,6 +14,7 @@ import { CrowdPlot } from './CrowdPlot.tsx';
 import { InkStamp } from './InkStamp.tsx';
 import { Circled, Scribble } from './Marks.tsx';
 import { basedOn } from './Reveal.tsx';
+import { Oddie } from './Oddie.tsx';
 
 interface Props {
   results: DayResults;
@@ -262,6 +263,11 @@ export function ResultsView({ results, backend, navigate, fresh = false, archive
           <span className="results__outof"> / {MAX_TOTAL}</span>
         </Circled>
         <p className="hand results__comment">{teacherComment(results.rows, results.total)}</p>
+        <Oddie
+          mood={results.total >= 450 ? 'wow' : results.total >= 250 ? 'happy' : results.total > 0 ? 'meh' : 'sad'}
+          size={76}
+          className="results__oddie"
+        />
       </div>
 
       <p className="pencil results__basis">

@@ -3,6 +3,7 @@ import { loadArchiveScores } from '../lib/backend/archive.ts';
 import type { History } from '../lib/history.ts';
 import { linkHandler } from '../lib/router.ts';
 import { MAX_TOTAL } from '../lib/scoring.ts';
+import { LAUNCH_DATE } from '../lib/launch.ts';
 import { addDays, dayNumber, formatShortDate } from '../lib/ukDate.ts';
 
 const MONTH_NAMES = [
@@ -13,11 +14,6 @@ const MONTH_NAMES = [
 /** How many worksheets to list before "Show older". */
 const PAGE = 30;
 
-/** Worksheet No. 1: the day Oddle launched. VITE_LAUNCH_DATE moves it. */
-export const LAUNCH_DATE = ((): string => {
-  const env = import.meta.env.VITE_LAUNCH_DATE as string | undefined;
-  return env && /^\d{4}-\d{2}-\d{2}$/.test(env) ? env : '2026-11-16';
-})();
 
 /** Can this date be played from the archive? Any day from launch to yesterday. */
 export function inArchive(date: string, today: string): boolean {

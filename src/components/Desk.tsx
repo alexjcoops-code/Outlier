@@ -86,73 +86,7 @@ function Ruler() {
   );
 }
 
-/** A rubber in a card sleeve, with a few crumbs beside it. */
-function Rubber() {
-  return (
-    <svg className="desk__rubber" viewBox="0 0 120 60" width="120" height="60" aria-hidden="true">
-      <g stroke={INK} strokeWidth="2" strokeLinejoin="round">
-        {/* the rubber, worn round at the used end */}
-        <path d="M14 10 H96 Q104 10 104 18 V40 Q104 48 96 48 H18 Q4 48 4 32 V22 Q4 10 14 10 Z" fill="#fde6e1" />
-        {/* the sleeve */}
-        <rect x="30" y="7" width="58" height="44" rx="2" fill="#3d6fc4" />
-        <rect x="30" y="7" width="58" height="8" fill="#5c8ad6" stroke="none" />
-        <rect x="30" y="7" width="58" height="44" rx="2" fill="none" />
-        {/* crumbs */}
-        <path d="M108 50 q3 -3 5 0 q1 3 -3 3 q-3 0 -2 -3 Z" fill="#fde6e1" strokeWidth="1.4" />
-        <path d="M112 41 q2 -2 4 0 q0 3 -2 2.5 q-2.5 0 -2 -2.5 Z" fill="#fde6e1" strokeWidth="1.4" />
-      </g>
-      {/* the maker's name on the sleeve */}
-      <text x="59" y="35" textAnchor="middle" fontFamily="var(--mono)" fontSize="12" fontWeight="600" fill="#ffffff">
-        oddle
-      </text>
-      <path d="M12 16 Q16 13 24 13" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
-    </svg>
-  );
-}
 
-/** A clear plastic protractor: half a disc with degree marks. */
-function Protractor() {
-  const r = 86;
-  const cx = 94;
-  const cy = 94;
-  const at = (deg: number, radius: number) => {
-    const a = (deg * Math.PI) / 180;
-    return [cx + Math.cos(a) * radius, cy - Math.sin(a) * radius] as const;
-  };
-  const marks = [];
-  for (let d = 0; d <= 180; d += 5) {
-    const [x1, y1] = at(d, r);
-    const [x2, y2] = at(d, r - (d % 10 === 0 ? 11 : 6));
-    marks.push(<line key={d} x1={x1} y1={y1} x2={x2} y2={y2} strokeWidth={d % 30 === 0 ? 1.4 : 1} />);
-  }
-  const labels = [0, 30, 60, 90, 120, 150, 180].map((d) => {
-    const [x, y] = at(d, r - 22);
-    return (
-      <text key={d} x={x} y={y + 3.5} textAnchor="middle">
-        {d}
-      </text>
-    );
-  });
-  const [ix1, iy1] = at(180, 40);
-  const [ix2, iy2] = at(0, 40);
-  return (
-    <svg className="desk__protractor" viewBox="0 0 188 104" width="188" height="104" aria-hidden="true">
-      <path
-        d={`M${cx - r - 4} ${cy + 6} V${cy} A${r + 4} ${r + 4} 0 0 1 ${cx + r + 4} ${cy} V${cy + 6} Z`}
-        fill="#d3e9f3"
-        stroke={INK}
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      {/* the inner cut-out arc */}
-      <path d={`M${ix1} ${iy1} A40 40 0 0 1 ${ix2} ${iy2}`} fill="none" stroke={INK} strokeWidth="1.5" />
-      <g stroke={INK}>{marks}</g>
-      <g className="desk__ruler-numbers">{labels}</g>
-      <path d={`M${cx - 7} ${cy} H${cx + 7} M${cx} ${cy - 7} V${cy}`} stroke={INK} strokeWidth="1.5" />
-      <path d="M40 40 L50 31 M46 46 L55 38" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" opacity="0.85" />
-    </svg>
-  );
-}
 
 /** A paperclip: an ink line with a silver wire inside it. */
 function Paperclip() {
@@ -213,7 +147,6 @@ interface Props {
   today: string;
   streak: number;
   navigate: (to: string) => void;
-  onHelp: () => void;
 }
 
 export function DeskLeft() {
@@ -222,14 +155,12 @@ export function DeskLeft() {
       <div className="desk__props">
         <Ruler />
         <Pencil />
-        <Rubber />
-        <Protractor />
       </div>
     </div>
   );
 }
 
-export function DeskRight({ history, today, streak, navigate, onHelp }: Props) {
+export function DeskRight({ history, today, streak, navigate }: Props) {
   const until = useUntilMidnight();
   const days = Object.entries(history)
     .filter(([date]) => date <= today)
@@ -240,16 +171,6 @@ export function DeskRight({ history, today, streak, navigate, onHelp }: Props) {
   return (
     <aside className="desk__side desk__side--right" aria-label="Notes on the desk">
       <div className="desk__notes">
-        <section className="desk-note desk-note--yellow">
-          <NotePaper />
-          <span className="desk-note__tape" aria-hidden="true" />
-          <h2>The rule</h2>
-          <p>Any right answer scores. The fewer people who said it, the more it's worth.</p>
-          <button type="button" className="linklike" onClick={onHelp}>
-            How to play
-          </button>
-        </section>
-
         <section className="desk-note desk-note--pink">
           <NotePaper />
           <Paperclip />
@@ -278,6 +199,7 @@ export function DeskRight({ history, today, streak, navigate, onHelp }: Props) {
 
         <section className="desk-note desk-note--blue">
           <NotePaper />
+          <span className="desk-note__tape" aria-hidden="true" />
           <h2>Next sheet</h2>
           <p>
             New questions in <span className="mono">{until}</span>, at midnight UK time.

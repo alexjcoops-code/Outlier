@@ -20,9 +20,10 @@ test('a full game: retries, a time-out, results, share text, resume and history'
   await page.goto('/');
 
   // Start screen
-  await expect(page.getByRole('heading', { name: /Today's worksheet/ })).toBeVisible();
-  await expect(page.getByText('7 questions, 40 seconds each. Any right answer counts, and rare right answers count more.')).toBeVisible();
-  await expect(page.getByRole('table', { name: 'Mark scheme' })).toContainText('Lone Wolf');
+  await expect(page.getByRole('heading', { name: 'Say the number nobody else will.' })).toBeVisible();
+  await expect(page.getByText(/^No\. \d+ · /)).toBeVisible();
+  await expect(page.getByText("7 questions, 40 seconds each. Any right answer scores, and the rarer it is, the more it's worth.")).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Mark scheme' })).toContainText('Lone Wolf');
   // Yesterday's crowd teaser: piles of dots and a right answer nobody gave.
   const clipping = page.getByRole('complementary', { name: "Yesterday's crowd" });
   await expect(clipping).toContainText(/said/);
@@ -138,7 +139,7 @@ test("the archive: play a past day against its crowd, off the streak", async ({ 
   await expect(page.locator('.archive__row').last()).toContainText('Mon 16 Nov');
   await page.locator('.archive__go').nth(1).click();
 
-  await expect(page.getByRole('heading', { name: /Worksheet from/ })).toBeVisible();
+  await expect(page.getByText(/^From the archive · /)).toBeVisible();
   await page.getByRole('button', { name: 'Start' }).click();
 
   const input = page.getByLabel('Your answer, a whole number');

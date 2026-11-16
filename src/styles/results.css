@@ -521,3 +521,6 @@
 .results__sharebox[open] summary {
   margin-bottom: 8px;
 }
+.results__oddie {
+  flex-shrink: 0;
+}

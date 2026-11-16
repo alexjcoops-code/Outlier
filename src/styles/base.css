@@ -545,3 +545,37 @@ a:hover,
       0 24px 48px -28px rgba(31, 42, 68, 0.45);
   }
 }
+
+/* ───── A little life ─────
+   Small, quick reactions to the pointer. Nothing moves on its own except
+   Oddie's blink. Everything here is off for people who ask for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .stamp {
+    transition: transform 160ms cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  .stamp:hover:not(:disabled) {
+    transform: rotate(-2.5deg) scale(1.04);
+  }
+  .btn-line,
+  .header__menu {
+    transition: transform 160ms cubic-bezier(0.3, 1.6, 0.5, 1), background-color 120ms;
+  }
+  .btn-line:hover:not(:disabled),
+  .header__menu:hover {
+    transform: rotate(1.5deg) translateY(-1px);
+  }
+  /* The logo's ring is drawn on as the page opens. */
+  .wordmark__o::after {
+    animation: ring-on 520ms cubic-bezier(0.3, 1.5, 0.5, 1) 120ms both;
+  }
+  @keyframes ring-on {
+    from {
+      opacity: 0;
+      transform: rotate(-120deg) scale(0.3);
+    }
+    to {
+      opacity: 1;
+      transform: rotate(-8deg) scale(1);
+    }
+  }
+}

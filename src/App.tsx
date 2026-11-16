@@ -151,7 +151,7 @@ export function App() {
           </main>
         </div>
       </div>
-      <DeskRight history={history} today={today} streak={days} navigate={navigate} onHelp={() => setHelp(true)} />
+      <DeskRight history={history} today={today} streak={days} navigate={navigate} />
       </div>
       {menu && <Menu page={page} navigate={navigate} onHelp={() => setHelp(true)} onClose={closeMenu} />}
       {help && <HowToPlay onClose={closeHelp} />}

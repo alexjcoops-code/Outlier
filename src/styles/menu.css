@@ -206,3 +206,22 @@
     letter-spacing: 0.03em;
   }
 }
+@media (prefers-reduced-motion: no-preference) {
+  .menu__tile {
+    transition: transform 160ms cubic-bezier(0.3, 1.6, 0.5, 1), background-color 120ms;
+  }
+  .menu__tile:hover {
+    transform: translateY(-3px) rotate(-1.2deg);
+  }
+  .menu__grid li:nth-child(even) .menu__tile:hover {
+    transform: translateY(-3px) rotate(1.2deg);
+  }
+  .menu__tile:hover .menu__icon svg {
+    animation: hop 360ms ease-out;
+  }
+  @keyframes hop {
+    40% {
+      transform: translateY(-4px) rotate(-6deg);
+    }
+  }
+}

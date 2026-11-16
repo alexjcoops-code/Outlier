@@ -7,6 +7,7 @@ import type { Prompt } from '../prompts.ts';
 import { formatShare, TIERS } from '../lib/scoring.ts';
 import type { RevealData } from '../lib/useGame.ts';
 import { CountUp } from './CountUp.tsx';
+import { Oddie, moodFor } from './Oddie.tsx';
 import { CrowdPlot } from './CrowdPlot.tsx';
 import { InkStamp } from './InkStamp.tsx';
 import { Circled, Emphasis, RedDash, RedTick } from './Marks.tsx';
@@ -124,6 +125,15 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
               ))}
             </span>
           )}
+        </motion.span>
+        {/* Oddie pops up with a face to match the mark. */}
+        <motion.span
+          className="reveal__oddie"
+          initial={reduce ? false : { scale: 0, rotate: -25, opacity: 0 }}
+          animate={{ scale: 1, rotate: 0, opacity: 1 }}
+          transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 14, delay: MARK_AT + 0.35 }}
+        >
+          <Oddie mood={moodFor(data.tier)} size={52} />
         </motion.span>
       </div>
 

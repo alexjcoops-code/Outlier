@@ -6,7 +6,9 @@ import { formatShortDate } from '../lib/ukDate.ts';
 import { useGame } from '../lib/useGame.ts';
 import { getPrompt } from '../prompts.ts';
 import { AnswerInput } from '../components/AnswerInput.tsx';
-import { MarkScheme } from '../components/MarkScheme.tsx';
+import { Oddie } from '../components/Oddie.tsx';
+import { PointsLadder } from '../components/PointsLadder.tsx';
+import { worksheetNumber } from '../lib/launch.ts';
 import { Scribble } from '../components/Marks.tsx';
 import { ProgressBoxes } from '../components/ProgressBoxes.tsx';
 import { ResultsView } from '../components/ResultsView.tsx';
@@ -69,13 +71,19 @@ export function PlayPage({ backend, date, navigate, onFinished, archive = false 
     const resuming = phase.position > 1;
     return (
       <section className="start" aria-labelledby="start-title">
-        <h1 id="start-title">
-          {archive ? `Worksheet from ${formatShortDate(date)}` : "Today's worksheet"}
-        </h1>
+        <div className="start__hero">
+          <Oddie mood="hello" size={88} className="start__oddie" />
+          <p className="start__kicker">
+            {archive ? 'From the archive' : 'No.'} {archive ? `· ${formatShortDate(date)}` : `${worksheetNumber(date)} · ${formatShortDate(date)}`}
+          </p>
+          <h1 id="start-title">
+            Say the number <span className="hl hl--swipe tier-fair start__nobody">nobody else</span> will.
+          </h1>
+        </div>
         <p className="pencil start__lede">
-          7 questions, 40 seconds each. Any right answer counts, and rare right answers count more.
+          7 questions, 40 seconds each. Any right answer scores, and the rarer it is, the more it's worth.
         </p>
-        <MarkScheme />
+        <PointsLadder />
         <div className="start__actions">
           <button type="button" className="stamp" onClick={game.start}>
             {resuming ? 'Carry on' : 'Start'}

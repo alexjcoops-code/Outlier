@@ -81,7 +81,7 @@ Durations are in `src/lib/motion.ts` and as CSS variables in `tokens.css`.
 | Marking | Highlighter swipe 300 ms, circle 450 ms, ticks 180 ms apart. |
 | Rewards | Scale with the tier, one signature move each: Fair counts up; Rare adds a second tick; Outlier gets red-pen emphasis strokes and two little stars dashed round the score (drawn, not thrown); Lone Wolf gets the NOBODY ELSE stamp, confetti cut from coloured paper in the highlighter colours (a burst from the mark, then a short shower down the page), a page shake and a longer buzz. Only a Lone Wolf gets confetti. Stamps land from 1.8× size, never sweeping across the page. A reward never covers the question, your answer or the rack. |
 | Page changes | 180 to 300 ms. |
-| Idle | Nothing moves while you think, except the loading scribble. |
+| Idle | Nothing moves while you think, except the loading scribble. Away from questions, Oddie blinks. |
 
 ## No underlining
 
@@ -93,6 +93,14 @@ Playtesters said underlined links and ruled headings made the game look AI-made.
 - Rows are split by faint dividers (`--rule`), not ink lines.
 - Text fields are boxes, not lines; the red pen marks the one you're typing in.
 - Focus is a red-pen box round the control.
+
+## Oddie, and a little life
+
+Oddie is the logo's "o" come to life: a bold ink ring for a body, dot eyes, rosy cheeks, stick arms and legs. It waves on the start page, pops up beside each mark with a face to match (bored for Obvious and Clever, smiling for Fair and Rare, star-eyed with arms up for Outlier and Lone Wolf, sad for out of time), and reacts to the day's total. It's never on screen while a question is being answered.
+
+The only things that move on their own are Oddie's blink and its first wave. Everything else reacts to you: stamps tilt and grow a touch on hover, outlined buttons and menu boxes lift and tip, menu icons hop, the logo's ring is drawn on as the page opens, and the start page's points staircase grows in. All of it is off for people who ask for less motion.
+
+The start page is one idea: "Say the number nobody else will.", the worksheet number and date above it, one line of rules, and the points as a staircase of highlighter bars (taller is worth more) instead of a table.
 
 ## Exclusions
 
