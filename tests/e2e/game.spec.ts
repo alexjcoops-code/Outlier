@@ -122,7 +122,8 @@ test('a full game: retries, a time-out, results, share text, resume and history'
 });
 
 test("the archive: play a past day against its crowd, off the streak", async ({ page }) => {
-  await page.clock.install();
+  // A few days after launch, so there are past worksheets.
+  await page.clock.install({ time: new Date('2026-11-20T12:00:00Z') });
   await page.goto('/');
   // Through the menu.
   await page.getByRole('button', { name: 'Menu' }).click();
@@ -131,8 +132,11 @@ test("the archive: play a past day against its crowd, off the streak", async ({ 
   await menu.getByRole('link', { name: /Archive/i }).click();
   await expect(menu).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'The archive' })).toBeVisible();
-  await expect(page.locator('.archive__row').first()).toContainText('Play');
-  await page.locator('.archive__go').first().click();
+  // Today's sheet is at the top and goes to the daily game; launch day is No. 1.
+  await expect(page.locator('.archive__row').first()).toContainText('Today');
+  await expect(page.locator('.archive__row')).toHaveCount(5);
+  await expect(page.locator('.archive__row').last()).toContainText('Mon 16 Nov');
+  await page.locator('.archive__go').nth(1).click();
 
   await expect(page.getByRole('heading', { name: /Worksheet from/ })).toBeVisible();
   await page.getByRole('button', { name: 'Start' }).click();
@@ -165,7 +169,7 @@ test("the archive: play a past day against its crowd, off the streak", async ({ 
 
   // Back in the archive, the day shows its score; the streak is untouched.
   await page.getByRole('link', { name: 'Back to the archive' }).click();
-  await expect(page.locator('.archive__row').first()).toContainText(String(expectedTotal));
+  await expect(page.locator('.archive__row').nth(1)).toContainText(String(expectedTotal));
   await page.goto('/book');
   await expect(page.locator('.book__stats')).toContainText('0 days');
 });

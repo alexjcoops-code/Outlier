@@ -203,7 +203,7 @@ Scores aren't stored. Every browser works them out from the answers with the sam
 
 ### The archive
 
-`/archive` lists every past worksheet, from the launch day (`VITE_LAUNCH_DATE`, default 2026-11-13; the offline demo offers the last 60 days) to yesterday. Days you played live show your score and can't be replayed. Any other day can be done once, with the usual 40 seconds a question.
+`/archive` lists every worksheet from launch day (`VITE_LAUNCH_DATE`, default 2026-11-16) to today, newest first; today's links to the daily game. Days you played live show your score and can't be replayed. Any other day can be done once, with the usual 40 seconds a question.
 
 A past day's crowd is final, so the archive is played in the browser against it (`src/lib/backend/archive.ts`): it asks the server for that day's questions and, after each answer, that day's crowd, and marks you with the same thresholds as the live game (`scoreFromCrowd` in `src/lib/scoring.ts`). Nothing is sent to the server, so archive answers never change anyone's marks, and they don't count towards your streak. Finished archive scores are kept in localStorage for the list.
 

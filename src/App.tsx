@@ -80,7 +80,6 @@ export function App() {
 
   const page = path.replace(/\/+$/, '') || '/';
   const days = streak(history, today);
-  const offline = backend.kind === 'local';
   const archiveDate = page.startsWith('/archive/') ? page.slice('/archive/'.length) : null;
   const known = ['/', '/versus', '/book', '/archive', '/admin'].includes(page) || archiveDate !== null;
 
@@ -99,7 +98,7 @@ export function App() {
             {page === '/versus' && <VersusPage backend={versus} navigate={navigate} />}
             {page === '/book' && <BookPage history={history} today={today} streak={days} navigate={navigate} />}
             {page === '/admin' && <AdminPage backend={backend} today={today} />}
-            {page === '/archive' && <ArchivePage history={history} today={today} offline={offline} navigate={navigate} />}
+            {page === '/archive' && <ArchivePage history={history} today={today} navigate={navigate} />}
             {archiveDate !== null &&
               (history[archiveDate] ? (
                 <div className="notice">
@@ -116,7 +115,7 @@ export function App() {
                     .
                   </p>
                 </div>
-              ) : inArchive(archiveDate, today, offline) ? (
+              ) : inArchive(archiveDate, today) ? (
                 <PlayPage
                   key={`archive-${archiveDate}`}
                   backend={archive}
