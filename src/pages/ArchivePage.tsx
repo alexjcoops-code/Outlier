@@ -66,15 +66,11 @@ export function ArchivePage({ history, today, offline, navigate }: Props) {
   return (
     <section className="archive" aria-labelledby="archive-title">
       <h1 id="archive-title">The archive</h1>
-      <p className="pencil archive__lede">
-        Every past worksheet. You're marked against that day's crowd, which has finished, so your answers don't
-        change anyone's marks, and they don't count towards your streak.
-      </p>
       {dates.length === 0 ? (
-        <p className="pencil">Nothing here yet. Yesterday's worksheet turns up here at midnight.</p>
+        <p className="pencil">Nothing here yet.</p>
       ) : (
         <p className="archive__count mono">
-          {dates.length} {dates.length === 1 ? 'worksheet' : 'worksheets'}, {missed} not done yet
+          {missed} of {dates.length} to do
         </p>
       )}
 

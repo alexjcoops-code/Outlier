@@ -77,9 +77,7 @@ export function PlayPage({ backend, date, navigate, onFinished, archive = false 
           <span className="start__dash" aria-hidden="true" /> <span className="start__count">7 questions</span>
         </h1>
         <p className="pencil start__lede">
-          {archive
-            ? "From the archive. You're marked against that day's crowd, and it doesn't count towards your streak. 25 seconds each."
-            : 'Any right answer counts. Rare right answers count more. 25 seconds each.'}
+          Any right answer counts. Rare right answers count more. 25 seconds each.
         </p>
         <MarkScheme />
         <div className="start__actions">

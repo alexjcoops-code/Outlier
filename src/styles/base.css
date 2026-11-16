@@ -206,20 +206,23 @@ a:hover,
   color: var(--pencil);
   text-decoration: none;
 }
-.header__help {
-  width: 32px;
-  height: 32px;
-  border: 1.5px solid var(--ink);
-  border-radius: 50% 46% 52% 48%;
-  background: transparent;
+.header__menu {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--paper);
   color: var(--ink);
-  font-family: var(--mono);
-  font-weight: 600;
-  font-size: 16px;
   cursor: pointer;
-  transform: rotate(-4deg);
 }
-.header__help:hover {
+.header__menu svg {
+  width: 24px;
+  height: 24px;
+}
+.header__menu:hover {
   background: var(--highlight);
 }
 @media (max-width: 420px) {

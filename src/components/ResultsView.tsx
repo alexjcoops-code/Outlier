@@ -266,7 +266,7 @@ export function ResultsView({ results, backend, navigate, fresh = false, archive
 
       <p className="pencil results__basis">
         {archive
-          ? `Marked against that day's crowd. ${basedOn(results.players, results.simulated)}. Not counted in your streak.`
+          ? `${basedOn(results.players, results.simulated)}.`
           : results.final
             ? `Final marks. ${basedOn(results.players, results.simulated)}.`
             : `Marks can still change until midnight. ${basedOn(results.players, results.simulated)}.`}

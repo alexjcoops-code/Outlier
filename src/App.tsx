@@ -2,6 +2,7 @@ import { MotionConfig } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Header } from './components/Header.tsx';
 import { HowToPlay } from './components/HowToPlay.tsx';
+import { Menu } from './components/Menu.tsx';
 import { DeskLeft, DeskRight } from './components/Desk.tsx';
 import { ConfettiLayer } from './components/Confetti.tsx';
 import { SvgDefs } from './components/Marks.tsx';
@@ -37,6 +38,8 @@ export function App() {
   const [today, setToday] = useState(() => ukDateString());
   const [history, setHistory] = useState(loadHistory);
   const [help, setHelp] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const closeMenu = useCallback(() => setMenu(false), []);
 
   // Roll over to the new worksheet at midnight in London, even if the tab stays open.
   useEffect(() => {
@@ -88,7 +91,7 @@ export function App() {
       <DeskLeft />
       <div className="page">
         <div className="column">
-          <Header date={today} streak={days} navigate={navigate} onHelp={() => setHelp(true)} />
+          <Header date={today} streak={days} navigate={navigate} onMenu={() => setMenu(true)} />
           <main>
             {page === '/' && (
               <PlayPage key={today} backend={backend} date={today} navigate={navigate} onFinished={onFinished} />
@@ -147,27 +150,11 @@ export function App() {
               </div>
             )}
           </main>
-          <footer className="footer">
-            <a href="/" onClick={linkHandler(navigate, '/')}>
-              Today
-            </a>
-            <a href="/versus" onClick={linkHandler(navigate, '/versus')}>
-              Versus
-            </a>
-            <a href="/book" onClick={linkHandler(navigate, '/book')}>
-              My book
-            </a>
-            <a href="/archive" onClick={linkHandler(navigate, '/archive')}>
-              Archive
-            </a>
-            <button type="button" className="linklike" onClick={() => setHelp(true)}>
-              How to play
-            </button>
-          </footer>
         </div>
       </div>
       <DeskRight history={history} today={today} streak={days} navigate={navigate} onHelp={() => setHelp(true)} />
       </div>
+      {menu && <Menu page={page} navigate={navigate} onHelp={() => setHelp(true)} onClose={closeMenu} />}
       {help && <HowToPlay onClose={closeHelp} />}
       <ConfettiLayer />
     </MotionConfig>

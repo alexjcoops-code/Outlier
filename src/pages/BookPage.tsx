@@ -62,14 +62,6 @@ export function BookPage({ history, today, streak, navigate }: Props) {
         </div>
       </dl>
 
-      <p className="pencil book__archive">
-        Missed a day? Every past worksheet is in{' '}
-        <a href="/archive" onClick={linkHandler(navigate, '/archive')}>
-          the archive
-        </a>
-        .
-      </p>
-
       {played === 0 && (
         <p className="pencil">
           Nothing marked yet. <a href="/" onClick={linkHandler(navigate, '/')}>Do today's worksheet</a> and it

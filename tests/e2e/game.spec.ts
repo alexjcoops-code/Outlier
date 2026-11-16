@@ -123,13 +123,18 @@ test('a full game: retries, a time-out, results, share text, resume and history'
 
 test("the archive: play a past day against its crowd, off the streak", async ({ page }) => {
   await page.clock.install();
-  await page.goto('/archive');
+  await page.goto('/');
+  // Through the menu.
+  await page.getByRole('button', { name: 'Menu' }).click();
+  const menu = page.getByRole('dialog', { name: 'Contents' });
+  await expect(menu.getByRole('link', { name: /Today's sheet/i })).toHaveAttribute('aria-current', 'page');
+  await menu.getByRole('link', { name: /Archive/i }).click();
+  await expect(menu).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'The archive' })).toBeVisible();
   await expect(page.locator('.archive__row').first()).toContainText('Do it');
   await page.locator('.archive__go').first().click();
 
   await expect(page.getByRole('heading', { name: /Worksheet from/ })).toBeVisible();
-  await expect(page.getByText(/doesn't count towards your streak/)).toBeVisible();
   await page.getByRole('button', { name: 'Start' }).click();
 
   const input = page.getByLabel('Your answer, a whole number');
@@ -156,7 +161,6 @@ test("the archive: play a past day against its crowd, off the streak", async ({ 
 
   await expect(page.getByRole('heading', { name: /Worksheet from .*, marked/ })).toBeVisible();
   await expect(page.locator('.results__score')).toHaveText(String(expectedTotal));
-  await expect(page.getByText(/Not counted in your streak/)).toBeVisible();
   await expect(page.getByText('What gets copied')).toHaveCount(0);
 
   // Back in the archive, the day shows its score; the streak is untouched.

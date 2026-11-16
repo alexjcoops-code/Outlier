@@ -55,6 +55,10 @@ Everything on the desk is drawn as a cartoon: a 2 px ink outline, flat fills, on
 
 The sticky notes carry real information: the rule in one line, your last few days and best score, and when the next sheet comes out. They have a darker glue strip, a curled corner, and tape or a paperclip. The stationery (ruler, pencil, rubber, protractor) is decoration only and hidden from screen readers. Nothing on the desk moves; the countdown changes once a minute.
 
+## The menu
+
+The header's menu button (three ruled lines in a box) opens the book's contents page: a sheet of squared paper with the printed margin, a "Contents" heading with a double rule, and sections ("Play", "You") headed by a dashed rule. Each item is an ink-outlined box with a drawn ink icon on a highlighter swipe and a short capitalised label. The page you're on is boxed in red pen. There is no footer: everything lives in the menu.
+
 ## Typography
 
 | Role | Face | Used for |

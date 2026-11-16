@@ -1,15 +1,16 @@
 import { linkHandler } from '../lib/router.ts';
 import { formatShortDate } from '../lib/ukDate.ts';
 import { Tally } from './Marks.tsx';
+import { MenuButton } from './Menu.tsx';
 
 interface Props {
   date: string;
   streak: number;
   navigate: (to: string) => void;
-  onHelp: () => void;
+  onMenu: () => void;
 }
 
-export function Header({ date, streak, navigate, onHelp }: Props) {
+export function Header({ date, streak, navigate, onMenu }: Props) {
   return (
     <header className="header">
       <a className="wordmark" href="/" onClick={linkHandler(navigate, '/')} aria-label="Oddle, home">
@@ -35,9 +36,7 @@ export function Header({ date, streak, navigate, onHelp }: Props) {
             <span aria-hidden="true">{streak === 1 ? 'day 1' : `${streak} days`}</span>
           </a>
         )}
-        <button type="button" className="header__help" onClick={onHelp} aria-label="How to play">
-          ?
-        </button>
+        <MenuButton onClick={onMenu} />
       </div>
     </header>
   );
