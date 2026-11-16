@@ -173,7 +173,7 @@
   gap: 6px;
 }
 .versus__room .pencil {
-  font-size: 13px;
+  font-size: 14px;
 }
 .versus__bigcode {
   font-size: 44px;
@@ -200,7 +200,7 @@
 }
 .register thead th {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--pencil);
   border-bottom: 1.5px solid var(--ink);
 }
@@ -235,7 +235,7 @@
   border: 1px solid var(--pencil);
   border-radius: 3px;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12.5px;
   color: var(--pencil);
   vertical-align: 2px;
 }
@@ -249,7 +249,7 @@
   .register__q,
   .register__total {
     width: 2.1em;
-    font-size: 13px;
+    font-size: 14px;
   }
 }
 
@@ -301,7 +301,7 @@
   padding: 1px 7px;
   border-radius: 3px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   white-space: nowrap;
 }
 .answers__points {
@@ -310,7 +310,7 @@
   font-size: 17px;
 }
 .answers__points .pencil {
-  font-size: 13px;
+  font-size: 14px;
 }
 .answers__shared {
   grid-column: 1 / -1;

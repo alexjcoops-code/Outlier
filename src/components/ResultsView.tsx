@@ -175,11 +175,6 @@ function ResultRow({ row, results, backend }: { row: DayRow; results: DayResults
           )}
           <span className="hand result__points">{row.tier === 'none' ? '0' : `+${row.points}`}</span>
         </span>
-        {!open && typeof dist === 'object' && (
-          <span className="result__strip" aria-hidden="true">
-            <CrowdPlot prompt={prompt} values={dist.values} mine={row.value} compact />
-          </span>
-        )}
         <span className="result__meta pencil">
           {row.share !== null &&
             (row.tier === 'lone' ? 'nobody else said this' : `${formatShare(row.share)} said this`)}
@@ -288,9 +283,12 @@ export function ResultsView({ results, backend, navigate, fresh = false }: Props
       </div>
       <p className="pencil results__copied" role="status">
         {copied === 'done' && 'Copied.'}
-        {copied === 'failed' && "Couldn't copy. Select the text below instead."}
+        {copied === 'failed' && "Couldn't copy. Open “What gets copied” and select it instead."}
       </p>
-      <pre className="results__share" aria-label="Share text">{text}</pre>
+      <details className="results__sharebox" open={copied === 'failed' || undefined}>
+        <summary className="pencil">What gets copied</summary>
+        <pre className="results__share" aria-label="Share text">{text}</pre>
+      </details>
       <Countdown />
     </section>
   );

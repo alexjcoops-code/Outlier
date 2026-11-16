@@ -96,7 +96,7 @@ function drawRack(
   ctx.stroke();
   if (!compact) {
     ctx.fillStyle = INK;
-    ctx.font = '11.5px "IBM Plex Mono", monospace';
+    ctx.font = '13px "IBM Plex Mono", monospace';
     ctx.textBaseline = 'alphabetic';
     ctx.textAlign = 'left';
     ctx.fillText(short(prompt.min), L.left, L.floor + 20);
@@ -148,7 +148,7 @@ function drawRack(
       ...balls.filter((b) => Math.abs(b.x - x) < L.tubeWidth / 2 && !b.mine).map((b) => b.y - r),
     );
     ctx.fillStyle = PENCIL;
-    ctx.font = '600 12px "IBM Plex Mono", monospace';
+    ctx.font = '600 13px "IBM Plex Mono", monospace';
     const align = x < 60 ? 'left' : x > L.width - 60 ? 'right' : 'center';
     ctx.textAlign = align;
     ctx.fillText(
@@ -459,7 +459,7 @@ export function CrowdPlot({ prompt, values, mine = null, animate = false, compac
       </div>
       {!compact && layout && (
         <figcaption className="crowd__caption">
-          Each ball is {formatPerBall(layout.perBall)} of answers.{caption ? ` ${caption}` : ''}
+          Each ball is {formatPerBall(layout.perBall)} of answers{caption ? ` · ${caption}` : '.'}
           {physical && (
             <>
               {' '}

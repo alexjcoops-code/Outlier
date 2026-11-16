@@ -192,7 +192,7 @@ a:hover,
   align-items: center;
   gap: 10px;
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: 13.5px;
   color: var(--pencil);
   white-space: nowrap;
 }
@@ -457,7 +457,7 @@ a:hover,
 .footer {
   margin-top: 56px;
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--pencil);
   display: flex;
   flex-wrap: wrap;

@@ -12,13 +12,13 @@ interface Props {
 export function Header({ date, streak, navigate, onHelp }: Props) {
   return (
     <header className="header">
-      <a className="wordmark" href="/" onClick={linkHandler(navigate, '/')} aria-label="Outlier, home">
+      <a className="wordmark" href="/" onClick={linkHandler(navigate, '/')} aria-label="Unsaid, home">
         <span aria-hidden="true">
-          outl
+          unsa
           <span className="wordmark__i">
             ı<span className="wordmark__dot" />
           </span>
-          er
+          d
         </span>
       </a>
       <div className="header__right">

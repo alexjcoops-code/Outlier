@@ -17,7 +17,7 @@ export function InkStamp({ text, ink, delay = 0, scale = 1, className = '' }: Pr
     <motion.div
       className={`ink-stamp ${className}`}
       style={{ color: ink, fontSize: `${17 * scale}px` }}
-      initial={reduce ? false : { scale: 3.2, opacity: 0, rotate: -24 }}
+      initial={reduce ? false : { scale: 1.8, opacity: 0, rotate: -16 }}
       animate={{ scale: 1, opacity: 0.92, rotate: -9 }}
       transition={reduce ? { duration: 0 } : { delay, duration: 0.28, ease: [0.6, 0, 0.9, 0.5] }}
       aria-hidden="true"

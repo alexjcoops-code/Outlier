@@ -322,10 +322,10 @@ function WaitingRoom({
   const alone = state.kind === 'quick' && state.startBy !== null && now > state.startBy && here < 2;
 
   const share = async () => {
-    const text = `Play me at Outlier: room ${state.code}`;
+    const text = `Play me at Unsaid: room ${state.code}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'Outlier versus', text, url: link });
+        await navigator.share({ title: 'Unsaid versus', text, url: link });
         return;
       }
       await navigator.clipboard.writeText(link);

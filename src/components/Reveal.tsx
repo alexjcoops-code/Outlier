@@ -25,6 +25,12 @@ const MARK_AT = MOTION.markAt;
 
 const TIER_INK = TIER_HEX;
 
+/** "1 player + simulated answers." for under the rack: the short form of basedOn(). */
+function crowdNote(players: number, simulated: boolean): string {
+  const who = `${players.toLocaleString('en-GB')} ${players === 1 ? 'player' : 'players'}`;
+  return simulated ? `${who} + simulated answers.` : `${who}.`;
+}
+
 export function basedOn(players: number, simulated: boolean): string {
   const who = `${players.toLocaleString('en-GB')} ${players === 1 ? 'player' : 'players'}`;
   return simulated ? `Based on ${who} + simulated answers` : `Based on ${who}`;
@@ -152,7 +158,7 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
             height={rackHeight}
             lone={data.tier === 'lone'}
             shockwave={fan.shockwave}
-            caption={`${basedOn(data.crowd.players, data.crowd.simulated)}.`}
+            caption={crowdNote(data.crowd.players, data.crowd.simulated)}
           />
         ) : (
           <div className="reveal__crowd-wait" style={{ height: rackHeight }}>

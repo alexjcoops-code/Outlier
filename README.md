@@ -1,6 +1,6 @@
-# Outlier
+# Unsaid
 
-A daily maths game where rare answers win.
+A daily maths game where rare answers win: find the right answer nobody else said.
 
 Every day at midnight UK time everyone gets the same seven prompts, such as "Name a prime under 1,000". Each has many right answers. You have 25 seconds to type a whole number. Any right answer scores, but the fewer people who gave the same answer, the more it scores. Up to 100 a question, 700 a day.
 
@@ -175,14 +175,14 @@ After each answer the whole crowd pours into a rack of tubes standing on the num
 
 ### Celebrations
 
-The rarer the answer, the bigger the fuss (`src/lib/celebrate.ts`):
+The rarer the answer, the bigger the fuss, but each tier has one signature move rather than everything at once (`src/lib/celebrate.ts`). Confetti is only for a Lone Wolf.
 
 | Tier | What happens |
 |---|---|
 | Obvious, Predictably Clever | A plain mark. |
 | Fair | The points count up into the red circle; one tick. |
-| Rare | Two ticks (a teacher's "very good"), a small burst of hole-punch confetti, a light buzz. |
-| Outlier | The red ball knocks the crowd into the air, a red BOLD stamp slams onto the page, the teacher dashes red-pen emphasis lines and two little stars round your score, the page jolts. No confetti. |
+| Rare | Two ticks (a teacher's "very good"), a light buzz. |
+| Outlier | The red ball knocks the crowd into the air, and the teacher dashes red-pen emphasis lines and two little stars round your score. |
 | Lone Wolf | The crowd scatters off the red ball, a NOBODY ELSE stamp in green pen, the page shakes, confetti cut from coloured paper (the highlighter colours) thrown out to the sides, then a shower of it fluttering down the page, a longer buzz. |
 
 A good day earns an award stamp on the results page, with confetti when the paper has just been finished: Merit (300+), Distinction (450+), Headteacher's award (600+). Vibration only happens on phones that support it. With reduced motion there is no confetti, shaking, buzzing or flying balls; the stamps and marks simply appear.

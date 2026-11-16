@@ -34,15 +34,16 @@ export const FANFARE: Record<TierId, Fanfare> = {
   obvious: { ...QUIET },
   clever: { ...QUIET },
   fair: { ...QUIET, countUp: true, ticks: 1 },
-  rare: { ...QUIET, countUp: true, ticks: 2, chads: 14, shockwave: 0.3, vibrate: [18] },
+  rare: { ...QUIET, countUp: true, ticks: 2, shockwave: 0.3, vibrate: [18] },
   outlier: {
     // No confetti: the teacher dashes red-pen marks round the score instead.
     chads: 0,
     stars: 0,
-    shake: 0.5,
-    shockwave: 0.75,
+    // Its mark is the teacher's red-pen emphasis: no stamp, no jolt.
+    shake: 0,
+    shockwave: 0.6,
     vibrate: [25, 40, 25],
-    stamp: { text: 'Bold', ink: '#c2223f' },
+    stamp: null,
     countUp: true,
     ticks: 2,
     coloured: false,

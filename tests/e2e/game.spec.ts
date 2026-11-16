@@ -91,13 +91,15 @@ test('a full game: retries, a time-out, results, share text, resume and history'
   await expect(page.getByText('provisional', { exact: true })).toBeVisible();
   await expect(page.locator('.result')).toHaveCount(7);
   await expect(page.locator('.result').nth(3)).toContainText('out of time');
-  // Every question shows a strip of its crowd; the timed-out one has no red dot.
-  await expect(page.locator('.result__strip')).toHaveCount(7);
-  await expect(page.locator('.result__strip figure[data-mine="yes"]')).toHaveCount(6);
+  // No mini racks under each answer any more: each offers the full crowd instead.
+  await expect(page.getByText('see the crowd')).toHaveCount(7);
   await expect(page.locator('.countdown')).toContainText(/Next worksheet in \d\d:\d\d:\d\d/);
 
+  // The share text is folded away until asked for.
+  await expect(page.getByLabel('Share text')).toBeHidden();
+  await page.getByText('What gets copied').click();
   const share = await page.getByLabel('Share text').innerText();
-  expect(share).toMatch(new RegExp(`^Outlier \\d\\d/\\d\\d/\\d\\d: ${expectedTotal}/700\\n[·○◐●★✦✗]{7}\\n`));
+  expect(share).toMatch(new RegExp(`^Unsaid \\d\\d/\\d\\d/\\d\\d: ${expectedTotal}/700\\n[·○◐●★✦✗]{7}\\n`));
   expect(share.split('\n')[1]![3]).toBe('✗');
 
   // Top answers for a question

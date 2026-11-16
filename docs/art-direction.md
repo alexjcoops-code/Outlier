@@ -1,4 +1,4 @@
-# Outlier: art direction
+# Unsaid: art direction
 
 The rules every screen follows. If a change breaks one of these, change the change, not the rule (or argue for a new rule here first).
 
@@ -60,7 +60,7 @@ Durations are in `src/lib/motion.ts` and as CSS variables in `tokens.css`.
 | Time running out | The pencil line shrinks steadily and turns red pen for the last five seconds. No blinking. |
 | Reveal | The crowd pours into the rack (about 2 s of physics); your ball drops last. The mark lands at 2.3 s. "Next question" works from the first frame. |
 | Marking | Highlighter swipe 300 ms, circle 450 ms, ticks 180 ms apart. |
-| Rewards | Scale with the tier: Fair counts up; Rare adds a second tick and a few white chads; Outlier gets a BOLD stamp, red-pen emphasis strokes and two little stars dashed round the score (drawn, not thrown) and a short jolt; Lone Wolf gets the NOBODY ELSE stamp, confetti cut from coloured paper in the highlighter colours (a burst from the mark, then a short shower down the page), and a longer buzz. Nothing below Rare gets confetti. A reward never covers the question, your answer or the rack. |
+| Rewards | Scale with the tier, one signature move each: Fair counts up; Rare adds a second tick; Outlier gets red-pen emphasis strokes and two little stars dashed round the score (drawn, not thrown); Lone Wolf gets the NOBODY ELSE stamp, confetti cut from coloured paper in the highlighter colours (a burst from the mark, then a short shower down the page), a page shake and a longer buzz. Only a Lone Wolf gets confetti. Stamps land from 1.8× size, never sweeping across the page. A reward never covers the question, your answer or the rack. |
 | Page changes | 180 to 300 ms. |
 | Idle | Nothing moves while you think, except the loading scribble. |
 
