@@ -96,9 +96,11 @@ Playtesters said underlined links and ruled headings made the game look AI-made.
 
 ## Oddie, and a little life
 
-Oddie is the logo's "o" come to life: a bold ink ring for a body, dot eyes, rosy cheeks, stick arms and legs. It waves on the start page, pops up beside each mark with a face to match (bored for Obvious and Clever, smiling for Fair and Rare, star-eyed with arms up for Outlier and Lone Wolf, sad for out of time), and reacts to the day's total. It's never on screen while a question is being answered.
+Oddie is the logo's "o" come to life: a bold ink ring for a body with a shine on it, big eyes with two highlights each, rosy cheeks, a curl on top, stick arms with round hands, and little shoes, standing on a soft shadow. It's original to Oddle. Moods: hello (waves), happy (smiling eyes, sways and hops), wow (star eyes that spin, open mouth, arms up, jumping with squash and stretch), meh (heavy lids, flat mouth, slow sigh), sad (worried brows, frown, a sweat drop that falls). It waves on the start page, pops up beside each mark, reacts to the day's total, and is never on screen while a question is being answered.
 
-The only things that move on their own are Oddie's blink and its first wave. Everything else reacts to you: stamps tilt and grow a touch on hover, outlined buttons and menu boxes lift and tip, menu icons hop, the logo's ring is drawn on as the page opens, and the start page's points staircase grows in. All of it is off for people who ask for less motion.
+How it moves: it drops in and squashes on landing, then breathes or plays its mood's loop; it blinks; its eyes follow your finger or mouse; tap it and it boings (squash, stretch, a little spin) and says a short line in a speech bubble. With reduced motion it just stands there, still tappable.
+
+Oddie is the only thing that moves on its own. Everything else reacts to you: stamps tilt and grow a touch on hover, outlined buttons and menu boxes lift and tip, menu icons hop, the logo's ring is drawn on as the page opens, and the start page's points staircase grows in. All of it is off for people who ask for less motion.
 
 The start page is one idea: "Say the number nobody else will.", the worksheet number and date above it, one line of rules, and the points as a staircase of highlighter bars (taller is worth more) instead of a table.
 

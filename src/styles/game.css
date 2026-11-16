@@ -45,8 +45,8 @@
     font-size: 29px;
   }
   .start__oddie {
-    width: 68px;
-    height: 68px;
+    width: 72px !important;
+    height: 72px !important;
   }
   .ladder {
     gap: 3px;
@@ -61,8 +61,8 @@
     font-size: 46px;
   }
   .start__oddie {
-    width: 112px;
-    height: 112px;
+    width: 120px !important;
+    height: 120px !important;
   }
 }
 
@@ -118,34 +118,68 @@
   font-weight: 700;
 }
 
-/* Oddie, the mascot: blinks now and then; waves when it says hello. */
-.oddie__eyes {
+/* Oddie, the mascot. The movement lives in Oddie.tsx; this is the blink,
+   the button reset and the speech bubble. */
+.oddie {
+  position: relative;
+  display: inline-block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.oddie svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.oddie:focus-visible {
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+.oddie__blink {
   transform-box: fill-box;
   transform-origin: center;
-  animation: blink 4.6s infinite;
+  animation: blink 4.2s infinite;
 }
 @keyframes blink {
   0%,
-  94%,
+  92%,
   100% {
     transform: scaleY(1);
   }
+  94% {
+    transform: scaleY(0.08);
+  }
   96% {
-    transform: scaleY(0.1);
+    transform: scaleY(1);
   }
 }
-.oddie__wave {
-  transform-box: view-box;
-  transform-origin: 79px 48px;
-  animation: wave 0.42s ease-in-out 0.5s 4 alternate both;
+@media (prefers-reduced-motion: reduce) {
+  .oddie__blink {
+    animation: none;
+  }
 }
-@keyframes wave {
-  from {
-    transform: rotate(-12deg);
-  }
-  to {
-    transform: rotate(16deg);
-  }
+/* What Oddie says when you tap it: a hand-drawn bubble above its head. */
+.oddie__says {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  right: 30%;
+  z-index: 5;
+  padding: 6px 12px;
+  border: 2.5px solid var(--ink);
+  border-radius: 14px 14px 4px 14px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--print);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 3px 4px 0 rgba(31, 42, 68, 0.18);
+  pointer-events: none;
 }
 
 /* ───── Question screen ───── */
