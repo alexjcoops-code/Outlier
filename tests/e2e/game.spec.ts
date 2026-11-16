@@ -121,6 +121,51 @@ test('a full game: retries, a time-out, results, share text, resume and history'
   await expect(page.locator('.book__detail')).toContainText(`${expectedTotal} / 700`);
 });
 
+test("the archive: play a past day against its crowd, off the streak", async ({ page }) => {
+  await page.clock.install();
+  await page.goto('/archive');
+  await expect(page.getByRole('heading', { name: 'The archive' })).toBeVisible();
+  await expect(page.locator('.archive__row').first()).toContainText('Do it');
+  await page.locator('.archive__go').first().click();
+
+  await expect(page.getByRole('heading', { name: /Worksheet from/ })).toBeVisible();
+  await expect(page.getByText(/doesn't count towards your streak/)).toBeVisible();
+  await page.getByRole('button', { name: 'Start' }).click();
+
+  const input = page.getByLabel('Your answer, a whole number');
+  let expectedTotal = 0;
+  for (let q = 1; q <= 7; q++) {
+    const valid = await answersOnScreen(page);
+    if (q === 3) {
+      await page.clock.runFor(26_000);
+      await expect(page.locator('.reveal')).toContainText('out of time');
+    } else {
+      await expect(input).toBeFocused();
+      await page.keyboard.type(String(valid[Math.floor(valid.length / 2)]!));
+      await page.keyboard.press('Enter');
+      await page.clock.runFor(800);
+      const reveal = page.locator('.reveal');
+      await expect(reveal).toBeVisible();
+      const points = Number(await reveal.locator('.reveal__score').getAttribute('data-points'));
+      expect([10, 15, 30, 60, 85, 100]).toContain(points);
+      expectedTotal += points;
+      await expect(reveal.locator('figure.crowd')).toHaveAttribute('data-mine', 'yes');
+    }
+    await page.getByRole('button', { name: q === 7 ? 'See marks' : 'Next question' }).click();
+  }
+
+  await expect(page.getByRole('heading', { name: /Worksheet from .*, marked/ })).toBeVisible();
+  await expect(page.locator('.results__score')).toHaveText(String(expectedTotal));
+  await expect(page.getByText(/Not counted in your streak/)).toBeVisible();
+  await expect(page.getByText('What gets copied')).toHaveCount(0);
+
+  // Back in the archive, the day shows its score; the streak is untouched.
+  await page.getByRole('link', { name: 'Back to the archive' }).click();
+  await expect(page.locator('.archive__row').first()).toContainText(String(expectedTotal));
+  await page.goto('/book');
+  await expect(page.locator('.book__stats')).toContainText('0 days');
+});
+
 test('leaving mid-game resumes at the next question; the abandoned one scores 0', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Start' }).click();

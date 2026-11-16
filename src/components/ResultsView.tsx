@@ -7,6 +7,7 @@ import { teacherComment } from '../lib/comment.ts';
 import { linkHandler } from '../lib/router.ts';
 import { formatShare, MAX_TOTAL, TIERS } from '../lib/scoring.ts';
 import { shareText } from '../lib/share.ts';
+import { formatShortDate } from '../lib/ukDate.ts';
 import { getPrompt } from '../prompts.ts';
 import { Countdown } from './Countdown.tsx';
 import { CrowdPlot } from './CrowdPlot.tsx';
@@ -20,6 +21,8 @@ interface Props {
   navigate: (to: string) => void;
   /** The paper was just finished (not reloaded): celebrate a good day. */
   fresh?: boolean;
+  /** A worksheet played from the archive. */
+  archive?: boolean;
 }
 
 /** A ruled line from 0 to 700 with your score, today's average and the top-10% mark. */
@@ -206,7 +209,7 @@ function ResultRow({ row, results, backend }: { row: DayRow; results: DayResults
   );
 }
 
-export function ResultsView({ results, backend, navigate, fresh = false }: Props) {
+export function ResultsView({ results, backend, navigate, fresh = false, archive = false }: Props) {
   const [copied, setCopied] = useState<'idle' | 'done' | 'failed'>('idle');
   const text = shareText(results, window.location.host);
   const reduce = useReducedMotion();
@@ -239,7 +242,9 @@ export function ResultsView({ results, backend, navigate, fresh = false }: Props
 
   return (
     <section className="results" aria-labelledby="results-title">
-      <h1 id="results-title">Today's worksheet, marked</h1>
+      <h1 id="results-title">
+        {archive ? `Worksheet from ${formatShortDate(results.date)}, marked` : "Today's worksheet, marked"}
+      </h1>
       {!results.final && <span className="provisional">provisional</span>}
 
       <div className="results__total" ref={totalRef}>
@@ -260,7 +265,9 @@ export function ResultsView({ results, backend, navigate, fresh = false }: Props
       </div>
 
       <p className="pencil results__basis">
-        {results.final
+        {archive
+          ? `Marked against that day's crowd. ${basedOn(results.players, results.simulated)}. Not counted in your streak.`
+          : results.final
             ? `Final marks. ${basedOn(results.players, results.simulated)}.`
             : `Marks can still change until midnight. ${basedOn(results.players, results.simulated)}.`}
       </p>
@@ -273,6 +280,17 @@ export function ResultsView({ results, backend, navigate, fresh = false }: Props
         ))}
       </ol>
 
+      {archive ? (
+        <div className="results__actions">
+          <a href="/archive" onClick={linkHandler(navigate, '/archive')} className="stamp stamp--small">
+            Back to the archive
+          </a>
+          <a href="/" onClick={linkHandler(navigate, '/')}>
+            Today's worksheet
+          </a>
+        </div>
+      ) : (
+      <>
       <div className="results__actions">
         <button type="button" className="stamp stamp--small" onClick={copy}>
           Copy result
@@ -290,6 +308,8 @@ export function ResultsView({ results, backend, navigate, fresh = false }: Props
         <pre className="results__share" aria-label="Share text">{text}</pre>
       </details>
       <Countdown />
+      </>
+      )}
     </section>
   );
 }

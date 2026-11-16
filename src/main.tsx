@@ -8,6 +8,7 @@ import './styles/game.css';
 import './styles/results.css';
 import './styles/versus.css';
 import './styles/desk.css';
+import './styles/archive.css';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

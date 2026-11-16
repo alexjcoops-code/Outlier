@@ -95,6 +95,22 @@ export function scoreAnswer(c: CrowdCounts): Score {
   return { tier, points: TIERS[tier].points, share };
 }
 
+/**
+ * Marks an answer against a finished crowd that doesn't include you (the
+ * archive). `share` is the part of that crowd that gave the same answer, which
+ * is exactly "others" in scoreAnswer. Same thresholds, same order.
+ */
+export function scoreFromCrowd(share: number, clever: boolean): Score {
+  let tier: TierId;
+  if (share <= 0) tier = 'lone';
+  else if (share >= OBVIOUS_SHARE) tier = 'obvious';
+  else if (share < OUTLIER_OTHERS) tier = 'outlier';
+  else if (clever) tier = 'clever';
+  else if (share >= FAIR_OTHERS) tier = 'fair';
+  else tier = 'rare';
+  return { tier, points: TIERS[tier].points, share };
+}
+
 /** "4%", "under 1%", "23%" */
 export function formatShare(share: number): string {
   const pct = share * 100;

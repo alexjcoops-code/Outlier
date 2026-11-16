@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { Backend, DayResults } from '../lib/backend/types.ts';
 import { PROMPTS_PER_DAY } from '../lib/daily.ts';
 import { linkHandler } from '../lib/router.ts';
+import { formatShortDate } from '../lib/ukDate.ts';
 import { useGame } from '../lib/useGame.ts';
 import { getPrompt } from '../prompts.ts';
 import { AnswerInput } from '../components/AnswerInput.tsx';
@@ -19,9 +20,11 @@ interface Props {
   date: string;
   navigate: (to: string) => void;
   onFinished?: (r: DayResults) => void;
+  /** A past worksheet from the archive, marked against that day's finished crowd. */
+  archive?: boolean;
 }
 
-export function PlayPage({ backend, date, navigate, onFinished }: Props) {
+export function PlayPage({ backend, date, navigate, onFinished, archive = false }: Props) {
   const game = useGame(backend, date, onFinished);
   const { phase, results } = game;
   // Did the player finish the paper just now (rather than reload the results)?
@@ -58,7 +61,7 @@ export function PlayPage({ backend, date, navigate, onFinished }: Props) {
 
   if (phase.name === 'results') {
     return (
-      <ResultsView results={results} backend={backend} navigate={navigate} fresh={playedNow.current} />
+      <ResultsView results={results} backend={backend} navigate={navigate} fresh={playedNow.current} archive={archive} />
     );
   }
 
@@ -70,20 +73,28 @@ export function PlayPage({ backend, date, navigate, onFinished }: Props) {
           Name <span className="start__blank" /> Class <span className="start__blank start__blank--short" />
         </p>
         <h1 id="start-title">
-          Today's worksheet <span className="start__dash" aria-hidden="true" />{' '}
-          <span className="start__count">7 questions</span>
+          {archive ? `Worksheet from ${formatShortDate(date)}` : "Today's worksheet"}{' '}
+          <span className="start__dash" aria-hidden="true" /> <span className="start__count">7 questions</span>
         </h1>
         <p className="pencil start__lede">
-          Any right answer counts. Rare right answers count more. 25 seconds each.
+          {archive
+            ? "From the archive. You're marked against that day's crowd, and it doesn't count towards your streak. 25 seconds each."
+            : 'Any right answer counts. Rare right answers count more. 25 seconds each.'}
         </p>
         <MarkScheme />
         <div className="start__actions">
           <button type="button" className="stamp" onClick={game.start}>
             {resuming ? 'Carry on' : 'Start'}
           </button>
-          <a href="/versus" onClick={linkHandler(navigate, '/versus')}>
-            Or play people live
-          </a>
+          {archive ? (
+            <a href="/archive" onClick={linkHandler(navigate, '/archive')}>
+              Back to the archive
+            </a>
+          ) : (
+            <a href="/versus" onClick={linkHandler(navigate, '/versus')}>
+              Or play people live
+            </a>
+          )}
         </div>
         {resuming && (
           <p className="pencil start__resume">
@@ -91,7 +102,7 @@ export function PlayPage({ backend, date, navigate, onFinished }: Props) {
             {PROMPTS_PER_DAY}.
           </p>
         )}
-        {!resuming && <YesterdayCrowd backend={backend} today={date} />}
+        {!resuming && !archive && <YesterdayCrowd backend={backend} today={date} />}
       </section>
     );
   }

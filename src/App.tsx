@@ -14,6 +14,9 @@ import { AdminPage } from './pages/AdminPage.tsx';
 import { BookPage } from './pages/BookPage.tsx';
 import { PlayPage } from './pages/PlayPage.tsx';
 import { VersusPage } from './pages/VersusPage.tsx';
+import { ArchivePage, inArchive } from './pages/ArchivePage.tsx';
+import { createArchiveBackend, recordArchiveScore } from './lib/backend/archive.ts';
+import { memoryStorage } from './lib/backend/local.ts';
 import { createVersusBackend } from './lib/versusOnline.ts';
 
 const HELP_SEEN = 'outlier:help-seen';
@@ -22,6 +25,15 @@ export function App() {
   const [path, navigate] = useRoute();
   const backend = useMemo(() => createBackend(), []);
   const versus = useMemo(() => createVersusBackend(), []);
+  const archive = useMemo(() => {
+    let storage: Storage | ReturnType<typeof memoryStorage>;
+    try {
+      storage = window.localStorage;
+    } catch {
+      storage = memoryStorage();
+    }
+    return createArchiveBackend(backend, storage);
+  }, [backend]);
   const [today, setToday] = useState(() => ukDateString());
   const [history, setHistory] = useState(loadHistory);
   const [help, setHelp] = useState(false);
@@ -65,6 +77,9 @@ export function App() {
 
   const page = path.replace(/\/+$/, '') || '/';
   const days = streak(history, today);
+  const offline = backend.kind === 'local';
+  const archiveDate = page.startsWith('/archive/') ? page.slice('/archive/'.length) : null;
+  const known = ['/', '/versus', '/book', '/archive', '/admin'].includes(page) || archiveDate !== null;
 
   return (
     <MotionConfig reducedMotion="user">
@@ -81,7 +96,45 @@ export function App() {
             {page === '/versus' && <VersusPage backend={versus} navigate={navigate} />}
             {page === '/book' && <BookPage history={history} today={today} streak={days} navigate={navigate} />}
             {page === '/admin' && <AdminPage backend={backend} today={today} />}
-            {!['/', '/versus', '/book', '/admin'].includes(page) && (
+            {page === '/archive' && <ArchivePage history={history} today={today} offline={offline} navigate={navigate} />}
+            {archiveDate !== null &&
+              (history[archiveDate] ? (
+                <div className="notice">
+                  <span className="hand">You did this one on the day.</span>
+                  <p>
+                    It's in{' '}
+                    <a href="/book" onClick={linkHandler(navigate, '/book')}>
+                      My book
+                    </a>
+                    . Pick another from{' '}
+                    <a href="/archive" onClick={linkHandler(navigate, '/archive')}>
+                      the archive
+                    </a>
+                    .
+                  </p>
+                </div>
+              ) : inArchive(archiveDate, today, offline) ? (
+                <PlayPage
+                  key={`archive-${archiveDate}`}
+                  backend={archive}
+                  date={archiveDate}
+                  navigate={navigate}
+                  onFinished={recordArchiveScore}
+                  archive
+                />
+              ) : (
+                <div className="notice">
+                  <span className="hand">Not in the archive.</span>
+                  <p>
+                    There's no past worksheet for that date.{' '}
+                    <a href="/archive" onClick={linkHandler(navigate, '/archive')}>
+                      See the archive
+                    </a>
+                    .
+                  </p>
+                </div>
+              ))}
+            {!known && (
               <div className="notice">
                 <span className="hand">Wrong classroom.</span>
                 <p>
@@ -103,6 +156,9 @@ export function App() {
             </a>
             <a href="/book" onClick={linkHandler(navigate, '/book')}>
               My book
+            </a>
+            <a href="/archive" onClick={linkHandler(navigate, '/archive')}>
+              Archive
             </a>
             <button type="button" className="linklike" onClick={() => setHelp(true)}>
               How to play

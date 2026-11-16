@@ -1,0 +1,58 @@
+/* ───── The archive: every past worksheet, one ruled line each ───── */
+.archive__lede {
+  margin: 12px 0 8px;
+}
+.archive__count {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--pencil);
+}
+.archive__month h2 {
+  margin: 28px 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pencil);
+}
+.archive__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1.5px solid var(--ink);
+}
+.archive__row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  border-bottom: 1.5px solid var(--ink);
+}
+.archive__no {
+  line-height: 48px;
+  top: 0;
+}
+.archive__date {
+  font-size: 17px;
+}
+.archive__status {
+  font-size: 15px;
+  white-space: nowrap;
+}
+.archive__score {
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--ink);
+}
+a.archive__status .pencil {
+  font-size: 14px;
+}
+.archive__go {
+  font-weight: 700;
+  text-decoration-color: var(--redpen);
+}
+.archive__more {
+  margin-top: 20px;
+}

@@ -201,6 +201,12 @@ The five questions are five different types, easy to hard, picked fresh for each
 
 Scores aren't stored. Every browser works them out from the answers with the same code (`src/lib/versus.ts`), so everyone sees the same register.
 
+### The archive
+
+`/archive` lists every past worksheet, from the launch day (`VITE_LAUNCH_DATE`, default 2026-11-13; the offline demo offers the last 60 days) to yesterday. Days you played live show your score and can't be replayed. Any other day can be done once, with the usual 25 seconds a question.
+
+A past day's crowd is final, so the archive is played in the browser against it (`src/lib/backend/archive.ts`): it asks the server for that day's questions and, after each answer, that day's crowd, and marks you with the same thresholds as the live game (`scoreFromCrowd` in `src/lib/scoring.ts`). Nothing is sent to the server, so archive answers never change anyone's marks, and they don't count towards your streak. Finished archive scores are kept in localStorage for the list.
+
 ### Not cheatable from the client
 
 - Tables have row level security with no client policies, apart from reading which prompts make up today and past days. Everything else goes through `SECURITY DEFINER` RPCs.
