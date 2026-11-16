@@ -59,9 +59,10 @@ The sticky notes carry real information: the rule in one line, your last few day
 
 | Role | Face | Used for |
 |---|---|---|
-| Display | Fraunces | Headings, tier names, the printed parts of the page |
-| HUD and numerals | IBM Plex Mono | Questions, answers, the timer, scores, the register: monospaced numerals that line up |
-| The teacher | Caveat | Only things the teacher writes: comments, wrong-answer notes, circled scores, "out of time" |
+| Print | Andika (400 and 700) | Everything printed: headings, questions, answers, the timer, scores, the register. A face made for children learning to read, with the school-book "a" and "g", so the sheet reads like a printed exercise book. Numerals are tabular so columns line up. |
+| The teacher | Kalam | Only things the teacher writes: comments, wrong-answer notes, circled scores, "out of time" |
+
+We moved off Fraunces, IBM Plex Mono and Caveat in November 2026: that trio is common in AI-made sites, and playtesters said it made the game look AI-made.
 
 ## Motion by event
 

@@ -64,7 +64,7 @@
   fill: var(--redpen);
   font-family: var(--hand);
   font-weight: 700;
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .results__list {

@@ -96,7 +96,7 @@ function drawRack(
   ctx.stroke();
   if (!compact) {
     ctx.fillStyle = INK;
-    ctx.font = '13px "IBM Plex Mono", monospace';
+    ctx.font = '13px Andika, sans-serif';
     ctx.textBaseline = 'alphabetic';
     ctx.textAlign = 'left';
     ctx.fillText(short(prompt.min), L.left, L.floor + 20);
@@ -148,7 +148,7 @@ function drawRack(
       ...balls.filter((b) => Math.abs(b.x - x) < L.tubeWidth / 2 && !b.mine).map((b) => b.y - r),
     );
     ctx.fillStyle = PENCIL;
-    ctx.font = '600 13px "IBM Plex Mono", monospace';
+    ctx.font = '700 13px Andika, sans-serif';
     const align = x < 60 ? 'left' : x > L.width - 60 ? 'right' : 'center';
     ctx.textAlign = align;
     ctx.fillText(
@@ -184,7 +184,7 @@ function drawRack(
     ctx.moveTo(x + dir * (r + 4), y - r - 2);
     ctx.bezierCurveTo(x + dir * 10, y - 16, x + dir * 18, ty + 6, x + dir * 28, ty - 2);
     ctx.stroke();
-    ctx.font = '700 21px Caveat, cursive';
+    ctx.font = '700 19px Kalam, cursive';
     ctx.textAlign = right ? 'left' : 'right';
     const text = lone ? `you, alone (${short(mine)})` : `you (${short(mine)})`;
     // A halo of paper so the writing stays legible over the balls.

@@ -39,9 +39,14 @@
   --t-panel: 240ms;
 
   /* Type */
-  --mono: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
-  --serif: 'Fraunces Variable', 'Fraunces', 'Literata', Georgia, serif;
-  --hand: 'Caveat', cursive;
+  /* Andika: a font made for children learning to read, so it looks like a
+     printed school book. One face for everything printed; the names --serif
+     and --mono are kept so older styles still work. */
+  --print: 'Andika', 'Trebuchet MS', sans-serif;
+  --serif: var(--print);
+  --mono: var(--print);
+  /* Kalam: a quick felt-tip hand, for the teacher only. */
+  --hand: 'Kalam', cursive;
 
   /* Page geometry */
   --square: 24px;
