@@ -21,7 +21,7 @@ test('a full game: retries, a time-out, results, share text, resume and history'
 
   // Start screen
   await expect(page.getByRole('heading', { name: /Today's worksheet/ })).toBeVisible();
-  await expect(page.getByText('Any right answer counts. Rare right answers count more. 40 seconds each.')).toBeVisible();
+  await expect(page.getByText('7 questions, 40 seconds each. Any right answer counts, and rare right answers count more.')).toBeVisible();
   await expect(page.getByRole('table', { name: 'Mark scheme' })).toContainText('Lone Wolf');
   // Yesterday's crowd teaser: piles of dots and a right answer nobody gave.
   const clipping = page.getByRole('complementary', { name: "Yesterday's crowd" });

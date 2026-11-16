@@ -73,11 +73,10 @@ export function PlayPage({ backend, date, navigate, onFinished, archive = false 
           Name <span className="start__blank" /> Class <span className="start__blank start__blank--short" />
         </p>
         <h1 id="start-title">
-          {archive ? `Worksheet from ${formatShortDate(date)}` : "Today's worksheet"}{' '}
-          <span className="start__dash" aria-hidden="true" /> <span className="start__count">7 questions</span>
+          {archive ? `Worksheet from ${formatShortDate(date)}` : "Today's worksheet"}
         </h1>
         <p className="pencil start__lede">
-          Any right answer counts. Rare right answers count more. 40 seconds each.
+          7 questions, 40 seconds each. Any right answer counts, and rare right answers count more.
         </p>
         <MarkScheme />
         <div className="start__actions">

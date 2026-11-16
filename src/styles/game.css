@@ -21,17 +21,6 @@
   border-bottom: 3px double var(--ink);
   display: inline-block;
 }
-/* A short pencil rule between a heading and its count, drawn rather than typed. */
-.start__dash {
-  display: inline-block;
-  width: 0.7em;
-  margin: 0 0.12em;
-  border-top: 2px solid var(--pencil);
-  vertical-align: 0.3em;
-}
-.start__count {
-  white-space: nowrap;
-}
 .start__lede {
   margin-top: 19px;
   max-width: 30em;

@@ -162,7 +162,7 @@ function Lobby({ backend, navigate, onEnter }: { backend: VersusBackend; navigat
   return (
     <section className="versus" aria-labelledby="versus-title">
       <h1 id="versus-title">
-        Versus <span className="start__dash" aria-hidden="true" /> <span className="start__count">you against the room</span>
+        Versus
       </h1>
       <p className="pencil start__lede">
         {VERSUS_ROUNDS} questions, 40 seconds each, everyone at once. Rare right answers score more, and if someone else in the
@@ -339,9 +339,9 @@ function WaitingRoom({
   return (
     <section className="versus" aria-labelledby="waiting-title">
       <h1 id="waiting-title">
-        {state.kind === 'private' ? 'Your room' : 'Finding players'} <span className="start__dash" aria-hidden="true" />{' '}
-        <span className="start__count">{versusLabel(state.size)}</span>
+        {state.kind === 'private' ? 'Your room' : 'Finding players'}
       </h1>
+      <p className="pencil versus__size">{versusLabel(state.size)}</p>
 
       {state.code && (
         <div className="versus__room">

@@ -347,3 +347,7 @@
   position: relative;
   display: inline-block;
 }
+.versus__size {
+  margin: 8px 0 0;
+  font-size: 16px;
+}
