@@ -49,7 +49,11 @@ From 1000 px wide the sheet lies on a desk with things round it; below that the 
 - **1240 px and up:** stationery on the left as well: a 15 cm ruler, a pencil, a rubber and a protractor.
 - **1600 px and up:** the sheet widens to 860 px and everything on the desk goes up a size.
 
-The sticky notes carry real information: the rule in one line, your last few days and best score, and when the next sheet comes out. The stationery is decoration only and hidden from screen readers. Stationery is drawn like the marks: ink outline and flat fills, no shading and no shadow. Only the notes, being paper, get the soft shadow. Nothing on the desk moves; the countdown changes once a minute.
+The desk is a cartoon of pale laminate wood: flat streaks of lighter and darker wood, broken grain lines, and two patches of arched grain. It's one 1600 × 1000 tile drawn by `scripts/make-desk-wood.mjs` (`public/desk-wood.svg`); rerun the script to change it.
+
+Everything on the desk is drawn as a cartoon: a 2 px ink outline, flat fills, one flat highlight, and a flat shadow cast down and to the right (no blur). The shadow is applied to each group, not each object, so the light comes from one place whatever angle a thing lies at. The sheet casts the same shadow.
+
+The sticky notes carry real information: the rule in one line, your last few days and best score, and when the next sheet comes out. They have a darker glue strip, a curled corner, and tape or a paperclip. The stationery (ruler, pencil, rubber, protractor) is decoration only and hidden from screen readers. Nothing on the desk moves; the countdown changes once a minute.
 
 ## Typography
 

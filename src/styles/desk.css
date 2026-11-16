@@ -55,96 +55,143 @@
   }
 }
 
-/* Stationery: ink outlines and flat fills, like everything else. */
+/* The desk itself: a cartoon of pale wood (scripts/make-desk-wood.mjs). */
+@media (min-width: 960px) {
+  html {
+    background-color: var(--desk);
+  }
+  body {
+    background: var(--desk) url('/desk-wood.svg') repeat 0 0 / 1600px auto;
+  }
+  /* The sheet casts the same flat shadow as everything else on the desk. */
+  .page {
+    box-shadow:
+      0 0 0 1px rgba(84, 62, 36, 0.12),
+      6px 8px 0 rgba(84, 62, 36, 0.22);
+  }
+}
+
+/* Stationery: a cartoon ink outline, flat fills, one flat highlight. The shadow
+   goes on the group, so every object casts it the same way whatever its angle. */
 .desk__props {
   position: relative;
   width: 200px;
-  height: 640px;
-  margin: 64px 0 0 auto;
+  height: 650px;
+  margin: 60px 0 0 auto;
+  filter: drop-shadow(4px 6px 0 rgba(84, 62, 36, 0.3));
+}
+.desk__props > svg {
+  position: absolute;
+  overflow: visible;
 }
 .desk__ruler {
-  position: absolute;
-  left: 22px;
+  left: 26px;
   top: 0;
   transform: rotate(-4deg);
 }
 .desk__ruler-numbers {
   font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  fill: var(--ink);
+}
+.desk__ruler-cm {
+  font-family: var(--mono);
   font-size: 9px;
   fill: var(--ink);
 }
 .desk__pencil {
-  position: absolute;
-  left: -50px;
-  top: 280px;
+  left: -64px;
+  top: 282px;
   transform: rotate(-62deg);
 }
+.desk__rubber {
+  left: 74px;
+  top: 452px;
+  transform: rotate(9deg);
+}
 .desk__protractor {
-  position: absolute;
-  left: 4px;
-  top: 536px;
+  left: 2px;
+  top: 540px;
   transform: rotate(-7deg);
 }
-.desk__protractor text {
-  font-family: var(--mono);
-  font-size: 8px;
-  fill: var(--ink);
-}
-.desk__rubber {
-  position: absolute;
-  left: 96px;
-  top: 452px;
-  transform: rotate(10deg);
-}
 
-/* Sticky notes: paper objects, so they may cast one soft shadow. */
+/* Sticky notes. The paper is drawn in SVG (NotePaper) behind the writing. */
 .desk__notes {
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 30px;
   width: 214px;
   margin-top: 96px;
-  padding-right: 6px;
+  padding-right: 8px;
+  filter: drop-shadow(4px 6px 0 rgba(84, 62, 36, 0.3));
 }
 .desk-note {
+  --note: #ffe56b;
+  --note-fold: #e2bd35;
   position: relative;
-  padding: 16px 16px 14px;
+  padding: 20px 18px 22px 16px;
   color: var(--ink);
   font-size: 15px;
   line-height: 1.45;
-  box-shadow: 1px 2px 0 rgba(31, 42, 68, 0.14), 5px 12px 16px -10px rgba(31, 42, 68, 0.4);
-  border-bottom-right-radius: 26px 5px;
+}
+.desk-note > :not(.desk-note__paper):not(.desk-note__clip):not(.desk-note__tape) {
+  position: relative;
+}
+.desk-note__paper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 .desk-note:nth-child(1) {
   transform: rotate(-2deg);
 }
 .desk-note:nth-child(2) {
   transform: rotate(1.4deg);
-  margin-left: 10px;
+  margin-left: 8px;
 }
 .desk-note:nth-child(3) {
   transform: rotate(-0.8deg);
 }
 .desk-note--yellow {
-  background: #fff3a6;
-}
-/* A paperclip holding the middle note's corner. */
-.desk-note__clip {
-  position: absolute;
-  top: -14px;
-  right: 22px;
-  transform: rotate(8deg);
+  --note: #ffe56b;
+  --note-fold: #e2bd35;
 }
 .desk-note--pink {
-  background: #ffd6de;
+  --note: #ffbccb;
+  --note-fold: #ec8ea5;
 }
 .desk-note--blue {
-  background: #d4e9fb;
+  --note: #b5dcf6;
+  --note-fold: #82bce4;
+}
+/* A strip of clear tape holding the top note down. */
+.desk-note__tape {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  width: 84px;
+  height: 26px;
+  margin-left: -42px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px solid rgba(31, 42, 68, 0.4);
+  border-left-style: dashed;
+  border-right-style: dashed;
+  transform: rotate(-4deg);
+}
+/* A paperclip holding the middle note's top edge. */
+.desk-note__clip {
+  position: absolute;
+  top: -18px;
+  right: 22px;
+  transform: rotate(8deg);
 }
 .desk-note h2 {
   margin: 0 0 6px;
   font-family: var(--mono);
-  font-size: 15px;
+  font-size: 15.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -163,7 +210,7 @@
 .desk-note__days li {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px dashed rgba(31, 42, 68, 0.35);
+  border-bottom: 1.5px dashed rgba(31, 42, 68, 0.4);
   padding: 2px 0;
 }
 .desk-note__days .mono {
@@ -171,5 +218,5 @@
 }
 .desk-note__small {
   font-size: 14px;
-  color: #4a4a4a;
+  color: #3d3d3d;
 }

@@ -1,28 +1,51 @@
 // What lies on the desk round the sheet, on a wide screen: stationery on the
-// left, sticky notes on the right. The notes carry real information (the rules
+// left, sticky notes on the right. The notes carry real information (the rule
 // in brief, your recent days, when the next sheet comes out); the stationery is
-// only there to make the desk feel like a desk. Hidden below 1180 px wide.
+// only there to make the desk feel like a desk.
+//
+// Everything is drawn as a cartoon: a 2 px ink outline, flat fills, one flat
+// highlight, and a flat shadow cast down and to the right (in desk.css).
 
 import { useEffect, useState } from 'react';
 import type { History } from '../lib/history.ts';
 import { linkHandler } from '../lib/router.ts';
 import { formatShortDate, msUntilUkMidnight } from '../lib/ukDate.ts';
 
-/** A flat, top-down pencil: ink outline, flat fills, no shading. Drawn pointing right. */
+const INK = 'var(--ink)';
+
+/** A yellow HB pencil, top-down, pointing right. */
 function Pencil() {
+  // The sharpened cone runs from x 262 to the point at x 334; the lead starts at x 310.
+  const coneY = (x: number, top: boolean) => (top ? 7 + ((x - 262) * 13) / 72 : 33 - ((x - 262) * 13) / 72);
   return (
-    <svg className="desk__pencil" viewBox="0 0 320 30" width="320" height="30" aria-hidden="true">
-      <g stroke="var(--ink)" strokeWidth="1.5" strokeLinejoin="round">
-        {/* rubber and ferrule */}
-        <path d="M10 4 H30 V26 H10 Q3 26 3 15 Q3 4 10 4 Z" fill="#f2a3a3" />
-        <rect x="30" y="3" width="24" height="24" fill="#c9c6bd" />
-        <path d="M38 3 V27 M46 3 V27" fill="none" />
-        {/* the painted body, with its two flat facets */}
-        <rect x="54" y="4" width="196" height="22" fill="#f4c430" />
-        <path d="M54 11.5 H250 M54 18.5 H250" fill="none" stroke="#c99a12" strokeWidth="1.2" />
-        {/* sharpened wood and the lead */}
-        <path d="M250 4 L298 15 L250 26 Z" fill="#ecd3a4" />
-        <path d="M284 11.8 L298 15 L284 18.2 Z" fill="var(--ink)" />
+    <svg className="desk__pencil" viewBox="0 0 340 40" width="340" height="40" aria-hidden="true">
+      <g stroke={INK} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
+        {/* rubber */}
+        <path d="M36 7 H17 Q4 7 4 20 Q4 33 17 33 H36 Z" fill="#f59aa3" />
+        <path d="M12 12.5 Q15 11 26 11" fill="none" stroke="#fcd0d4" strokeWidth="3" />
+        {/* metal ferrule with two crimps */}
+        <rect x="34" y="5.5" width="30" height="29" rx="2" fill="#c9ced6" />
+        <rect x="40" y="5.5" width="5" height="29" fill="#a3aab5" strokeWidth="1.5" />
+        <rect x="53" y="5.5" width="5" height="29" fill="#a3aab5" strokeWidth="1.5" />
+        <path d="M36 10 H62" fill="none" stroke="#eef1f4" strokeWidth="2.5" />
+        {/* the painted body: three flat facets */}
+        <rect x="64" y="7" width="200" height="26" fill="#f7b51d" />
+        <rect x="64" y="7" width="200" height="8" fill="#ffd54d" stroke="none" />
+        <rect x="64" y="25" width="200" height="8" fill="#de9410" stroke="none" />
+        <path d="M64 15 H264 M64 25 H264" fill="none" stroke="#b9770a" strokeWidth="1.2" />
+        <rect x="64" y="7" width="200" height="26" fill="none" />
+        <text x="232" y="23.5" fontFamily="var(--mono)" fontSize="9" fontWeight="600" fill="#7a4d00" stroke="none">
+          HB
+        </text>
+        {/* sharpened wood, with the scalloped edge where the paint stops */}
+        <path
+          d={`M264 7 Q271 9.5 266 13.5 Q273 16.5 266 20 Q273 23.5 266 26.5 Q271 30.5 264 33 L310 ${coneY(310, false)} L310 ${coneY(310, true)} Z`}
+          fill="#f3d6a6"
+        />
+        <path d="M276 15.5 Q290 17 300 17.5" fill="none" stroke="#dcb57e" strokeWidth="1.5" />
+        {/* the lead */}
+        <path d={`M310 ${coneY(310, true)} L334 20 L310 ${coneY(310, false)} Q306.5 20 310 ${coneY(310, true)} Z`} fill="#3b404c" />
+        <path d="M314 18.6 L324 19.6" fill="none" stroke="#8b93a3" strokeWidth="1.5" />
       </g>
     </svg>
   );
@@ -31,96 +54,142 @@ function Pencil() {
 /** A clear plastic 15 cm ruler, lying upright. */
 function Ruler() {
   const cm = 22;
+  const top = 14;
+  const length = 30 + 15 * cm;
   const ticks = [];
   for (let mm = 0; mm <= 150; mm++) {
-    const y = 14 + (mm * cm) / 10;
-    const long = mm % 10 === 0;
-    const mid = mm % 5 === 0;
-    ticks.push(<line key={mm} x1="0" x2={long ? 16 : mid ? 11 : 7} y1={y} y2={y} />);
+    const y = top + (mm * cm) / 10;
+    const len = mm % 10 === 0 ? 17 : mm % 5 === 0 ? 12 : 7;
+    ticks.push(<line key={mm} x1="2" x2={2 + len} y1={y} y2={y} strokeWidth={mm % 10 === 0 ? 1.4 : 1} />);
   }
   const numbers = [];
   for (let n = 0; n <= 15; n++) {
     numbers.push(
-      <text key={n} x="20" y={14 + n * cm + 3.5}>
+      <text key={n} x="24" y={top + n * cm + 3.6}>
         {n}
       </text>,
     );
   }
   return (
-    <svg className="desk__ruler" viewBox={`0 0 48 ${28 + 15 * cm}`} width="48" height={28 + 15 * cm} aria-hidden="true">
-      <rect x="0.75" y="0.75" width="46.5" height={26.5 + 15 * cm} rx="3" fill="rgba(255,255,255,0.42)" stroke="var(--ink)" strokeWidth="1.5" />
-      <g stroke="var(--ink)" strokeWidth="1">
-        {ticks}
-      </g>
+    <svg className="desk__ruler" viewBox={`0 0 56 ${length}`} width="56" height={length} aria-hidden="true">
+      <rect x="1" y="1" width="54" height={length - 2} rx="4" fill="#d3e9f3" stroke={INK} strokeWidth="2" />
+      {/* a tinted strip down the far edge, like the bevel on a real ruler */}
+      <rect x="44" y="2" width="10" height={length - 4} rx="3" fill="#b4d5e8" />
+      <g stroke={INK}>{ticks}</g>
       <g className="desk__ruler-numbers">{numbers}</g>
+      <text className="desk__ruler-cm" x="28" y={length - 10}>
+        cm
+      </text>
+      {/* two flat gleams */}
+      <path d={`M40 ${length * 0.18} L48 ${length * 0.13} M40 ${length * 0.24} L48 ${length * 0.19}`} stroke="#ffffff" strokeWidth="3" strokeLinecap="round" opacity="0.85" />
     </svg>
   );
 }
 
-/** A rubber in a card sleeve. */
+/** A rubber in a card sleeve, with a few crumbs beside it. */
 function Rubber() {
   return (
-    <svg className="desk__rubber" viewBox="0 0 92 44" width="92" height="44" aria-hidden="true">
-      <g stroke="var(--ink)" strokeWidth="1.5" strokeLinejoin="round">
-        <rect x="1" y="4" width="90" height="36" rx="5" fill="#f7f4ee" />
-        <rect x="22" y="2" width="54" height="40" rx="1.5" fill="#3f6fb5" />
+    <svg className="desk__rubber" viewBox="0 0 120 60" width="120" height="60" aria-hidden="true">
+      <g stroke={INK} strokeWidth="2" strokeLinejoin="round">
+        {/* the rubber, worn round at the used end */}
+        <path d="M14 10 H96 Q104 10 104 18 V40 Q104 48 96 48 H18 Q4 48 4 32 V22 Q4 10 14 10 Z" fill="#fde6e1" />
+        {/* the sleeve */}
+        <rect x="30" y="7" width="58" height="44" rx="2" fill="#3d6fc4" />
+        <rect x="30" y="7" width="58" height="8" fill="#5c8ad6" stroke="none" />
+        <rect x="30" y="7" width="58" height="44" rx="2" fill="none" />
+        {/* crumbs */}
+        <path d="M108 50 q3 -3 5 0 q1 3 -3 3 q-3 0 -2 -3 Z" fill="#fde6e1" strokeWidth="1.4" />
+        <path d="M112 41 q2 -2 4 0 q0 3 -2 2.5 q-2.5 0 -2 -2.5 Z" fill="#fde6e1" strokeWidth="1.4" />
       </g>
-      <path d="M30 22 H68" stroke="#f7f4ee" strokeWidth="1.5" strokeDasharray="4 3" />
+      {/* the maker's name on the sleeve */}
+      <text x="59" y="35" textAnchor="middle" fontFamily="var(--mono)" fontSize="12" fontWeight="600" fill="#ffffff">
+        oddle
+      </text>
+      <path d="M12 16 Q16 13 24 13" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
 }
 
-/** A clear plastic protractor: half a disc with degree marks every 10. */
+/** A clear plastic protractor: half a disc with degree marks. */
 function Protractor() {
-  const r = 84;
-  const cx = 90;
-  const cy = 92;
+  const r = 86;
+  const cx = 94;
+  const cy = 94;
+  const at = (deg: number, radius: number) => {
+    const a = (deg * Math.PI) / 180;
+    return [cx + Math.cos(a) * radius, cy - Math.sin(a) * radius] as const;
+  };
   const marks = [];
   for (let d = 0; d <= 180; d += 5) {
-    const a = (d * Math.PI) / 180;
-    const len = d % 10 === 0 ? 10 : 5;
-    const x1 = cx + Math.cos(a) * r;
-    const y1 = cy - Math.sin(a) * r;
-    const x2 = cx + Math.cos(a) * (r - len);
-    const y2 = cy - Math.sin(a) * (r - len);
-    marks.push(<line key={d} x1={x1} y1={y1} x2={x2} y2={y2} />);
+    const [x1, y1] = at(d, r);
+    const [x2, y2] = at(d, r - (d % 10 === 0 ? 11 : 6));
+    marks.push(<line key={d} x1={x1} y1={y1} x2={x2} y2={y2} strokeWidth={d % 30 === 0 ? 1.4 : 1} />);
   }
   const labels = [0, 30, 60, 90, 120, 150, 180].map((d) => {
-    const a = (d * Math.PI) / 180;
+    const [x, y] = at(d, r - 22);
     return (
-      <text key={d} x={cx + Math.cos(a) * (r - 20)} y={cy - Math.sin(a) * (r - 20) + 3} textAnchor="middle">
+      <text key={d} x={x} y={y + 3.5} textAnchor="middle">
         {d}
       </text>
     );
   });
+  const [ix1, iy1] = at(180, 40);
+  const [ix2, iy2] = at(0, 40);
   return (
-    <svg className="desk__protractor" viewBox="0 0 180 98" width="180" height="98" aria-hidden="true">
+    <svg className="desk__protractor" viewBox="0 0 188 104" width="188" height="104" aria-hidden="true">
       <path
-        d={`M${cx - r - 4} ${cy + 4} A${r + 4} ${r + 4} 0 0 1 ${cx + r + 4} ${cy + 4} Z`}
-        fill="rgba(255,255,255,0.42)"
-        stroke="var(--ink)"
-        strokeWidth="1.5"
+        d={`M${cx - r - 4} ${cy + 6} V${cy} A${r + 4} ${r + 4} 0 0 1 ${cx + r + 4} ${cy} V${cy + 6} Z`}
+        fill="#d3e9f3"
+        stroke={INK}
+        strokeWidth="2"
         strokeLinejoin="round"
       />
-      <g stroke="var(--ink)" strokeWidth="1">
-        {marks}
-      </g>
-      {labels}
-      <path d={`M${cx - 6} ${cy} H${cx + 6} M${cx} ${cy - 6} V${cy}`} stroke="var(--ink)" strokeWidth="1" />
+      {/* the inner cut-out arc */}
+      <path d={`M${ix1} ${iy1} A40 40 0 0 1 ${ix2} ${iy2}`} fill="none" stroke={INK} strokeWidth="1.5" />
+      <g stroke={INK}>{marks}</g>
+      <g className="desk__ruler-numbers">{labels}</g>
+      <path d={`M${cx - 7} ${cy} H${cx + 7} M${cx} ${cy - 7} V${cy}`} stroke={INK} strokeWidth="1.5" />
+      <path d="M40 40 L50 31 M46 46 L55 38" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" opacity="0.85" />
     </svg>
   );
 }
 
-/** A paperclip, drawn as one bent wire. */
+/** A paperclip: an ink line with a silver wire inside it. */
 function Paperclip() {
+  const d = 'M15 15 V42 a5.5 5.5 0 0 1 -11 0 V10 a8.5 8.5 0 0 1 17 0 V38';
   return (
-    <svg className="desk-note__clip" viewBox="0 0 22 52" width="22" height="52" aria-hidden="true">
+    <svg className="desk-note__clip" viewBox="0 0 26 56" width="26" height="56" aria-hidden="true">
+      <path d={d} fill="none" stroke={INK} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={d} fill="none" stroke="#d3d9e0" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * The note itself: a square of coloured paper with a slightly uneven edge and
+ * the bottom-right corner curling up. Stretched to fit whatever is written on it.
+ */
+function NotePaper() {
+  return (
+    <svg className="desk-note__paper" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       <path
-        d="M15 14 V40 a5 5 0 0 1 -10 0 V9 a8 8 0 0 1 16 0 V38"
-        fill="none"
-        stroke="#7d8590"
-        strokeWidth="2.2"
-        strokeLinecap="round"
+        d="M1.2 2.4 L50 1.4 L98.8 1 L98.6 50 L98.3 84 L83 98.8 L40 98.4 L1.6 98.2 L1 50 Z"
+        fill="var(--note)"
+        stroke={INK}
+        strokeWidth="2"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+      {/* the glue strip along the top, a shade darker */}
+      <path d="M1.4 2.4 L50 1.4 L98.7 1.1 L98.7 13 L1.3 13.4 Z" fill="var(--note-fold)" opacity="0.35" />
+      {/* the curl: the back of the paper showing */}
+      <path
+        d="M98.3 84 L86 85.5 L83 98.8 Z"
+        fill="var(--note-fold)"
+        stroke={INK}
+        strokeWidth="2"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
       />
     </svg>
   );
@@ -172,6 +241,8 @@ export function DeskRight({ history, today, streak, navigate, onHelp }: Props) {
     <aside className="desk__side desk__side--right" aria-label="Notes on the desk">
       <div className="desk__notes">
         <section className="desk-note desk-note--yellow">
+          <NotePaper />
+          <span className="desk-note__tape" aria-hidden="true" />
           <h2>The rule</h2>
           <p>Any right answer scores. The fewer people who said it, the more it's worth.</p>
           <button type="button" className="linklike" onClick={onHelp}>
@@ -180,10 +251,11 @@ export function DeskRight({ history, today, streak, navigate, onHelp }: Props) {
         </section>
 
         <section className="desk-note desk-note--pink">
+          <NotePaper />
           <Paperclip />
           <h2>Recent days</h2>
           {recent.length === 0 ? (
-            <p>Nothing in it yet. Finish today's sheet and it goes in.</p>
+            <p>Nothing in your book yet. Finish today's sheet and it goes in.</p>
           ) : (
             <>
               <ul className="desk-note__days">
@@ -205,6 +277,7 @@ export function DeskRight({ history, today, streak, navigate, onHelp }: Props) {
         </section>
 
         <section className="desk-note desk-note--blue">
+          <NotePaper />
           <h2>Next sheet</h2>
           <p>
             New questions in <span className="mono">{until}</span>, at midnight UK time.
