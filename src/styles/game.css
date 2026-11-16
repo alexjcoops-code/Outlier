@@ -465,6 +465,24 @@
   transform: rotate(-0.6deg);
   display: inline-block;
 }
+/* The tier name stays hidden until the mark lands, then pops in as the
+   highlighter goes across, all at once with the score and Oddie. The delay
+   (MOTION.markAt) is set inline and applies to every animation in the list. */
+.reveal__tier.hl--swipe {
+  animation:
+    tier-in 300ms cubic-bezier(0.3, 1.6, 0.5, 1) both,
+    swipe 420ms cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+@keyframes tier-in {
+  from {
+    opacity: 0;
+    transform: rotate(-6deg) scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-0.6deg) scale(1);
+  }
+}
 .circled {
   position: relative;
   display: inline-block;
@@ -754,8 +772,9 @@
   margin-left: -13px;
 }
 /* Outlier and Lone Wolf: the highlighter keeps glowing a moment after it lands. */
-.reveal__tier--loud {
+.reveal__tier.reveal__tier--loud {
   animation:
+    tier-in 300ms cubic-bezier(0.3, 1.6, 0.5, 1) both,
     swipe 420ms cubic-bezier(0.3, 0.7, 0.2, 1) both,
     loud 900ms ease-out 1 both;
 }
