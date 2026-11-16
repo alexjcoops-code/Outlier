@@ -1,24 +1,5 @@
 /* ───── Start screen ───── */
-.start__fields {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin-bottom: 24px;
-  font-size: 14px;
-  line-height: 24px;
-}
-.start__blank {
-  flex: 1;
-  max-width: 150px;
-  border-bottom: 1.5px dotted var(--pencil);
-  margin-right: 10px;
-}
-.start__blank--short {
-  max-width: 56px;
-}
 .start h1 {
-  padding-bottom: 5px;
-  border-bottom: 3px double var(--ink);
   display: inline-block;
 }
 .start__lede {
@@ -55,10 +36,10 @@
   padding-bottom: 5px;
 }
 .mark-scheme tr {
-  border-top: 1.5px solid var(--ink);
+  border-top: 1px solid var(--rule);
 }
 .mark-scheme tr:last-child {
-  border-bottom: 1.5px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
 }
 .mark-scheme td,
 .mark-scheme th {
@@ -207,11 +188,10 @@
   display: block;
   width: 100%;
   height: 60px;
-  padding: 0 2px;
-  border: 0;
-  border-bottom: 2.5px solid var(--ink);
-  border-radius: 0;
-  background: rgba(245, 241, 230, 0.6);
+  padding: 0 14px;
+  border: 2.5px solid var(--ink);
+  border-radius: 4px;
+  background: var(--paper);
   color: #3a4660;
   font-family: var(--mono);
   font-weight: 500;
@@ -221,8 +201,8 @@
   caret-color: var(--redpen);
 }
 .answer__input:focus-visible {
-  box-shadow: none;
-  border-bottom-color: var(--redpen);
+  outline: none;
+  border-color: var(--redpen);
 }
 .answer__input.is-locked {
   color: #0d1424;
@@ -332,7 +312,6 @@
   align-items: center;
   gap: 10px;
   min-height: 60px;
-  border-bottom: 2.5px solid var(--ink);
   max-width: 290px;
 }
 .reveal__value {

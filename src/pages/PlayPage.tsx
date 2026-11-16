@@ -69,9 +69,6 @@ export function PlayPage({ backend, date, navigate, onFinished, archive = false 
     const resuming = phase.position > 1;
     return (
       <section className="start" aria-labelledby="start-title">
-        <p className="start__fields pencil mono" aria-hidden="true">
-          Name <span className="start__blank" /> Class <span className="start__blank start__blank--short" />
-        </p>
         <h1 id="start-title">
           {archive ? `Worksheet from ${formatShortDate(date)}` : "Today's worksheet"}
         </h1>
@@ -84,12 +81,12 @@ export function PlayPage({ backend, date, navigate, onFinished, archive = false 
             {resuming ? 'Carry on' : 'Start'}
           </button>
           {archive ? (
-            <a href="/archive" onClick={linkHandler(navigate, '/archive')}>
+            <a className="btn-line" href="/archive" onClick={linkHandler(navigate, '/archive')}>
               Back to the archive
             </a>
           ) : (
-            <a href="/versus" onClick={linkHandler(navigate, '/versus')}>
-              Or play people live
+            <a className="btn-line" href="/versus" onClick={linkHandler(navigate, '/versus')}>
+              Play people live
             </a>
           )}
         </div>

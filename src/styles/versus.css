@@ -35,12 +35,11 @@
 .versus__code {
   display: block;
   width: 100%;
-  height: 44px;
-  padding: 0 2px;
-  border: 0;
-  border-bottom: 2px solid var(--ink);
-  border-radius: 0;
-  background: transparent;
+  height: 48px;
+  padding: 0 12px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--paper);
   color: var(--ink);
   font-family: var(--hand);
   font-size: 25px;
@@ -48,8 +47,8 @@
 }
 .versus__name:focus-visible,
 .versus__code:focus-visible {
-  box-shadow: none;
-  border-bottom-color: var(--redpen);
+  outline: none;
+  border-color: var(--redpen);
 }
 
 .versus__sizes {
@@ -201,7 +200,7 @@
   font-family: var(--mono);
   font-size: 13px;
   color: var(--pencil);
-  border-bottom: 1.5px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
 }
 .register__name {
   overflow-wrap: anywhere;

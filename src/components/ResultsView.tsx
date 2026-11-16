@@ -285,7 +285,7 @@ export function ResultsView({ results, backend, navigate, fresh = false, archive
           <a href="/archive" onClick={linkHandler(navigate, '/archive')} className="stamp stamp--small">
             Back to the archive
           </a>
-          <a href="/" onClick={linkHandler(navigate, '/')}>
+          <a className="btn-line" href="/" onClick={linkHandler(navigate, '/')}>
             Today's worksheet
           </a>
         </div>
@@ -295,7 +295,7 @@ export function ResultsView({ results, backend, navigate, fresh = false, archive
         <button type="button" className="stamp stamp--small" onClick={copy}>
           Copy result
         </button>
-        <a href="/versus" onClick={linkHandler(navigate, '/versus')}>
+        <a className="btn-line" href="/versus" onClick={linkHandler(navigate, '/versus')}>
           Play people live
         </a>
       </div>

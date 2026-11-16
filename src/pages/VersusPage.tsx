@@ -241,7 +241,7 @@ function Lobby({ backend, navigate, onEnter }: { backend: VersusBackend; navigat
               </div>
               <ul className="versus__more">
                 <li>
-                  <button type="button" className="linklike" disabled={busy !== null} onClick={() => void go('room', (n) => backend.createRoom(n, size))}>
+                  <button type="button" className="btn-line" disabled={busy !== null} onClick={() => void go('room', (n) => backend.createRoom(n, size))}>
                     {busy === 'room' ? 'Making a room…' : 'Make a room for friends'}
                   </button>{' '}
                   <span className="pencil">and send them the link</span>
@@ -257,13 +257,13 @@ function Lobby({ backend, navigate, onEnter }: { backend: VersusBackend; navigat
                       maxLength={CODE_LENGTH + 2}
                       onChange={(e) => setCode(normaliseCode(e.target.value))}
                     />
-                    <button type="submit" className="linklike" disabled={busy !== null}>
+                    <button type="submit" className="btn-line" disabled={busy !== null}>
                       {busy === 'join' ? 'Joining…' : 'Join room'}
                     </button>
                   </form>
                 </li>
                 <li>
-                  <button type="button" className="linklike" disabled={busy !== null} onClick={() => void go('ghosts', (n) => backend.playGhosts(n, size))}>
+                  <button type="button" className="btn-line" disabled={busy !== null} onClick={() => void go('ghosts', (n) => backend.playGhosts(n, size))}>
                     {ghostsLabel}
                   </button>{' '}
                   <span className="pencil">if nobody's about</span>
@@ -292,7 +292,7 @@ function Lobby({ backend, navigate, onEnter }: { backend: VersusBackend; navigat
         </p>
       )}
       <p className="versus__back">
-        <a href="/" onClick={linkHandler(navigate, '/')}>
+        <a className="btn-line" href="/" onClick={linkHandler(navigate, '/')}>
           Back to today's worksheet
         </a>
       </p>
@@ -384,7 +384,7 @@ function WaitingRoom({
             Play ghosts instead
           </button>
         )}
-        <button type="button" className="linklike" onClick={onLeave}>
+        <button type="button" className="btn-line" onClick={onLeave}>
           Leave
         </button>
       </div>
@@ -726,7 +726,7 @@ function Final({ state, onAgain, navigate }: { state: VersusState; onAgain: () =
         <button type="button" className="stamp" onClick={onAgain}>
           Play again
         </button>
-        <a href="/" onClick={linkHandler(navigate, '/')}>
+        <a className="btn-line" href="/" onClick={linkHandler(navigate, '/')}>
           Today's worksheet
         </a>
       </div>

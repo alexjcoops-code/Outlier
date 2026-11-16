@@ -83,6 +83,17 @@ Durations are in `src/lib/motion.ts` and as CSS variables in `tokens.css`.
 | Page changes | 180 to 300 ms. |
 | Idle | Nothing moves while you think, except the loading scribble. |
 
+## No underlining
+
+Playtesters said underlined links and ruled headings made the game look AI-made. So:
+
+- Links are bold ink with no underline; hovering lays a highlighter swipe behind them.
+- A second action next to a stamp is an outlined box (`.btn-line`), never an underlined link.
+- Headings have no rules under them.
+- Rows are split by faint dividers (`--rule`), not ink lines.
+- Text fields are boxes, not lines; the red pen marks the one you're typing in.
+- Focus is a red-pen box round the control.
+
 ## Exclusions
 
 1. No lit or 3D objects, glass, glows or gradients. If it's not ink, pencil, highlighter or paper, it doesn't belong.

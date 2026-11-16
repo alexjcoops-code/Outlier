@@ -198,9 +198,14 @@
 .desk-note p {
   margin: 0 0 8px;
 }
+/* The note's link: a small outlined button. */
 .desk-note a,
 .desk-note .linklike {
-  font-size: 14.5px;
+  display: inline-block;
+  padding: 3px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 3px;
+  font-size: 14px;
 }
 .desk-note__days {
   list-style: none;

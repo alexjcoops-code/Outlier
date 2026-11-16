@@ -54,7 +54,6 @@
   font-size: 32px;
   font-weight: 700;
   line-height: 1.15;
-  border-bottom: 4px double var(--ink);
 }
 .menu__close {
   display: grid;

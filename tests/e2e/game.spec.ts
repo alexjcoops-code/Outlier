@@ -131,7 +131,7 @@ test("the archive: play a past day against its crowd, off the streak", async ({ 
   await menu.getByRole('link', { name: /Archive/i }).click();
   await expect(menu).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'The archive' })).toBeVisible();
-  await expect(page.locator('.archive__row').first()).toContainText('Do it');
+  await expect(page.locator('.archive__row').first()).toContainText('Play');
   await page.locator('.archive__go').first().click();
 
   await expect(page.getByRole('heading', { name: /Worksheet from/ })).toBeVisible();

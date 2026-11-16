@@ -71,11 +71,11 @@
   margin: 20px 0 0;
   padding: 0;
   list-style: none;
-  border-top: 1.5px solid var(--ink);
+  border-top: 1px solid var(--rule);
 }
 .result {
   position: relative;
-  border-bottom: 1.5px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
 }
 .result .margin-note {
   top: 6px;
@@ -140,8 +140,7 @@
 }
 .result__chev {
   margin-left: auto;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  font-weight: 700;
 }
 .result__panel {
   padding: 4px 0 12px;
@@ -227,8 +226,8 @@
   gap: 8px 30px;
   margin: 20px 0 24px;
   padding: 10px 0;
-  border-top: 1.5px solid var(--ink);
-  border-bottom: 1.5px solid var(--ink);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
 .book__stats dt {
   font-family: var(--mono);
@@ -426,7 +425,7 @@
   font-size: 13px;
   letter-spacing: 0.06em;
   color: var(--pencil);
-  border-bottom: 1.5px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
   font-weight: 400;
 }
 .overlay tbody th {
@@ -513,8 +512,7 @@
 .results__sharebox summary {
   cursor: pointer;
   font-size: 15px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  font-weight: 700;
   list-style: none;
 }
 .results__sharebox summary::-webkit-details-marker {

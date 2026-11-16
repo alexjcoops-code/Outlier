@@ -113,12 +113,13 @@ h1 {
   line-height: 1.1;
 }
 
+/* Links are bold ink, never underlined; a highlighter swipe on hover. */
 a,
 .linklike {
   color: var(--ink);
-  text-decoration: underline;
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 3px;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 3px;
   background: none;
   border: 0;
   padding: 0;
@@ -127,16 +128,16 @@ a,
 }
 a:hover,
 .linklike:hover {
-  text-decoration-color: var(--redpen);
+  background: rgba(255, 233, 122, 0.7);
 }
 
-/* Focus: a red-pen underline, never the browser's blue ring. */
+/* Focus: a red-pen box, never the browser's blue ring. */
 :focus {
   outline: none;
 }
 :focus-visible {
-  outline: none;
-  box-shadow: 0 4px 0 -1px var(--redpen);
+  outline: 2.5px solid var(--redpen);
+  outline-offset: 3px;
 }
 
 .sr-only {
@@ -283,11 +284,8 @@ a:hover,
   box-shadow: 0 1px 0 rgba(31, 42, 68, 0.28);
 }
 .stamp:focus-visible {
-  box-shadow: none;
-  text-decoration: underline;
-  text-decoration-color: var(--redpen);
-  text-decoration-thickness: 3px;
-  text-underline-offset: 5px;
+  outline: 2.5px solid var(--redpen);
+  outline-offset: 4px;
 }
 .stamp:disabled {
   opacity: 0.55;
@@ -309,6 +307,30 @@ a:hover,
 }
 .stamp--ghost:hover::before {
   background: var(--highlight);
+}
+
+/* A second action next to a stamp: an outlined box, in normal case. */
+.btn-line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 2px solid var(--ink);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--print);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-line:hover {
+  background: rgba(255, 233, 122, 0.7);
+}
+.btn-line:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 /* ───── Highlighter ───── */
@@ -385,8 +407,8 @@ a:hover,
 .notice {
   margin: 24px 0;
   padding: 12px 0;
-  border-top: 1.5px solid var(--ink);
-  border-bottom: 1.5px solid var(--ink);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
 .notice .hand {
   display: block;

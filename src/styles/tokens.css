@@ -8,6 +8,8 @@
   /* What the paper lies on, on a wide screen. */
   --desk: #cdbfa8;
   --highlight: #ffe97a;
+  /* Thin dividers between rows: faint, so they never read as underlining. */
+  --rule: rgba(31, 42, 68, 0.16);
 
   /* Tier highlighters */
   --tier-obvious: #cfcfcf;

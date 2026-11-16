@@ -108,7 +108,7 @@ export function ArchivePage({ history, today, offline, navigate }: Props) {
                       </a>
                     ) : (
                       <a className="archive__status archive__go" href={href} onClick={linkHandler(navigate, href)}>
-                        {startedInArchive(date) ? 'Carry on' : 'Do it'}
+                        {startedInArchive(date) ? 'Carry on' : 'Play'}
                         <span className="sr-only">: worksheet for {formatShortDate(date)}</span>
                       </a>
                     )}

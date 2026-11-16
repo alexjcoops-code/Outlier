@@ -19,7 +19,7 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  border-top: 1.5px solid var(--ink);
+  border-top: 1px solid var(--rule);
 }
 .archive__row {
   position: relative;
@@ -28,7 +28,7 @@
   justify-content: space-between;
   gap: 12px;
   min-height: 48px;
-  border-bottom: 1.5px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
 }
 .archive__no {
   line-height: 48px;
@@ -49,9 +49,21 @@
 a.archive__status .pencil {
   font-size: 14px;
 }
-.archive__go {
-  font-weight: 700;
-  text-decoration-color: var(--redpen);
+/* The whole row is the link; "Play" just labels it. */
+.archive__row a::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.archive__row:hover {
+  background: rgba(255, 233, 122, 0.45);
+}
+a.archive__status:hover {
+  background: none;
+}
+.archive__go::after {
+  content: ' \203A';
+  font-size: 1.15em;
 }
 .archive__more {
   margin-top: 20px;
