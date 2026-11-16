@@ -162,10 +162,10 @@ a:hover,
 }
 .wordmark {
   position: relative;
-  font-family: var(--mono);
-  font-weight: 600;
-  font-size: 24px;
-  letter-spacing: -0.02em;
+  font-family: var(--print);
+  font-weight: 700;
+  font-size: 27px;
+  letter-spacing: -0.01em;
   color: var(--ink);
   text-decoration: none;
   line-height: 1;
@@ -175,19 +175,21 @@ a:hover,
 .wordmark__o {
   position: relative;
   display: inline-block;
-  margin: 0 0.12em 0 0.08em;
+  /* Room either side so the ring clears the margin and the "d". */
+  margin: 0 0.2em 0 0.1em;
 }
-/* A red-pen ring round the "o", drawn by hand: slightly lopsided and tilted. */
+/* The teacher's ring round the "o": one quick pen loop that overshoots where
+   it started, centred on the letter itself (measured: the bold "o" is centred
+   0.29em across and 0.645em down its line box, and is about 0.57em tall). */
 .wordmark__o::after {
   content: '';
   position: absolute;
-  left: -0.09em;
-  right: -0.2em;
-  top: 0.22em;
-  bottom: -0.04em;
-  border: 2px solid var(--redpen);
-  border-radius: 54% 46% 52% 44% / 48% 56% 44% 52%;
-  transform: rotate(-14deg);
+  left: calc(0.29em - 0.45em);
+  top: calc(0.645em - 0.44em);
+  width: 0.9em;
+  height: 0.88em;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M70 11 C48 1 13 9 7 44 C2 77 30 96 58 92 C86 88 99 62 92 36 C86 17 68 7 46 10' fill='none' stroke='%23c62828' stroke-width='7' stroke-linecap='round'/></svg>") center / 100% 100% no-repeat;
+  transform: rotate(-8deg);
   pointer-events: none;
 }
 .header__right {
