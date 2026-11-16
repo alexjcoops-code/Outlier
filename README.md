@@ -2,7 +2,7 @@
 
 A daily maths game where rare answers win: find the right answer nobody else said.
 
-Every day at midnight UK time everyone gets the same seven prompts, such as "Name a prime under 1,000". Each has many right answers. You have 25 seconds to type a whole number. Any right answer scores, but the fewer people who gave the same answer, the more it scores. Up to 100 a question, 700 a day.
+Every day at midnight UK time everyone gets the same seven prompts, such as "Name a prime under 1,000". Each has many right answers. You have 40 seconds to type a whole number. Any right answer scores, but the fewer people who gave the same answer, the more it scores. Up to 100 a question, 700 a day.
 
 | Tier | Points | Rule |
 |---|---|---|
@@ -153,7 +153,7 @@ Every ghost has an ability and, separately, a playing style. The proportions and
 
 #### AI ghosts
 
-One Claude call per prompt (all seven run at once) asks the model to play the day's 100-person cast, each with an ability, a style and a short persona ("Year 9 student, average at maths, rushing"), under 25-second pressure, returning JSON `{id, ability, style, attempts, final}`. Every final answer goes through the real validator; an invalid one counts as a time-out, and anyone missing from the reply is replaced by a rule-based ghost with the same ability and style. If the call fails, that prompt gets 1,100 rule-based ghosts.
+One Claude call per prompt (all seven run at once) asks the model to play the day's 100-person cast, each with an ability, a style and a short persona ("Year 9 student, average at maths, rushing"), under 40-second pressure, returning JSON `{id, ability, style, attempts, final}`. Every final answer goes through the real validator; an invalid one counts as a time-out, and anyone missing from the reply is replaced by a rule-based ghost with the same ability and style. If the call fails, that prompt gets 1,100 rule-based ghosts.
 
 #### Mixing ghosts with real players
 
@@ -189,7 +189,7 @@ A good day earns an award stamp on the results page, with confetti when the pape
 
 ### Versus
 
-`/versus` is the live mode. You play against 1 to 7 other people (1 v 1, 1 v 2, 1 v 3, 1 v 5 or 1 v 7): five questions, 25 seconds each, and everyone sees each question at the same moment. There are three ways in:
+`/versus` is the live mode. You play against 1 to 7 other people (1 v 1, 1 v 2, 1 v 3, 1 v 5 or 1 v 7): five questions, 40 seconds each, and everyone sees each question at the same moment. There are three ways in:
 
 - "Find players" puts you in a quick match with strangers who picked the same size. It starts when the table is full, or after 45 seconds with whoever turned up, as long as that's two or more. If nobody comes, you're offered ghosts instead.
 - "Make a room for friends" gives you a five-character code and a link to send (`/versus?code=K7MPQ`). The room starts when it's full, or when the host presses "Start now".
@@ -203,17 +203,17 @@ Scores aren't stored. Every browser works them out from the answers with the sam
 
 ### The archive
 
-`/archive` lists every past worksheet, from the launch day (`VITE_LAUNCH_DATE`, default 2026-11-13; the offline demo offers the last 60 days) to yesterday. Days you played live show your score and can't be replayed. Any other day can be done once, with the usual 25 seconds a question.
+`/archive` lists every past worksheet, from the launch day (`VITE_LAUNCH_DATE`, default 2026-11-13; the offline demo offers the last 60 days) to yesterday. Days you played live show your score and can't be replayed. Any other day can be done once, with the usual 40 seconds a question.
 
 A past day's crowd is final, so the archive is played in the browser against it (`src/lib/backend/archive.ts`): it asks the server for that day's questions and, after each answer, that day's crowd, and marks you with the same thresholds as the live game (`scoreFromCrowd` in `src/lib/scoring.ts`). Nothing is sent to the server, so archive answers never change anyone's marks, and they don't count towards your streak. Finished archive scores are kept in localStorage for the list.
 
 ### Not cheatable from the client
 
 - Tables have row level security with no client policies, apart from reading which prompts make up today and past days. Everything else goes through `SECURITY DEFINER` RPCs.
-- `submit_answer` checks the value against that day's answer key (generated from the TypeScript validators when the day is prepared), checks the server-side clock started by `start_prompt` (25 seconds plus 3 for the network), allows one answer per prompt, and rate-limits each player id to 20 submissions per 30 seconds.
+- `submit_answer` checks the value against that day's answer key (generated from the TypeScript validators when the day is prepared), checks the server-side clock started by `start_prompt` (40 seconds plus 3 for the network), allows one answer per prompt, and rate-limits each player id to 20 submissions per 30 seconds.
 - `get_distribution` refuses until you have answered that prompt or run out of time on it.
 - Tomorrow's prompts exist in the database from 23:30 but are hidden by policy until midnight.
-- Versus: other players' answers to the current question stay hidden until the round closes; answers are checked against the stored key and accepted only between the question's start and 28 seconds after it.
+- Versus: other players' answers to the current question stay hidden until the round closes; answers are checked against the stored key and accepted only between the question's start and 43 seconds after it.
 
 There is no login, so a player is an anonymous UUID in `localStorage`. Clearing storage gives a new identity and another go; that is the accepted cost of having no accounts.
 

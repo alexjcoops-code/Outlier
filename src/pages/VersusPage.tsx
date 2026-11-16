@@ -165,7 +165,7 @@ function Lobby({ backend, navigate, onEnter }: { backend: VersusBackend; navigat
         Versus <span className="start__dash" aria-hidden="true" /> <span className="start__count">you against the room</span>
       </h1>
       <p className="pencil start__lede">
-        {VERSUS_ROUNDS} questions, 25 seconds each, everyone at once. Rare right answers score more, and if someone else in the
+        {VERSUS_ROUNDS} questions, 40 seconds each, everyone at once. Rare right answers score more, and if someone else in the
         room says the same number, you <em>split the points</em>.
       </p>
 

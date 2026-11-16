@@ -2,7 +2,7 @@
 // Versus: you against a handful of other people, live, on the same questions.
 //
 // A match is VERSUS_ROUNDS questions. Everyone sees each question at the same
-// moment and has the usual 25 seconds. When the round closes, everyone's
+// moment and has the usual 40 seconds. When the round closes, everyone's
 // answers are shown.
 //
 // Scoring has two parts:

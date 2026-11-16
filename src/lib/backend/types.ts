@@ -1,7 +1,8 @@
 import type { TierId } from '../scoring.ts';
 
-export const TIMER_MS = 25_000;
-/** Allowance for network latency on top of the 25 seconds. The server uses the same figure. */
+/** Time to answer each question (40 s since 17 Nov 2026; it was 25 s). The server uses the same figure. */
+export const TIMER_MS = 40_000;
+/** Allowance for network latency on top of the 40 seconds. The server uses the same figure. */
 export const GRACE_MS = 3_000;
 
 export interface DayRow {

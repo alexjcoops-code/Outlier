@@ -58,6 +58,7 @@ beforeAll(async () => {
   await db.exec(read('20261113000000_init.sql'));
   await db.exec(read('20261114000000_versus.sql'));
   await db.exec(read('20261116000000_harder_tiers.sql'));
+  await db.exec(read('20261117000000_longer_timer.sql'));
 });
 
 describe('versus: private rooms', () => {
@@ -133,10 +134,10 @@ describe('versus: playing a match', () => {
     expect(s.rounds[1].prompt_id).toBe(promptIds[1]);
     expect(await answer(40, id, 2, valid(2))).toBe('not_started');
 
-    // Round 2: only one answers; time runs out after 25 s plus 3 s grace.
+    // Round 2: only one answers; time runs out after 40 s plus 3 s grace.
     await wait(id, 3);
     expect(await answer(40, id, 2, valid(2))).toBe('ok');
-    await wait(id, 26);
+    await wait(id, 41);
     expect(await answer(41, id, 2, valid(2))).toBe('ok'); // inside the grace
     await wait(id, 2);
     s = await state(40, id);
@@ -146,7 +147,7 @@ describe('versus: playing a match', () => {
       await wait(id, 9);
       s = await state(40, id);
       expect(s.round).toBe(round);
-      await wait(id, 29); // nobody answers
+      await wait(id, 44); // nobody answers
       s = await state(40, id);
       expect(s.rounds[round - 1].answers).toEqual([{ seat: 1, value: null }, { seat: 2, value: null }]);
     }

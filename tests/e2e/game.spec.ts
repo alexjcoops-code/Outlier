@@ -21,7 +21,7 @@ test('a full game: retries, a time-out, results, share text, resume and history'
 
   // Start screen
   await expect(page.getByRole('heading', { name: /Today's worksheet/ })).toBeVisible();
-  await expect(page.getByText('Any right answer counts. Rare right answers count more. 25 seconds each.')).toBeVisible();
+  await expect(page.getByText('Any right answer counts. Rare right answers count more. 40 seconds each.')).toBeVisible();
   await expect(page.getByRole('table', { name: 'Mark scheme' })).toContainText('Lone Wolf');
   // Yesterday's crowd teaser: piles of dots and a right answer nobody gave.
   const clipping = page.getByRole('complementary', { name: "Yesterday's crowd" });
@@ -59,7 +59,7 @@ test('a full game: retries, a time-out, results, share text, resume and history'
 
     if (q === 4) {
       // Let this one run out.
-      await page.clock.runFor(26_000);
+      await page.clock.runFor(41_000);
       await expect(page.locator('.reveal')).toContainText('out of time');
     } else {
       // Commas and spaces are stripped.
@@ -142,7 +142,7 @@ test("the archive: play a past day against its crowd, off the streak", async ({ 
   for (let q = 1; q <= 7; q++) {
     const valid = await answersOnScreen(page);
     if (q === 3) {
-      await page.clock.runFor(26_000);
+      await page.clock.runFor(41_000);
       await expect(page.locator('.reveal')).toContainText('out of time');
     } else {
       await expect(input).toBeFocused();

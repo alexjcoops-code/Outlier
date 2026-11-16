@@ -37,7 +37,7 @@ export function HowToPlay({ onClose }: { onClose: () => void }) {
         <h2 id="how-title">How to play</h2>
         <ol>
           <li>Seven questions a day. Each has lots of right answers.</li>
-          <li>You get 25 seconds to type a whole number. Wrong ones bounce back; keep trying.</li>
+          <li>You get 40 seconds to type a whole number. Wrong ones bounce back; keep trying.</li>
           <li>The fewer people who gave your answer, the more it scores. Up to 100 a question.</li>
           <li>Or play Versus: five questions live against 1 to 7 others. Say the same number as someone and you split the points.</li>
         </ol>

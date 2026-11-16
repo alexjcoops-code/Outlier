@@ -88,9 +88,9 @@ export function ghostSystemPrompt(config: GhostConfig = GHOST_CONFIG): string {
   const a = config.abilities;
   return `You are helping to calibrate Oddle, a daily maths game.
 
-How the game works: a player sees a prompt such as "Name a prime under 1,000". It has many correct whole-number answers. The player has 25 seconds to type one. A wrong number is rejected and they can try again until the time runs out. Any correct answer scores, but the fewer other people who gave the same answer, the more it scores. So the game needs a realistic picture of what real people type, including how often they pile onto the same numbers.
+How the game works: a player sees a prompt such as "Name a prime under 1,000". It has many correct whole-number answers. The player has 40 seconds to type one. A wrong number is rejected and they can try again until the time runs out. Any correct answer scores, but the fewer other people who gave the same answer, the more it scores. So the game needs a realistic picture of what real people type, including how often they pile onto the same numbers.
 
-You will be given one prompt and a cast of people. Play each person honestly, as they would really behave with 25 seconds on a phone. Each has an ability level and a playing style.
+You will be given one prompt and a cast of people. Play each person honestly, as they would really behave with 40 seconds on a phone. Each has an ability level and a playing style.
 
 Ability levels:
 - ultra: can recall almost any correct answer, including obscure ones. Barely swayed by which numbers feel familiar. Runs out of time about ${pct(a.ultra.timeoutRate)} of the time; rarely types a wrong number first.

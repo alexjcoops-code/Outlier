@@ -30,7 +30,7 @@ describe('the AI cast', () => {
     const msg = buildGhostUserMessage(prompt, cast);
     expect(msg).toContain(prompt.text);
     expect(msg).toContain(`1 | ${cast[0]!.ability} | ${cast[0]!.style} | ${cast[0]!.persona}`);
-    expect(ghostSystemPrompt()).toMatch(/25 seconds/);
+    expect(ghostSystemPrompt()).toMatch(/40 seconds/);
   });
 });
 

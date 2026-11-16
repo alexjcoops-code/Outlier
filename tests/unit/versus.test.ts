@@ -94,7 +94,7 @@ describe('versus against ghosts', () => {
     expect(s.rounds[0]!.answers).toBeNull(); // ghosts still thinking
 
     for (let round = 1; round <= VERSUS_ROUNDS; round++) {
-      // Step the clock until this round closes: early if everyone's in, at 25 s at the latest.
+      // Step the clock until this round closes: early if everyone's in, at 40 s at the latest.
       while (!(s = await v.state(id)).rounds[round - 1]?.answers) t += 500;
       expect(s.closedAt! - s.roundStartsAt!).toBeLessThanOrEqual(TIMER_MS);
       expect(s.round).toBe(round);

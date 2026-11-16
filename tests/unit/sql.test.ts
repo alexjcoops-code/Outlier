@@ -50,6 +50,8 @@ beforeAll(async () => {
   await db.exec('create role anon nologin; create role authenticated nologin; create role service_role nologin;');
   await db.exec(MIGRATION);
   await db.exec(readFileSync(new URL('../../supabase/migrations/20261116000000_harder_tiers.sql', import.meta.url), 'utf8'));
+  await db.exec(readFileSync(new URL('../../supabase/migrations/20261114000000_versus.sql', import.meta.url), 'utf8'));
+  await db.exec(readFileSync(new URL('../../supabase/migrations/20261117000000_longer_timer.sql', import.meta.url), 'utf8'));
   today = (await db.query<{ d: string }>(`select uk_today()::text as d`)).rows[0]!.d;
   ids = dailyPromptIds(today);
 });
@@ -147,8 +149,8 @@ describe('a day in the database', () => {
     await expect(start(1, 8)).rejects.toThrow(/no_such_question/);
     expect((await submit(1, 1, common)).reason).toBe('not_started');
     const s = await start(1, 1);
-    expect(s.remaining_ms).toBeGreaterThan(24000);
-    expect(s.remaining_ms).toBeLessThanOrEqual(25000);
+    expect(s.remaining_ms).toBeGreaterThan(39000);
+    expect(s.remaining_ms).toBeLessThanOrEqual(40000);
   });
 
   it('no peeking at the distribution before answering', async () => {
@@ -190,13 +192,13 @@ describe('a day in the database', () => {
 
   it('expires answers after 25 seconds plus grace', async () => {
     await start(4, 1);
-    await db.query(`update prompt_starts set started_at = now() - interval '27 seconds' where player_id = $1`, [uuid(4)]);
+    await db.query(`update prompt_starts set started_at = now() - interval '42 seconds' where player_id = $1`, [uuid(4)]);
     expect((await start(4, 1)).remaining_ms).toBe(0);
     // Inside the 3-second grace: still accepted.
     expect((await submit(4, 1, rareish)).ok).toBe(true);
 
     await start(5, 1);
-    await db.query(`update prompt_starts set started_at = now() - interval '29 seconds' where player_id = $1`, [uuid(5)]);
+    await db.query(`update prompt_starts set started_at = now() - interval '44 seconds' where player_id = $1`, [uuid(5)]);
     expect(await submit(5, 1, common)).toEqual({ ok: false, reason: 'expired' });
     // Timed out, so now the distribution is visible, and question 2 can start.
     expect((await distribution(5, 1)).values.length).toBeGreaterThan(0);

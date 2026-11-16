@@ -58,7 +58,7 @@ describe('archive backend', () => {
     await expect(archive.getDistribution(PAST, 1)).rejects.toThrow(/no_peeking/);
 
     const { remainingMs } = await archive.startPrompt(PAST, 1);
-    expect(remainingMs).toBe(25_000);
+    expect(remainingMs).toBe(40_000);
     const prompt = getPrompt(day.rows[0]!.promptId);
     const crowd = await real.getDistribution(PAST, 1);
     const value = crowd.values[0]!.value; // the crowd's favourite: Obvious
@@ -81,7 +81,7 @@ describe('archive backend', () => {
     // Invalid answers bounce; late ones are refused.
     await archive.startPrompt(PAST, 3);
     expect(await archive.submitAnswer(PAST, 3, -5)).toEqual({ ok: false, reason: 'invalid' });
-    tick(29_000);
+    tick(44_000);
     expect(await archive.submitAnswer(PAST, 3, validAnswers(getPrompt(day.rows[2]!.promptId))[0]!)).toEqual({
       ok: false,
       reason: 'expired',
