@@ -164,8 +164,9 @@ a:hover,
   position: relative;
   font-family: var(--print);
   font-weight: 700;
-  font-size: 27px;
-  letter-spacing: -0.01em;
+  /* It's the name of the game: the biggest thing in the header. */
+  font-size: 38px;
+  letter-spacing: -0.015em;
   color: var(--ink);
   text-decoration: none;
   line-height: 1;
@@ -490,7 +491,15 @@ a:hover,
 }
 
 /* Short screens: give the question and the number pad the room. */
+@media (min-width: 720px) {
+  .wordmark {
+    font-size: 44px;
+  }
+}
 @media (max-height: 620px) {
+  .wordmark {
+    font-size: 32px;
+  }
   .header {
     height: 52px;
     margin-bottom: 10px;
