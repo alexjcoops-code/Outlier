@@ -85,7 +85,7 @@ const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 export function ghostSystemPrompt(config: GhostConfig = GHOST_CONFIG): string {
   const a = config.abilities;
-  return `You are helping to calibrate Unsaid, a daily maths game.
+  return `You are helping to calibrate Oddle, a daily maths game.
 
 How the game works: a player sees a prompt such as "Name a prime under 1,000". It has many correct whole-number answers. The player has 25 seconds to type one. A wrong number is rejected and they can try again until the time runs out. Any correct answer scores, but the fewer other people who gave the same answer, the more it scores. So the game needs a realistic picture of what real people type, including how often they pile onto the same numbers.
 

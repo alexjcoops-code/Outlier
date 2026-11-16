@@ -1,4 +1,4 @@
-# Unsaid
+# Oddle
 
 A daily maths game where rare answers win: find the right answer nobody else said.
 

@@ -1,4 +1,4 @@
-# Unsaid: art direction
+# Oddle: art direction
 
 The rules every screen follows. If a change breaks one of these, change the change, not the rule (or argue for a new rule here first).
 

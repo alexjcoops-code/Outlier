@@ -12,13 +12,10 @@ interface Props {
 export function Header({ date, streak, navigate, onHelp }: Props) {
   return (
     <header className="header">
-      <a className="wordmark" href="/" onClick={linkHandler(navigate, '/')} aria-label="Unsaid, home">
+      <a className="wordmark" href="/" onClick={linkHandler(navigate, '/')} aria-label="Oddle, home">
+        {/* The teacher has circled the "o": the odd one out. */}
         <span aria-hidden="true">
-          unsa
-          <span className="wordmark__i">
-            ı<span className="wordmark__dot" />
-          </span>
-          d
+          <span className="wordmark__o">o</span>ddle
         </span>
       </a>
       <div className="header__right">
