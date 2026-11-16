@@ -41,6 +41,16 @@ Tokens live in `src/styles/tokens.css`. Use the role, not the hex.
 - The crowd's balls are pencil-shaded discs. Your ball is a red-pen disc with a ring round it, so it reads in greyscale too.
 - One family only: drawn marks (ticks, circles, dashes, stars, stamps). No emoji, no icon sets, no shaded sprites.
 
+## The desk (wide screens)
+
+From 1000 px wide the sheet lies on a desk with things round it; below that the sheet fills the screen as before.
+
+- **1000 to 1239 px:** the sheet plus a column of sticky notes on its right.
+- **1240 px and up:** stationery on the left as well: a 15 cm ruler, a pencil, a rubber and a protractor.
+- **1600 px and up:** the sheet widens to 860 px and everything on the desk goes up a size.
+
+The sticky notes carry real information: the rule in one line, your last few days and best score, and when the next sheet comes out. The stationery is decoration only and hidden from screen readers. Stationery is drawn like the marks: ink outline and flat fills, no shading and no shadow. Only the notes, being paper, get the soft shadow. Nothing on the desk moves; the countdown changes once a minute.
+
 ## Typography
 
 | Role | Face | Used for |

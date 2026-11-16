@@ -1,0 +1,175 @@
+/* ───── The desk round the sheet (wide screens) ─────
+   Stationery on the left, sticky notes on the right. Nothing here moves. */
+
+.desk__side {
+  display: none;
+}
+
+/* Mid-width screens: the sheet and a column of notes beside it. */
+@media (min-width: 1000px) {
+  .desk {
+    display: grid;
+    grid-template-columns: minmax(700px, 780px) 214px;
+    justify-content: center;
+    column-gap: 28px;
+    padding: 0 16px;
+  }
+  .desk > .page {
+    width: auto;
+    margin: 36px 0 48px;
+  }
+  .desk__side--right {
+    display: block;
+    position: sticky;
+    top: 36px;
+    align-self: start;
+    min-width: 0;
+  }
+}
+
+/* Wide screens: stationery on the left as well. */
+@media (min-width: 1240px) {
+  .desk {
+    grid-template-columns: minmax(190px, 1fr) minmax(720px, 780px) minmax(214px, 1fr);
+    justify-content: stretch;
+    column-gap: 32px;
+  }
+  .desk__side--left {
+    display: block;
+    position: sticky;
+    top: 36px;
+    align-self: start;
+    min-width: 0;
+  }
+}
+
+/* Big screens: a bigger sheet and everything on the desk a size up. */
+@media (min-width: 1600px) {
+  .desk {
+    grid-template-columns: minmax(240px, 1fr) 860px minmax(260px, 1fr);
+    column-gap: 56px;
+  }
+  .desk__props,
+  .desk__notes {
+    zoom: 1.2;
+  }
+}
+
+/* Stationery: ink outlines and flat fills, like everything else. */
+.desk__props {
+  position: relative;
+  width: 200px;
+  height: 640px;
+  margin: 64px 0 0 auto;
+}
+.desk__ruler {
+  position: absolute;
+  left: 22px;
+  top: 0;
+  transform: rotate(-4deg);
+}
+.desk__ruler-numbers {
+  font-family: var(--mono);
+  font-size: 9px;
+  fill: var(--ink);
+}
+.desk__pencil {
+  position: absolute;
+  left: -50px;
+  top: 280px;
+  transform: rotate(-62deg);
+}
+.desk__protractor {
+  position: absolute;
+  left: 4px;
+  top: 536px;
+  transform: rotate(-7deg);
+}
+.desk__protractor text {
+  font-family: var(--mono);
+  font-size: 8px;
+  fill: var(--ink);
+}
+.desk__rubber {
+  position: absolute;
+  left: 96px;
+  top: 452px;
+  transform: rotate(10deg);
+}
+
+/* Sticky notes: paper objects, so they may cast one soft shadow. */
+.desk__notes {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  width: 214px;
+  margin-top: 96px;
+  padding-right: 6px;
+}
+.desk-note {
+  position: relative;
+  padding: 16px 16px 14px;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.45;
+  box-shadow: 1px 2px 0 rgba(31, 42, 68, 0.14), 5px 12px 16px -10px rgba(31, 42, 68, 0.4);
+  border-bottom-right-radius: 26px 5px;
+}
+.desk-note:nth-child(1) {
+  transform: rotate(-2deg);
+}
+.desk-note:nth-child(2) {
+  transform: rotate(1.4deg);
+  margin-left: 10px;
+}
+.desk-note:nth-child(3) {
+  transform: rotate(-0.8deg);
+}
+.desk-note--yellow {
+  background: #fff3a6;
+}
+/* A paperclip holding the middle note's corner. */
+.desk-note__clip {
+  position: absolute;
+  top: -14px;
+  right: 22px;
+  transform: rotate(8deg);
+}
+.desk-note--pink {
+  background: #ffd6de;
+}
+.desk-note--blue {
+  background: #d4e9fb;
+}
+.desk-note h2 {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.desk-note p {
+  margin: 0 0 8px;
+}
+.desk-note a,
+.desk-note .linklike {
+  font-size: 14.5px;
+}
+.desk-note__days {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+.desk-note__days li {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed rgba(31, 42, 68, 0.35);
+  padding: 2px 0;
+}
+.desk-note__days .mono {
+  font-weight: 600;
+}
+.desk-note__small {
+  font-size: 14px;
+  color: #4a4a4a;
+}

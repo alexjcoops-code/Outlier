@@ -2,6 +2,7 @@ import { MotionConfig } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Header } from './components/Header.tsx';
 import { HowToPlay } from './components/HowToPlay.tsx';
+import { DeskLeft, DeskRight } from './components/Desk.tsx';
 import { ConfettiLayer } from './components/Confetti.tsx';
 import { SvgDefs } from './components/Marks.tsx';
 import { createBackend } from './lib/backend/index.ts';
@@ -68,6 +69,8 @@ export function App() {
   return (
     <MotionConfig reducedMotion="user">
       <SvgDefs />
+      <div className="desk">
+      <DeskLeft />
       <div className="page">
         <div className="column">
           <Header date={today} streak={days} navigate={navigate} onHelp={() => setHelp(true)} />
@@ -106,6 +109,8 @@ export function App() {
             </button>
           </footer>
         </div>
+      </div>
+      <DeskRight history={history} today={today} streak={days} navigate={navigate} onHelp={() => setHelp(true)} />
       </div>
       {help && <HowToPlay onClose={closeHelp} />}
       <ConfettiLayer />
