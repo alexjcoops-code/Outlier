@@ -422,21 +422,41 @@
   color: #0d1424;
 }
 .reveal__mark {
-  position: relative;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px 18px;
   margin-top: 22px;
   min-height: 60px;
-  padding-right: 56px;
 }
+/* Oddie stands right next to the mark, big enough to read its face. */
 .reveal__oddie {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  margin-top: -26px;
+  margin-left: 10px;
   line-height: 0;
+}
+.reveal__oddie .oddie {
+  width: 104px !important;
+  height: 104px !important;
+}
+.reveal {
+  position: relative;
+}
+/* On a phone there's no room in the row: Oddie stands in the top right corner,
+   beside the answer and the mark. */
+@media (max-width: 600px) {
+  .reveal__mark {
+    padding-right: 92px;
+  }
+  .reveal__oddie {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    margin: 0;
+  }
+  .reveal__oddie .oddie {
+    width: 96px !important;
+    height: 96px !important;
+  }
 }
 .reveal__tier {
   font-size: 27px;
@@ -467,6 +487,9 @@
 }
 .reveal__points .circled__text {
   font-size: 32px;
+  /* Kalam's numbers sit high in the line; drop them to the middle of the ring
+     (measured: the glyphs' centre was 0.21em above the ring's). */
+  top: 0.21em;
 }
 .star-stamp {
   margin-left: -4px;
@@ -751,6 +774,15 @@
 
 /* Short phones: the result has to land on screen. Tier and score share one row,
    the stamp shrinks and tucks under them, so the rack (and your ball) stays in view. */
+@media (max-height: 760px) and (max-width: 600px) {
+  .reveal__mark {
+    padding-right: 76px;
+  }
+  .reveal__oddie .oddie {
+    width: 78px !important;
+    height: 78px !important;
+  }
+}
 @media (max-height: 760px) {
   .question:has(.reveal) .reveal__mark {
     gap: 4px 10px;

@@ -133,7 +133,7 @@ export function Reveal({ prompt, data, isLast, onNext }: Props) {
           animate={{ scale: 1, rotate: 0, opacity: 1 }}
           transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 14, delay: MARK_AT + 0.35 }}
         >
-          <Oddie mood={moodFor(data.tier)} size={52} />
+          <Oddie mood={moodFor(data.tier)} size={104} />
         </motion.span>
       </div>
 
